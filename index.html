@@ -84,7 +84,7 @@
     </div>
     <div id="score"></div>
     <div id="leaderboard">
-        <h3>Топ игроков</h3>
+        <h3>Топ результатов</h3>
         <ul id="topScores"></ul>
     </div>
 
@@ -188,7 +188,10 @@
 
         function drawPipes() {
             pipes.forEach(pipe => {
-                ctx.fillStyle = "#ffcc00";
+                let grad = ctx.createLinearGradient(pipe.x, 0, pipe.x, canvas.height);
+                grad.addColorStop(0, "#FF5733");
+                grad.addColorStop(1, "#C70039");
+                ctx.fillStyle = grad;
                 ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
                 ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
             });
