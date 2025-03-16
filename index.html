@@ -2,19 +2,23 @@
 <html>
 <head>
     <title>Shadow Flappy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
+        body, html {
             margin: 0;
+            padding: 0;
             overflow: hidden;
             font-family: 'Press Start 2P', cursive;
             background: #000;
         }
         #gameCanvas {
             display: block;
-            margin: auto;
-            /* Убираем фоновое изображение, фон будет рисоваться через canvas */
-            border: 2px solid black;
+            width: 100vw;
+            height: 100vh;
+            border: none;
         }
         #menu {
             position: absolute;
@@ -31,12 +35,12 @@
             z-index: 10;
         }
         #menu h1 {
-            font-size: 48px;
+            font-size: 5vw;
             margin-bottom: 20px;
         }
         #menu button {
-            padding: 15px 30px;
-            font-size: 20px;
+            padding: 10px 20px;
+            font-size: 3vw;
             background: #e74c3c;
             border: none;
             border-radius: 5px;
@@ -45,16 +49,16 @@
         }
         #score {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 5%;
+            left: 5%;
             color: white;
-            font-size: 24px;
+            font-size: 4vw;
             z-index: 5;
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div id="menu">
         <h1>SHADOW</h1>
         <button id="startBtn">Start Game</button>
@@ -62,38 +66,51 @@
     <div id="score"></div>
 
     <script>
+        // Telegram WebApp API
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+        }
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const menu = document.getElementById('menu');
         const startBtn = document.getElementById('startBtn');
         const scoreElement = document.getElementById('score');
-        
+
         let gameStarted = false;
         let score = 0;
-        let bgTime = 0; // переменная для анимации фона
-        
+        let bgTime = 0;
+
+        // Размеры canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Первоначальный вызов
+
         // Параметры персонажа
         const shadow = {
-            x: 50,
-            y: 300,
-            width: 40,
-            height: 40,
+            x: canvas.width * 0.1,
+            y: canvas.height * 0.5,
+            width: canvas.width * 0.1,
+            height: canvas.width * 0.1,
             velocity: 0,
             gravity: 0.5,
-            jump: -8
+            jump: -10
         };
-        
+
         // Параметры труб
         let pipes = [];
-        const pipeWidth = 50;
-        const pipeGap = 150;
-        const pipeSpacing = 200;
-        const pipeSpeed = 3; // скорость труб
-        
+        const pipeWidth = canvas.width * 0.1;
+        const pipeGap = canvas.height * 0.3;
+        const pipeSpacing = canvas.width * 0.5;
+        const pipeSpeed = 3;
+
         // Загрузка изображения персонажа
         const shadowImg = new Image();
         shadowImg.src = 'https://i0.wp.com/mynintendonews.com/wp-content/uploads/2024/04/shadow_year_of_shadow.webp?fit=2560%2C2291&ssl=1';
-        
+
         // Управление
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && gameStarted) {
@@ -106,17 +123,17 @@
             }
         });
         startBtn.addEventListener('click', startGame);
-        
+
         function startGame() {
             gameStarted = true;
             score = 0;
             pipes = [];
-            shadow.y = 300;
+            shadow.y = canvas.height * 0.5;
             shadow.velocity = 0;
             menu.style.display = 'none';
             gameLoop();
         }
-        
+
         function createPipe() {
             const gapPosition = Math.random() * (canvas.height - pipeGap - 100) + 50;
             pipes.push({
@@ -126,7 +143,7 @@
                 passed: false
             });
         }
-        
+
         function checkCollision(pipe) {
             return (
                 shadow.x < pipe.x + pipeWidth &&
@@ -134,23 +151,19 @@
                 (shadow.y < pipe.topHeight || shadow.y + shadow.height > pipe.bottomY)
             );
         }
-        
-        // Функция для отрисовки трубы с градиентной заливкой и неоновым свечением
+
         function drawPipe(pipe) {
             ctx.save();
-            // Неоновое свечение для колонн
             ctx.shadowColor = "#0ff";
             ctx.shadowBlur = 20;
-            
-            // Создаём линейный градиент для трубы
+
             let grad = ctx.createLinearGradient(pipe.x, 0, pipe.x, canvas.height);
             grad.addColorStop(0, "#004");
             grad.addColorStop(1, "#00aaff");
             ctx.fillStyle = grad;
             ctx.strokeStyle = grad;
             ctx.lineWidth = 2;
-            
-            // Верхняя труба с закруглением снизу
+
             ctx.beginPath();
             ctx.moveTo(pipe.x, 0);
             ctx.lineTo(pipe.x + pipeWidth, 0);
@@ -161,8 +174,7 @@
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
-            
-            // Нижняя труба с закруглением сверху
+
             ctx.beginPath();
             ctx.moveTo(pipe.x, canvas.height);
             ctx.lineTo(pipe.x + pipeWidth, canvas.height);
@@ -173,17 +185,15 @@
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
-            
+
             ctx.restore();
         }
-        
-        // Функция для отрисовки анимированного тёмного фона с меняющимся градиентом
+
         function drawAnimatedBackground() {
             bgTime += 0.005;
-            // Вычисляем смещение для градиента
             const x0 = Math.sin(bgTime) * 100;
             const y0 = Math.cos(bgTime) * 100;
-            
+
             let bgGrad = ctx.createLinearGradient(x0, y0, canvas.width - x0, canvas.height - y0);
             bgGrad.addColorStop(0, "#0d0d0d");
             bgGrad.addColorStop(0.5, "#1a1a1a");
@@ -191,22 +201,19 @@
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        
+
         function gameLoop() {
             if (!gameStarted) return;
-            
-            // Отрисовка анимированного фона
+
             drawAnimatedBackground();
-            
-            // Обновление позиции персонажа
+
             shadow.velocity += shadow.gravity;
             shadow.y += shadow.velocity;
-            
-            // Создание труб
+
             if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - pipeSpacing) {
                 createPipe();
             }
-            
+
             pipes.forEach(pipe => {
                 pipe.x -= pipeSpeed;
                 if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
@@ -218,22 +225,15 @@
                     menu.style.display = 'flex';
                 }
             });
-            
-            // Отрисовка труб с градиентной заливкой
+
             pipes.forEach(pipe => {
                 drawPipe(pipe);
             });
-            
-            // Отрисовка персонажа с неоновым свечением
-            ctx.save();
-            ctx.shadowColor = "#ff00ff";
-            ctx.shadowBlur = 20;
+
             ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
-            ctx.restore();
-            
-            // Обновление счётчика очков
+
             scoreElement.textContent = `Score: ${score}`;
-            
+
             requestAnimationFrame(gameLoop);
         }
     </script>
