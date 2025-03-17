@@ -1,382 +1,256 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <!-- viewport-fit=cover для iOS с учетом safe area -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Shadow Flappy</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <style>
-    /* Основные стили с учетом safe area для iOS */
-    body, html {
-      margin: 0;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      overflow: hidden;
-      font-family: 'Press Start 2P', cursive;
-      background: #000;
-    }
-    /* Canvas занимает весь экран, touch-action запрещает стандартные жесты */
-    #gameCanvas {
-      display: block;
-      width: 100vw;
-      height: 100vh;
-      border: none;
-      touch-action: none;
-    }
-    .background {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
-    .clouds {
-      background: url('https://i.imgur.com/5j5gXzL.png') repeat-x;
-      animation: moveClouds 20s linear infinite;
-    }
-    .mountains {
-      background: url('https://i.imgur.com/5j5gXzL.png') repeat-x;
-      animation: moveMountains 40s linear infinite;
-      background-position: 0 80%;
-      opacity: 0.5;
-    }
-    @keyframes moveClouds {
-      from { background-position: 0 0; }
-      to { background-position: -1000px 0; }
-    }
-    @keyframes moveMountains {
-      from { background-position: 0 80%; }
-      to { background-position: -500px 80%; }
-    }
-    /* Меню старта игры */
-    #menu {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #2E3192, #1BFFFF);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-      animation: fadeIn 1s ease-in;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    #menu h1 {
-      font-size: 5vw;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px #fff;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-    #menu input {
-      font-size: 3vw;
-      padding: 10px;
-      text-align: center;
-      margin-bottom: 15px;
-      border: 2px solid #f39c12;
-      border-radius: 5px;
-      background: #fff;
-    }
-    #menu button {
-      padding: 10px 20px;
-      font-size: 3vw;
-      background: linear-gradient(45deg, #e74c3c, #f39c12);
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      color: white;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      transition: transform 0.2s, background 0.3s;
-    }
-    #menu button:hover {
-      transform: scale(1.1);
-      background: linear-gradient(45deg, #f39c12, #e74c3c);
-    }
-    #menu button:active {
-      transform: scale(0.95);
-    }
-    /* Счет и лидерборд */
-    #score {
-      position: absolute;
-      top: 5%;
-      left: 5%;
-      color: #fff;
-      font-size: 4vw;
-      z-index: 5;
-      text-shadow: 0 0 5px #f39c12;
-      transition: transform 0.2s;
-    }
-    #leaderboard {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 200px;
-      background: linear-gradient(45deg, #2c3e50, #34495e);
-      color: white;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: center;
-      font-size: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      z-index: 5;
-    }
-    #topScores li {
-      margin-bottom: 5px;
-      font-size: 14px;
-    }
-    /* Адаптация для небольших экранов */
-    @media (max-width: 414px) {
-      #menu h1 {
-        font-size: 8vw;
-      }
-      #menu input, #menu button {
-        font-size: 5vw;
-      }
-      #score {
-        font-size: 6vw;
-      }
-      #leaderboard {
-        width: 150px;
-        font-size: 10px;
-      }
-    }
-  </style>
+    <title>Shadow Flappy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Press Start 2P', cursive;
+            background: #000;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            border: none;
+        }
+        #menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        #menu h1 {
+            font-size: 5vw;
+            margin-bottom: 20px;
+        }
+        #menu input {
+            font-size: 3vw;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        #menu button {
+            padding: 10px 20px;
+            font-size: 3vw;
+            background: #e74c3c;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+        #score {
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            color: white;
+            font-size: 4vw;
+            z-index: 5;
+        }
+        #leaderboard {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 200px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-  <div class="background clouds"></div>
-  <div class="background mountains"></div>
-  <canvas id="gameCanvas"></canvas>
-  <div id="menu">
-    <h1>FLYING SEAL</h1>
-    <input type="text" id="nickname" placeholder="Введите никнейм">
-    <button id="startBtn">GO!</button>
-  </div>
-  <div id="score"></div>
-  <div id="leaderboard">
-    <h3>Топ результатов</h3>
-    <ul id="topScores"></ul>
-  </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="menu">
+        <h1>FLYING SEAL</h1>
+        <input type="text" id="nickname" placeholder="Введите никнейм">
+        <button id="startBtn">Start Game</button>
+    </div>
+    <div id="score"></div>
+    <div id="leaderboard">
+        <h3>Топ результатов</h3>
+        <ul id="topScores"></ul>
+    </div>
+<script>
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+    }
 
-  <script>
-    // Получаем элементы
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
     const startBtn = document.getElementById('startBtn');
     const nicknameInput = document.getElementById('nickname');
     const scoreElement = document.getElementById('score');
+    const leaderboard = document.getElementById('leaderboard');
     const topScoresList = document.getElementById('topScores');
 
-    // Переменные игры
     let gameStarted = false;
     let score = 0;
-    let displayedScore = 0;
+    let bgTime = 0;
     let username = "";
-    let isFalling = false;
 
-    // Функция для адаптации размера canvas
     function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Параметры игрового персонажа
     const shadow = {
-      x: canvas.width * 0.1,
-      y: canvas.height * 0.5,
-      width: canvas.width * 0.1,
-      height: canvas.width * 0.1,
-      velocity: 0,
-      gravity: 0.35,
-      jump: -6
+        x: canvas.width * 0.1,
+        y: canvas.height * 0.5,
+        width: canvas.width * 0.1,
+        height: canvas.width * 0.1,
+        velocity: 0,
+        gravity: 0.35,
+        jump: -6
     };
 
-    // Параметры препятствий
     let pipes = [];
     const pipeWidth = canvas.width * 0.1;
     const pipeGap = canvas.height * 0.3;
     const pipeSpacing = canvas.width * 0.5;
     const pipeSpeed = 2.5;
 
-    // Изображения для персонажа
     const shadowImg = new Image();
     shadowImg.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
-    const fallingImg = new Image();
-    fallingImg.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-40-removebg-preview16119a865192f78f.png';
 
-    // Универсальная функция прыжка
-    function jump() {
-      if (gameStarted) {
-        shadow.velocity = shadow.jump;
-      }
-    }
-
-    // Обработчики событий для клавиатуры, мыши, touch и pointer
     document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameStarted) {
-        jump();
-      }
+        if (e.code === 'Space' && gameStarted) {
+            shadow.velocity = shadow.jump;
+        }
     });
-    canvas.addEventListener('click', () => jump());
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      jump();
-    });
-    canvas.addEventListener('pointerdown', () => jump());
 
-    // Старт игры по нажатию на кнопку
+    // Обработчик для клика мышью
+    canvas.addEventListener('click', () => {
+        if (gameStarted) {
+            shadow.velocity = shadow.jump;
+        }
+    });
+
+    // Добавлен обработчик для касаний (iOS и другие сенсорные устройства)
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Предотвращаем возможное срабатывание дополнительных событий
+        if (gameStarted) {
+            shadow.velocity = shadow.jump;
+        }
+    });
+
     startBtn.addEventListener('click', () => {
-      username = nicknameInput.value || "Player";
-      startGame();
+        username = nicknameInput.value || "Player";
+        startGame();
     });
 
     function startGame() {
-      gameStarted = true;
-      score = 0;
-      displayedScore = 0;
-      pipes = [];
-      shadow.y = canvas.height * 0.5;
-      shadow.velocity = 0;
-      isFalling = false;
-      menu.style.display = 'none';
-      gameLoop();
+        gameStarted = true;
+        score = 0;
+        pipes = [];
+        shadow.y = canvas.height * 0.5;
+        shadow.velocity = 0;
+        menu.style.display = 'none';
+        gameLoop();
     }
 
     function createPipe() {
-      const gapPosition = Math.random() * (canvas.height - pipeGap - 100) + 50;
-      pipes.push({
-        x: canvas.width,
-        topHeight: gapPosition,
-        bottomY: gapPosition + pipeGap,
-        passed: false,
-        offset: Math.random() * 100
-      });
+        const gapPosition = Math.random() * (canvas.height - pipeGap - 100) + 50;
+        pipes.push({
+            x: canvas.width,
+            topHeight: gapPosition,
+            bottomY: gapPosition + pipeGap,
+            passed: false
+        });
     }
 
     function checkCollision(pipe) {
-      return (
-        shadow.x < pipe.x + pipeWidth &&
-        shadow.x + shadow.width > pipe.x &&
-        (shadow.y < pipe.topHeight || shadow.y + shadow.height > pipe.bottomY)
-      );
+        return (
+            shadow.x < pipe.x + pipeWidth &&
+            shadow.x + shadow.width > pipe.x &&
+            (shadow.y < pipe.topHeight || shadow.y + shadow.height > pipe.bottomY)
+        );
     }
 
     function drawBackground() {
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      bgGrad.addColorStop(0, "#2E3192");
-      bgGrad.addColorStop(1, "#1BFFFF");
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    function createPipeTexture() {
-      const textureCanvas = document.createElement('canvas');
-      textureCanvas.width = 20;
-      textureCanvas.height = 20;
-      const textureCtx = textureCanvas.getContext('2d');
-      textureCtx.fillStyle = '#FF5733';
-      textureCtx.fillRect(0, 0, 20, 20);
-      textureCtx.fillStyle = '#C70039';
-      for (let i = 0; i < 20; i += 5) {
-        textureCtx.fillRect(0, i, 20, 2);
-      }
-      return textureCanvas;
+        bgTime += 0.005;
+        let bgGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        bgGrad.addColorStop(0, "#2E3192");
+        bgGrad.addColorStop(1, "#1BFFFF");
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     function drawPipes() {
-      pipes.forEach(pipe => {
-        const sway = Math.sin(Date.now() / 1000 + pipe.offset) * 5;
-        const texture = ctx.createPattern(createPipeTexture(), 'repeat');
-        ctx.fillStyle = texture;
-        ctx.fillRect(pipe.x, sway, pipeWidth, pipe.topHeight);
-        ctx.fillRect(pipe.x, pipe.bottomY + sway, pipeWidth, canvas.height - pipe.bottomY);
-      });
-    }
-
-    function drawShadow() {
-      ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-      ctx.shadowBlur = 10;
-      const img = shadow.velocity > 0 ? fallingImg : shadowImg;
-      ctx.drawImage(img, shadow.x, shadow.y, shadow.width, shadow.height);
-      ctx.shadowBlur = 0;
-    }
-
-    function updateScore() {
-      if (displayedScore < score) {
-        displayedScore++;
-        scoreElement.textContent = `Score: ${displayedScore}`;
-        scoreElement.style.transform = 'scale(1.2)';
-        setTimeout(() => {
-          scoreElement.style.transform = 'scale(1)';
-        }, 200);
-      }
-    }
-
-    function saveScore(name, points) {
-      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
-      scores.push({ name, points });
-      scores.sort((a, b) => b.points - a.points);
-      scores = scores.slice(0, 5);
-      localStorage.setItem("scores", JSON.stringify(scores));
-      updateLeaderboard();
-    }
-
-    function updateLeaderboard() {
-      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
-      topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
+        pipes.forEach(pipe => {
+            let grad = ctx.createLinearGradient(pipe.x, 0, pipe.x, canvas.height);
+            grad.addColorStop(0, "#FF5733");
+            grad.addColorStop(1, "#C70039");
+            ctx.fillStyle = grad;
+            ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
+            ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+        });
     }
 
     function gameLoop() {
-      if (!gameStarted) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawBackground();
+        if (!gameStarted) return;
 
-      shadow.velocity += shadow.gravity;
-      shadow.y += shadow.velocity;
+        drawBackground();
+        shadow.velocity += shadow.gravity;
+        shadow.y += shadow.velocity;
 
-      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - pipeSpacing) {
-        createPipe();
-      }
-
-      pipes.forEach(pipe => {
-        pipe.x -= pipeSpeed;
-        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
-          score++;
-          pipe.passed = true;
+        if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - pipeSpacing) {
+            createPipe();
         }
-        if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
-          isFalling = true;
-          setTimeout(() => {
-            gameStarted = false;
-            saveScore(username, score);
-            menu.style.display = 'flex';
-            isFalling = false;
-          }, 500);
-        }
-      });
 
-      drawPipes();
-      drawShadow();
-      updateScore();
-      requestAnimationFrame(gameLoop);
+        pipes.forEach(pipe => {
+            pipe.x -= pipeSpeed;
+            if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
+                score++;
+                pipe.passed = true;
+            }
+            if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+                gameStarted = false;
+                saveScore(username, score);
+                menu.style.display = 'flex';
+            }
+        });
+
+        drawPipes();
+        ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
+        scoreElement.textContent = `Score: ${score}`;
+        requestAnimationFrame(gameLoop);
     }
 
+    function saveScore(name, points) {
+        let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+        scores.push({ name, points });
+        scores.sort((a, b) => b.points - a.points);
+        scores = scores.slice(0, 5);
+        localStorage.setItem("scores", JSON.stringify(scores));
+        updateLeaderboard();
+    }
+
+    function updateLeaderboard() {
+        let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+        topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
+    }
     updateLeaderboard();
-  </script>
+</script>
+
 </body>
 </html>
