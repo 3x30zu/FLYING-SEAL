@@ -1,28 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <!-- Добавлен viewport-fit=cover для Telegram Web Apps -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Viewport для мобильных устройств -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Shadow Flappy</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Учитываем safe-area инсет */
     body, html {
-      margin: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      margin: 0;
       padding: 0;
       overflow: hidden;
       font-family: 'Press Start 2P', cursive;
       background: #000;
-      height: 100vh;
     }
     #gameCanvas {
       display: block;
       width: 100vw;
       height: 100vh;
       border: none;
-      touch-action: none;
     }
     .background {
       position: absolute;
@@ -64,8 +61,6 @@
       align-items: center;
       z-index: 10;
       animation: fadeIn 1s ease-in;
-      /* Учитываем safe-area */
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -90,7 +85,6 @@
       border: 2px solid #f39c12;
       border-radius: 5px;
       background: #fff;
-      width: 80%;
     }
     #menu button {
       padding: 10px 20px;
@@ -102,7 +96,6 @@
       color: white;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
       transition: transform 0.2s, background 0.3s;
-      width: 80%;
     }
     #menu button:hover {
       transform: scale(1.1);
@@ -123,8 +116,8 @@
     }
     #leaderboard {
       position: absolute;
-      top: calc(10px + env(safe-area-inset-top));
-      right: calc(10px + env(safe-area-inset-right));
+      top: 10px;
+      right: 10px;
       width: 200px;
       background: linear-gradient(45deg, #2c3e50, #34495e);
       color: white;
@@ -178,7 +171,6 @@
     const startBtn = document.getElementById('startBtn');
     const nicknameInput = document.getElementById('nickname');
     const scoreElement = document.getElementById('score');
-    const leaderboard = document.getElementById('leaderboard');
     const topScoresList = document.getElementById('topScores');
 
     let gameStarted = false;
@@ -187,6 +179,7 @@
     let username = "";
     let isFalling = false;
 
+    // Функция для подгонки канваса под размер экрана
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -216,22 +209,20 @@
     const fallingImg = new Image();
     fallingImg.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-40-removebg-preview16119a865192f78f.png';
 
+    // Обработчик для клавиши "Пробел"
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted) {
         shadow.velocity = shadow.jump;
       }
     });
-    canvas.addEventListener('click', () => {
+    // Обработчик для касания экрана (touchstart) и клика мыши
+    function jumpHandler() {
       if (gameStarted) {
         shadow.velocity = shadow.jump;
       }
-    });
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (gameStarted) {
-        shadow.velocity = shadow.jump;
-      }
-    }, { passive: false });
+    }
+    canvas.addEventListener('click', jumpHandler);
+    canvas.addEventListener('touchstart', jumpHandler);
 
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value || "Player";
@@ -282,7 +273,7 @@
         const sway = Math.sin(Date.now() / 1000 + pipe.offset) * 5;
         const texture = ctx.createPattern(createPipeTexture(), 'repeat');
         ctx.fillStyle = texture;
-        ctx.fillRect(pipe.x, 0 + sway, pipeWidth, pipe.topHeight);
+        ctx.fillRect(pipe.x, sway, pipeWidth, pipe.topHeight);
         ctx.fillRect(pipe.x, pipe.bottomY + sway, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
