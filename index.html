@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Используем viewport-fit=cover для поддержки безопасных зон iPhone -->
+  <!-- viewport-fit=cover для iOS с учетом safe area -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Shadow Flappy</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Safe area для iPhone */
+    /* Основные стили с учетом safe area для iOS */
     body, html {
       margin: 0;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -16,7 +16,7 @@
       font-family: 'Press Start 2P', cursive;
       background: #000;
     }
-    /* Добавляем touch-action для предотвращения жестов по умолчанию */
+    /* Canvas занимает весь экран, touch-action запрещает стандартные жесты */
     #gameCanvas {
       display: block;
       width: 100vw;
@@ -50,6 +50,7 @@
       from { background-position: 0 80%; }
       to { background-position: -500px 80%; }
     }
+    /* Меню старта игры */
     #menu {
       position: absolute;
       top: 0;
@@ -107,6 +108,7 @@
     #menu button:active {
       transform: scale(0.95);
     }
+    /* Счет и лидерборд */
     #score {
       position: absolute;
       top: 5%;
@@ -135,6 +137,7 @@
       margin-bottom: 5px;
       font-size: 14px;
     }
+    /* Адаптация для небольших экранов */
     @media (max-width: 414px) {
       #menu h1 {
         font-size: 8vw;
@@ -168,21 +171,23 @@
   </div>
 
   <script>
+    // Получаем элементы
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
     const startBtn = document.getElementById('startBtn');
     const nicknameInput = document.getElementById('nickname');
     const scoreElement = document.getElementById('score');
-    const leaderboard = document.getElementById('leaderboard');
     const topScoresList = document.getElementById('topScores');
 
+    // Переменные игры
     let gameStarted = false;
     let score = 0;
     let displayedScore = 0;
     let username = "";
     let isFalling = false;
 
+    // Функция для адаптации размера canvas
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -190,6 +195,7 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
+    // Параметры игрового персонажа
     const shadow = {
       x: canvas.width * 0.1,
       y: canvas.height * 0.5,
@@ -200,43 +206,40 @@
       jump: -6
     };
 
+    // Параметры препятствий
     let pipes = [];
     const pipeWidth = canvas.width * 0.1;
     const pipeGap = canvas.height * 0.3;
     const pipeSpacing = canvas.width * 0.5;
     const pipeSpeed = 2.5;
 
+    // Изображения для персонажа
     const shadowImg = new Image();
     shadowImg.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
-
     const fallingImg = new Image();
     fallingImg.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-40-removebg-preview16119a865192f78f.png';
 
-    // Обработчики для клавиатуры, кликов и касаний (поддержка iPhone)
+    // Универсальная функция прыжка
+    function jump() {
+      if (gameStarted) {
+        shadow.velocity = shadow.jump;
+      }
+    }
+
+    // Обработчики событий для клавиатуры, мыши, touch и pointer
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted) {
-        shadow.velocity = shadow.jump;
+        jump();
       }
     });
-    canvas.addEventListener('click', () => {
-      if (gameStarted) {
-        shadow.velocity = shadow.jump;
-      }
-    });
+    canvas.addEventListener('click', () => jump());
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
-      if (gameStarted) {
-        shadow.velocity = shadow.jump;
-      }
+      jump();
     });
-    // Дополнительный обработчик touchend, если потребуется
-    canvas.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      if (gameStarted) {
-        shadow.velocity = shadow.jump;
-      }
-    });
+    canvas.addEventListener('pointerdown', () => jump());
 
+    // Старт игры по нажатию на кнопку
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value || "Player";
       startGame();
@@ -274,21 +277,11 @@
     }
 
     function drawBackground() {
-      let bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
       bgGrad.addColorStop(0, "#2E3192");
       bgGrad.addColorStop(1, "#1BFFFF");
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    function drawPipes() {
-      pipes.forEach(pipe => {
-        const sway = Math.sin(Date.now() / 1000 + pipe.offset) * 5;
-        const texture = ctx.createPattern(createPipeTexture(), 'repeat');
-        ctx.fillStyle = texture;
-        ctx.fillRect(pipe.x, sway, pipeWidth, pipe.topHeight);
-        ctx.fillRect(pipe.x, pipe.bottomY + sway, pipeWidth, canvas.height - pipe.bottomY);
-      });
     }
 
     function createPipeTexture() {
@@ -305,6 +298,16 @@
       return textureCanvas;
     }
 
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        const sway = Math.sin(Date.now() / 1000 + pipe.offset) * 5;
+        const texture = ctx.createPattern(createPipeTexture(), 'repeat');
+        ctx.fillStyle = texture;
+        ctx.fillRect(pipe.x, sway, pipeWidth, pipe.topHeight);
+        ctx.fillRect(pipe.x, pipe.bottomY + sway, pipeWidth, canvas.height - pipe.bottomY);
+      });
+    }
+
     function drawShadow() {
       ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
       ctx.shadowBlur = 10;
@@ -313,11 +316,36 @@
       ctx.shadowBlur = 0;
     }
 
+    function updateScore() {
+      if (displayedScore < score) {
+        displayedScore++;
+        scoreElement.textContent = `Score: ${displayedScore}`;
+        scoreElement.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+          scoreElement.style.transform = 'scale(1)';
+        }, 200);
+      }
+    }
+
+    function saveScore(name, points) {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      scores.push({ name, points });
+      scores.sort((a, b) => b.points - a.points);
+      scores = scores.slice(0, 5);
+      localStorage.setItem("scores", JSON.stringify(scores));
+      updateLeaderboard();
+    }
+
+    function updateLeaderboard() {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
+    }
+
     function gameLoop() {
       if (!gameStarted) return;
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBackground();
+
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
 
@@ -348,30 +376,6 @@
       requestAnimationFrame(gameLoop);
     }
 
-    function updateScore() {
-      if (displayedScore < score) {
-        displayedScore++;
-        scoreElement.textContent = `Score: ${displayedScore}`;
-        scoreElement.style.transform = 'scale(1.2)';
-        setTimeout(() => {
-          scoreElement.style.transform = 'scale(1)';
-        }, 200);
-      }
-    }
-
-    function saveScore(name, points) {
-      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
-      scores.push({ name, points });
-      scores.sort((a, b) => b.points - a.points);
-      scores = scores.slice(0, 5);
-      localStorage.setItem("scores", JSON.stringify(scores));
-      updateLeaderboard();
-    }
-
-    function updateLeaderboard() {
-      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
-      topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
-    }
     updateLeaderboard();
   </script>
 </body>
