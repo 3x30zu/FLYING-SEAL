@@ -8,7 +8,7 @@
   <title>Shadow Flappy</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Добавляем safe-area insets для iPhone */
+    /* Safe area для iPhone */
     body, html {
       margin: 0;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -16,11 +16,13 @@
       font-family: 'Press Start 2P', cursive;
       background: #000;
     }
+    /* Добавляем touch-action для предотвращения жестов по умолчанию */
     #gameCanvas {
       display: block;
       width: 100vw;
       height: 100vh;
       border: none;
+      touch-action: none;
     }
     .background {
       position: absolute;
@@ -133,7 +135,6 @@
       margin-bottom: 5px;
       font-size: 14px;
     }
-    /* Дополнительные адаптации для iPhone (например, для экранов с шириной до 414px) */
     @media (max-width: 414px) {
       #menu h1 {
         font-size: 8vw;
@@ -223,6 +224,13 @@
       }
     });
     canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameStarted) {
+        shadow.velocity = shadow.jump;
+      }
+    });
+    // Дополнительный обработчик touchend, если потребуется
+    canvas.addEventListener('touchend', (e) => {
       e.preventDefault();
       if (gameStarted) {
         shadow.velocity = shadow.jump;
