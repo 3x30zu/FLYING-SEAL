@@ -34,8 +34,21 @@
             align-items: center;
             z-index: 10;
         }
+        /* Анимация заголовка */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
         #menu h1 {
             font-size: 5vw;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+        /* Стили для изображения в меню */
+        #menu img {
+            width: 30vw;
+            max-width: 300px;
             margin-bottom: 20px;
         }
         #menu input {
@@ -78,9 +91,12 @@
 <body>
     <canvas id="gameCanvas"></canvas>
     <div id="menu">
+        <!-- Добавлено изображение в меню -->
+        <img src="https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18c6fc8411fcee93b0.jpg" alt="Menu Image">
         <h1>FLYING SEAL</h1>
         <input type="text" id="nickname" placeholder="Введите никнейм">
-        <button id="startBtn">Start Game</button>
+        <!-- Изменён текст кнопки -->
+        <button id="startBtn">GO!</button>
     </div>
     <div id="score"></div>
     <div id="leaderboard">
@@ -111,7 +127,7 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Изображения для нерпы: исходное (при прыжке) и при падении
+    // Изображения для нерпы: исходное (при прыжке) и при падении (когда velocity >= 0)
     const originalShadowSrc = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
     const fallingShadowSrc = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
     const shadowImg = new Image();
@@ -234,7 +250,6 @@
                 pipe.passed = true;
             }
             if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
-                // Если столкновение – завершаем игру
                 gameStarted = false;
                 setTimeout(() => {
                     saveScore(username, score);
@@ -244,13 +259,9 @@
             }
         }
 
-        // Изменяем изображение персонажа в зависимости от направления движения:
-        // Если velocity >= 0, значит нерпа падает, иначе - поднимается.
-        if (shadow.velocity >= 0) {
-            shadowImg.src = fallingShadowSrc;
-        } else {
-            shadowImg.src = originalShadowSrc;
-        }
+        // Смена изображения в зависимости от направления движения:
+        // Если velocity >= 0 (падение), используем изображение падения, иначе — исходное.
+        shadowImg.src = shadow.velocity >= 0 ? fallingShadowSrc : originalShadowSrc;
 
         drawPipes();
         ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
