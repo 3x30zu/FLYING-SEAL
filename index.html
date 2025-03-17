@@ -19,6 +19,7 @@
             width: 100vw;
             height: 100vh;
             border: none;
+            touch-action: none; /* Отключает стандартные жесты на iOS */
         }
         .background {
             position: absolute;
@@ -125,7 +126,7 @@
             text-align: center;
             font-size: 12px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            z-index: 15;
+            z-index: 5;
         }
         #topScores li {
             margin-bottom: 5px;
@@ -213,11 +214,19 @@
                 shadow.velocity = shadow.jump;
             }
         });
+        // Обработчик для клика мыши
         canvas.addEventListener('click', () => {
             if (gameStarted) {
                 shadow.velocity = shadow.jump;
             }
         });
+        // Обработчик для касания на сенсорных устройствах (iOS)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Предотвращаем зум и другие жесты
+            if (gameStarted) {
+                shadow.velocity = shadow.jump;
+            }
+        }, { passive: false });
 
         startBtn.addEventListener('click', () => {
             username = nicknameInput.value || "Player";
