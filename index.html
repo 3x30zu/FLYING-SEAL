@@ -98,12 +98,10 @@
     const startBtn = document.getElementById('startBtn');
     const nicknameInput = document.getElementById('nickname');
     const scoreElement = document.getElementById('score');
-    const leaderboard = document.getElementById('leaderboard');
     const topScoresList = document.getElementById('topScores');
 
     let gameStarted = false;
     let score = 0;
-    let bgTime = 0;
     let username = "";
 
     function resizeCanvas() {
@@ -112,6 +110,16 @@
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
+    // Изображения для нерпы: исходное (при прыжке) и при падении
+    const originalShadowSrc = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
+    const fallingShadowSrc = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
+    const shadowImg = new Image();
+    shadowImg.src = originalShadowSrc;
+
+    // Фоновое изображение
+    const backgroundImg = new Image();
+    backgroundImg.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg';
 
     const shadow = {
         x: canvas.width * 0.1,
@@ -129,9 +137,7 @@
     const pipeSpacing = canvas.width * 0.5;
     const pipeSpeed = 2.5;
 
-    const shadowImg = new Image();
-    shadowImg.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
-
+    // Управление клавиатурой
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && gameStarted) {
             shadow.velocity = shadow.jump;
@@ -145,9 +151,9 @@
         }
     });
 
-    // Добавлен обработчик для касаний (iOS и другие сенсорные устройства)
+    // Обработчик для касаний (iOS и сенсорные устройства)
     canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Предотвращаем возможное срабатывание дополнительных событий
+        e.preventDefault();
         if (gameStarted) {
             shadow.velocity = shadow.jump;
         }
@@ -164,6 +170,8 @@
         pipes = [];
         shadow.y = canvas.height * 0.5;
         shadow.velocity = 0;
+        // Сброс изображения персонажа на исходное
+        shadowImg.src = originalShadowSrc;
         menu.style.display = 'none';
         gameLoop();
     }
@@ -186,13 +194,14 @@
         );
     }
 
+    // Рисуем фон с использованием фонового изображения
     function drawBackground() {
-        bgTime += 0.005;
-        let bgGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        bgGrad.addColorStop(0, "#2E3192");
-        bgGrad.addColorStop(1, "#1BFFFF");
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (backgroundImg.complete) {
+            ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+        } else {
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
     }
 
     function drawPipes() {
@@ -210,6 +219,7 @@
         if (!gameStarted) return;
 
         drawBackground();
+
         shadow.velocity += shadow.gravity;
         shadow.y += shadow.velocity;
 
@@ -217,18 +227,30 @@
             createPipe();
         }
 
-        pipes.forEach(pipe => {
+        for (let pipe of pipes) {
             pipe.x -= pipeSpeed;
             if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
                 score++;
                 pipe.passed = true;
             }
             if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+                // Если столкновение – завершаем игру
                 gameStarted = false;
-                saveScore(username, score);
-                menu.style.display = 'flex';
+                setTimeout(() => {
+                    saveScore(username, score);
+                    menu.style.display = 'flex';
+                }, 1000);
+                break;
             }
-        });
+        }
+
+        // Изменяем изображение персонажа в зависимости от направления движения:
+        // Если velocity >= 0, значит нерпа падает, иначе - поднимается.
+        if (shadow.velocity >= 0) {
+            shadowImg.src = fallingShadowSrc;
+        } else {
+            shadowImg.src = originalShadowSrc;
+        }
 
         drawPipes();
         ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
