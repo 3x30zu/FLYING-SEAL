@@ -3,14 +3,14 @@
 <head>
   <title>Flying Seal</title>
   <!-- Добавляем viewport-fit=cover -->
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  
   <!-- Пиксельный шрифт -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* Сбрасываем отступы и учитываем safe area */
+    /* Общие стили с учётом safe area */
     html, body {
       margin: 0;
       padding: 0;
@@ -22,13 +22,12 @@
       font-family: 'Press Start 2P', cursive;
     }
     body {
-      /* Отступы под вырез (notch) на iOS */
       padding-top: env(safe-area-inset-top);
       padding-right: env(safe-area-inset-right);
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
     }
-    /* Растягиваем канвас на всё окно */
+    /* Канвас занимает весь экран */
     #gameCanvas {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -38,7 +37,7 @@
     #menu {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0,0,0,0.5);
       color: white;
       display: flex;
       flex-direction: column;
@@ -54,11 +53,16 @@
       object-fit: cover;
       z-index: -1;
     }
+    #menu h1 {
+      font-size: 5vw;
+      margin-bottom: 20px;
+      animation: bounce 2s infinite;
+    }
     #menu p {
       font-size: 3vw;
       margin: 10px 0;
     }
-    /* Мигающее предупреждение при пустом нике */
+    /* Мигающее предупреждение для пустого ника */
     #nicknameWarning {
       display: none;
       color: red;
@@ -68,7 +72,32 @@
     }
     @keyframes blink {
       0%, 100% { opacity: 1; }
-      50%      { opacity: 0; }
+      50% { opacity: 0; }
+    }
+    /* Окно описания Hard Mode */
+    #hardModeDescription {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3498db;
+      border: 4px solid #fff;
+      padding: 20px;
+      z-index: 50;
+      font-size: 3vw;
+      display: none;
+      text-align: center;
+      width: 80%;
+    }
+    #hardModeDescription button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: transparent;
+      border: none;
+      font-size: 3vw;
+      color: #fff;
+      cursor: pointer;
     }
     /* leaderboard */
     #leaderboard {
@@ -100,6 +129,11 @@
       font-size: 5vw;
       margin-bottom: 20px;
     }
+    /* Баланс монет в SHOP */
+    #shopBalance {
+      font-size: 3vw;
+      margin-bottom: 20px;
+    }
     .shop-item {
       background: #3498db;
       border: 4px solid #fff;
@@ -116,14 +150,17 @@
     #shop .back-btn {
       margin-top: 20px;
       background: #FF5722;
-      border-color: #fff;
+      border: 4px solid #fff;
       box-shadow: 4px 4px 0 #00ffff;
+      font-size: 3vw;
+      padding: 10px 20px;
+      cursor: pointer;
     }
     /* Оверлей для Game Over */
     #gameOverOverlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0,0,0,0.8);
       color: white;
       display: none;
       flex-direction: column;
@@ -131,10 +168,6 @@
       align-items: center;
       text-align: center;
       z-index: 20;
-    }
-    #hardModeRewardContainer {
-      margin-top: 20px;
-      display: none;
     }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
@@ -145,11 +178,6 @@
       0%   { transform: translateX(0); }
       50%  { transform: translateX(5px); }
       100% { transform: translateX(0); }
-    }
-    #menu h1, #gameOverOverlay h2 {
-      font-size: 5vw;
-      margin-bottom: 20px;
-      animation: bounce 2s infinite;
     }
     #menu input {
       font-size: 3vw;
@@ -194,44 +222,106 @@
       top: 5%;
       right: 5%;
     }
+    /* Стили для вкладки MODES */
+    #modesTab {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      /* Добавляем фон, аналогичный главному меню */
+      background: rgba(0,0,0,0.5);
+      background-image: url('https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg');
+      background-size: cover;
+      background-position: center;
+      z-index: 15;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Кнопка включения режима во вкладке MODES */
+    #hardModeButton {
+      padding: 10px 20px;
+      font-size: 3vw;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    /* Когда режим включён – кнопка становится красной */
+    #hardModeButton.hard-on {
+      background: red;
+    }
+    /* Секция с текстом монет */
+    #hardModeCoin {
+      margin-top: 10px;
+      display: inline-block;
+      color: #fff;
+      font-size: 3vw;
+    }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <!-- Главное меню -->
+
+  <!-- Главное меню (без элементов для Hard Mode) -->
   <div id="menu">
     <img src="https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg" alt="Menu Background">
     <h1>FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
-    <!-- Моргающее предупреждение -->
+
+    <!-- Предупреждение о нике -->
     <p id="nicknameWarning">Введите никнейм!</p>
     <input type="text" id="nickname" placeholder="Введите никнейм">
+
     <button id="startBtn">GO!</button>
     <button id="telegramBtn">TELEGRAM</button>
     <button id="shopBtn">SHOP</button>
+    <!-- Кнопка для перехода во вкладку MODES -->
+    <button id="modesBtn">MODES</button>
     <div id="leaderboard">
       <h3>Топ результатов</h3>
       <ul id="topScores"></ul>
     </div>
   </div>
+
+  <!-- Вкладка MODES -->
+  <div id="modesTab">
+    <h2 style="color:white; font-size:5vw;">MODES</h2>
+    <div id="hardModeSection" style="margin-top:20px; text-align:center;">
+      <!-- Кнопка для переключения Hard Mode, с вопросительным значком в квадрате -->
+      <button id="hardModeButton" style="padding:10px 20px; font-size:3vw;">
+        <span id="hardModeText">HARD MODE OFF</span>
+        <span id="hardModeQuestion" style="border:2px solid #fff; padding:2px 6px; cursor:pointer; font-size:3vw; margin-left:10px;">?</span>
+      </button>
+      <!-- Текст рядом с кнопкой -->
+      <div id="hardModeCoin">X2 COINS</div>
+    </div>
+    <button id="modesBackBtn" style="margin-top:20px; padding:10px 20px; font-size:3vw;">Back</button>
+  </div>
+
+  <!-- Окно описания Hard Mode -->
+  <div id="hardModeDescription">
+    <button id="closeHardModeDesc">X</button>
+    <p>
+      Включённый Hard Mode делает игру сложнее – зазор между трубами уменьшается, что требует большей реакции. 
+      При сборе монет вы получаете двойное количество монет!
+    </p>
+  </div>
+
   <!-- Магазин трейлов -->
   <div id="shop">
     <h2>Shop</h2>
+    <!-- Баланс монет в SHOP -->
+    <p id="shopBalance">Total Coins: 0</p>
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
+
   <!-- Оверлей для Game Over -->
   <div id="gameOverOverlay">
     <h2>Share the result with your friends!</h2>
     <button id="shareBtn">Share the result!</button>
     <button id="continueBtn">Continue game!</button>
     <button id="mainMenuBtn">MAIN MENU</button>
-    <!-- Награда за Hard Mode -->
-    <div id="hardModeRewardContainer">
-      <p id="hardModeCountText"></p>
-      <button id="rewardBtn">GET REWARD</button>
-    </div>
   </div>
+
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
 
@@ -239,7 +329,7 @@
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
     }
-    
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
@@ -250,18 +340,26 @@
     const startBtn = document.getElementById('startBtn');
     const telegramBtn = document.getElementById('telegramBtn');
     const shopBtn = document.getElementById('shopBtn');
+    const modesBtn = document.getElementById('modesBtn');
+    const modesTab = document.getElementById('modesTab');
+    const modesBackBtn = document.getElementById('modesBackBtn');
     const shareBtn = document.getElementById('shareBtn');
     const continueBtn = document.getElementById('continueBtn');
     const mainMenuBtn = document.getElementById('mainMenuBtn');
     const nicknameInput = document.getElementById('nickname');
     const nicknameWarning = document.getElementById('nicknameWarning');
-    const scoreElement = document.getElementById('score');
-    const coinCountElement = document.getElementById('coinCount');
     const menuTotalCoinsElement = document.getElementById('menuTotalCoins');
     const topScoresList = document.getElementById('topScores');
-    const hardModeRewardContainer = document.getElementById('hardModeRewardContainer');
-    const hardModeCountText = document.getElementById('hardModeCountText');
-    const rewardBtn = document.getElementById('rewardBtn');
+    // Элементы для Hard Mode во вкладке MODES
+    const hardModeButton = document.getElementById('hardModeButton');
+    const hardModeText = document.getElementById('hardModeText');
+    const hardModeQuestion = document.getElementById('hardModeQuestion');
+    const hardModeDescription = document.getElementById('hardModeDescription');
+    const closeHardModeDesc = document.getElementById('closeHardModeDesc');
+    const scoreElement = document.getElementById('score');
+    const coinCountElement = document.getElementById('coinCount');
+    // Баланс монет в SHOP
+    const shopBalance = document.getElementById('shopBalance');
 
     let gameStarted = false;
     let score = 0;
@@ -269,34 +367,26 @@
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
 
+    // Флаг для включения Hard Mode (по умолчанию выключен)
+    let hardModeEnabled = false;
+
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+    shopBalance.textContent = `Total Coins: ${totalCoins}`;
 
     let waterDrips = [];
     let particles = [];
     let coins = [];
 
     // Glow-эффект и реакции
-    let glowEffect = {
-      active: false,
-      color: '',
-      intensity: 0
-    };
+    let glowEffect = { active: false, color: '', intensity: 0 };
     let reactionMessages = [];
 
-    // Hard Mode эвенты
-    let hardEventState = "waiting";
-    let nextHardEventTimer = getRandomEventTimer();
-    let countdownTimer = 0;
-    let hardModeCountdown = 0;
-    let chillTimer = 0;
-    let hardModeCount = 0;
-
-    // Настройка эвентов: 3-4 раза в минуту => 900-1200 кадров
-    function getRandomEventTimer() {
-      return Math.floor(Math.random() * (1200 - 900 + 1)) + 900;
+    // При включённом Hard Mode игра становится сложнее: зазор между трубами уменьшается
+    function effectiveGap() {
+      return hardModeEnabled ? canvas.height * 0.2 : canvas.height * 0.3;
     }
 
     function resizeCanvas() {
@@ -402,16 +492,11 @@
 
     // Трейлы (частицы)
     const trailsConfig = {
-      "1": { id: "1", name: "Default", price: 0,
-        gradient: ["rgba(0,255,255,1)", "rgba(0,255,255,0)"], random: false },
-      "2": { id: "2", name: "Blue Glow", price: 50,
-        gradient: ["rgba(0,150,255,1)", "rgba(0,150,255,0)"], random: false },
-      "3": { id: "3", name: "Rainbow", price: 100,
-        gradient: ["rainbow", "rainbow"], random: true },
-      "4": { id: "4", name: "Fire", price: 75,
-        gradient: ["rgba(255,69,0,1)", "rgba(255,69,0,0)"], random: false },
-      "5": { id: "5", name: "Electric", price: 150,
-        gradient: ["rgba(255,255,0,1)", "rgba(255,255,0,0)"], random: false }
+      "1": { id: "1", name: "Default", price: 0, gradient: ["rgba(0,255,255,1)", "rgba(0,255,255,0)"], random: false },
+      "2": { id: "2", name: "Blue Glow", price: 50, gradient: ["rgba(0,150,255,1)", "rgba(0,150,255,0)"], random: false },
+      "3": { id: "3", name: "Rainbow", price: 100, gradient: ["rainbow", "rainbow"], random: true },
+      "4": { id: "4", name: "Fire", price: 75, gradient: ["rgba(255,69,0,1)", "rgba(255,69,0,0)"], random: false },
+      "5": { id: "5", name: "Electric", price: 150, gradient: ["rgba(255,255,0,1)", "rgba(255,255,0,0)"], random: false }
     };
 
     function drawParticles() {
@@ -461,34 +546,20 @@
       }
     }
 
-    // Создание монеты
-    function createCoin(gapPosition) {
-      let coin = {
-        x: canvas.width + pipeWidth / 2,
-        y: gapPosition + effectiveGap() / 2,
-        radius: canvas.width * 0.02,
-        collected: false
-      };
-      coins.push(coin);
-    }
+    // Монетки в стиле Super Mario
     function drawPixelCoin(coin) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
       let radius = coin.radius;
-      ctx.fillStyle = "#FFC107";
+      ctx.fillStyle = "#FFD700";
       ctx.beginPath();
       ctx.arc(coin.x, coin.y, radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#FF9800";
-      let innerRadius = radius * 0.4;
-      ctx.beginPath();
-      ctx.arc(coin.x, coin.y, innerRadius, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "#B8860B";
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(coin.x, coin.y, radius, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.fillStyle = "#FFF8DC";
+      ctx.fillRect(coin.x - radius * 0.3, coin.y - radius * 0.3, radius * 0.6, radius * 0.6);
       ctx.restore();
     }
     function drawCoins() {
@@ -497,6 +568,16 @@
           drawPixelCoin(coin);
         }
       });
+    }
+
+    function createCoin(gapPosition) {
+      let coin = {
+        x: canvas.width + pipeWidth / 2,
+        y: gapPosition + effectiveGap() / 2,
+        radius: canvas.width * 0.02,
+        collected: false
+      };
+      coins.push(coin);
     }
 
     function checkCoinCollision(coin) {
@@ -542,34 +623,21 @@
       });
     }
 
-    // Hard Mode оверлей
-    function drawHardModeOverlay() {
-      ctx.save();
-      ctx.textAlign = "center";
-      if (hardEventState === "countdown") {
-        let secondsLeft = Math.ceil(countdownTimer / 60);
-        ctx.font = "40px 'Press Start 2P'";
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
-        ctx.fillText(secondsLeft, canvas.width / 2, canvas.height / 2);
-      } else if (hardEventState === "active") {
-        let secondsLeft = Math.ceil(hardModeCountdown / 60);
-        ctx.font = "40px 'Press Start 2P'";
-        ctx.fillStyle = "rgba(255,0,0,1)";
-        ctx.fillText("HARD MODE", canvas.width / 2, canvas.height / 2);
-        ctx.font = "20px 'Press Start 2P'";
-        ctx.fillText(secondsLeft, canvas.width / 2, canvas.height / 2 + 40);
-      } else if (hardEventState === "chill") {
-        ctx.font = "40px 'Press Start 2P'";
-        ctx.fillStyle = "rgba(0,255,0,1)";
-        ctx.fillText("CHILL", canvas.width / 2, canvas.height / 2);
+    // Обновление изображения нерпы (смена в зависимости от скорости)
+    function updateShadowImage() {
+      if (shadow.velocity >= 0) {
+        shadowImg.src = fallingShadowSrc;
+      } else {
+        shadowImg.src = originalShadowSrc;
       }
-      ctx.restore();
     }
 
-    // Определяем зазор труб
+    // Определяем зазор труб (зависит от Hard Mode)
+    function effectiveGapValue() {
+      return hardModeEnabled ? canvas.height * 0.2 : canvas.height * 0.3;
+    }
     function effectiveGap() {
-      // Hard Mode: чуть сложнее (25% высоты)
-      return (hardEventState === "active") ? canvas.height * 0.25 : canvas.height * 0.3;
+      return effectiveGapValue();
     }
 
     // Управление вводом
@@ -590,21 +658,38 @@
       }
     });
 
-    // Закрытие клавиатуры при нажатии вне поля ввода
     document.addEventListener('touchstart', (event) => {
       if (event.target !== nicknameInput) {
         nicknameInput.blur();
       }
     });
 
-    // Убираем предупреждение, когда пользователь начинает вводить
     nicknameInput.addEventListener('input', () => {
       if (nicknameInput.value.trim() !== '') {
         nicknameWarning.style.display = 'none';
       }
     });
 
-    // При нажатии GO! проверяем ник
+    // Во вкладке MODES – переключатель Hard Mode
+    hardModeButton.addEventListener('click', () => {
+      hardModeEnabled = !hardModeEnabled;
+      if (hardModeEnabled) {
+        hardModeButton.classList.add("hard-on");
+        hardModeText.textContent = "HARD MODE ON";
+      } else {
+        hardModeButton.classList.remove("hard-on");
+        hardModeText.textContent = "HARD MODE OFF";
+      }
+    });
+    // Клик по вопросительному значку открывает окно описания
+    hardModeQuestion.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hardModeDescription.style.display = 'block';
+    });
+    closeHardModeDesc.addEventListener('click', () => {
+      hardModeDescription.style.display = 'none';
+    });
+
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
       if (!username) {
@@ -624,6 +709,17 @@
       shop.style.display = 'flex';
       renderShopItems();
     });
+    // Переход во вкладку MODES
+    modesBtn.addEventListener('click', () => {
+      menu.style.display = 'none';
+      modesTab.style.display = 'flex';
+    });
+    // Обратно в меню из вкладки MODES
+    modesBackBtn.addEventListener('click', () => {
+      modesTab.style.display = 'none';
+      menu.style.display = 'flex';
+    });
+    // Кнопка BACK в SHOP возвращает в главное меню
     shopBackBtn.addEventListener('click', () => {
       shop.style.display = 'none';
       menu.style.display = 'flex';
@@ -643,14 +739,6 @@
       menu.style.display = 'flex';
       gameStarted = false;
     });
-    rewardBtn.addEventListener('click', () => {
-      let rewardCoins = hardModeCount * 25;
-      totalCoins += rewardCoins;
-      localStorage.setItem("totalCoins", totalCoins);
-      menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
-      hardModeRewardContainer.style.display = 'none';
-      alert("You got " + rewardCoins + " coins for Hard Mode!");
-    });
 
     function startGame() {
       gameStarted = true;
@@ -662,15 +750,6 @@
       coins = [];
       reactionMessages = [];
       glowEffect.active = false;
-
-      // Сброс эвентов
-      hardEventState = "waiting";
-      nextHardEventTimer = getRandomEventTimer();
-      countdownTimer = 0;
-      hardModeCountdown = 0;
-      chillTimer = 0;
-      hardModeCount = 0;
-
       shadow.y = canvas.height * 0.5;
       shadow.velocity = 0;
       shadowImg.src = originalShadowSrc;
@@ -678,8 +757,8 @@
     }
 
     function createPipe() {
-      let effective_gap = effectiveGap();
-      const gapPosition = Math.random() * (canvas.height - effective_gap - 100) + 50;
+      let gap = effectiveGap();
+      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
       let color = pipeColors[Math.floor(Math.random() * pipeColors.length)];
       let numPoints = 7;
       let topEdge = generateEdgePoints(pipeWidth, numPoints);
@@ -687,7 +766,7 @@
       pipes.push({
         x: canvas.width,
         topHeight: gapPosition,
-        bottomY: gapPosition + effective_gap,
+        bottomY: gapPosition + gap,
         passed: false,
         color: color,
         topEdge: topEdge,
@@ -716,34 +795,6 @@
     function gameLoop() {
       if (!gameStarted) return;
       
-      // Обновление состояний Hard Mode
-      if (hardEventState === "waiting") {
-        nextHardEventTimer--;
-        if (nextHardEventTimer <= 0) {
-          hardEventState = "countdown";
-          countdownTimer = 3 * 60;
-        }
-      } else if (hardEventState === "countdown") {
-        countdownTimer--;
-        if (countdownTimer <= 0) {
-          hardEventState = "active";
-          hardModeCountdown = 7 * 60; // 7 секунд
-        }
-      } else if (hardEventState === "active") {
-        hardModeCountdown--;
-        if (hardModeCountdown <= 0) {
-          hardEventState = "chill";
-          chillTimer = 60;
-          hardModeCount++;
-        }
-      } else if (hardEventState === "chill") {
-        chillTimer--;
-        if (chillTimer <= 0) {
-          hardEventState = "waiting";
-          nextHardEventTimer = getRandomEventTimer();
-        }
-      }
-      
       drawBackground();
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
@@ -758,7 +809,6 @@
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
-          // Пороговые эффекты
           if (score === 10) {
             activateGlow('rgba(0,255,255,0.8)', 20);
             showReaction('wow, 10!');
@@ -780,38 +830,32 @@
           gameStarted = false;
           setTimeout(() => {
             saveScore(username, score);
-            if (hardModeCount > 0) {
-              hardModeCountText.textContent = "Hard Modes completed: " + hardModeCount;
-              hardModeRewardContainer.style.display = 'block';
-            } else {
-              hardModeRewardContainer.style.display = 'none';
-            }
             gameOverOverlay.style.display = 'flex';
           }, 1000);
           return;
         }
       }
+      
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
           coin.collected = true;
-          coinCount++;
-          totalCoins++;
+          if (hardModeEnabled) {
+            coinCount += 2;
+            totalCoins += 2;
+          } else {
+            coinCount++;
+            totalCoins++;
+          }
           localStorage.setItem("totalCoins", totalCoins);
           menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
       drawCoins();
       drawParticles();
 
-      // Обновление изображения нерпы: если падает (velocity >= 0) – используем fallingShadowSrc, иначе originalShadowSrc
-      if (shadow.velocity >= 0) {
-        shadowImg.src = fallingShadowSrc;
-      } else {
-        shadowImg.src = originalShadowSrc;
-      }
-
-      // Отрисовка нерпы с glow-эффектом
+      updateShadowImage();
       if (glowEffect.active) {
         ctx.save();
         ctx.shadowColor = glowEffect.color;
@@ -827,9 +871,6 @@
       coinCountElement.textContent = `Coins: ${coinCount}`;
       
       drawReactions();
-      if (hardEventState !== "waiting") {
-        drawHardModeOverlay();
-      }
       
       requestAnimationFrame(gameLoop);
     }
@@ -849,7 +890,6 @@
     }
     updateLeaderboard();
 
-    // Магазин
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
       for (let id in trailsConfig) {
@@ -879,6 +919,7 @@
               totalCoins -= trail.price;
               localStorage.setItem("totalCoins", totalCoins);
               menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+              shopBalance.textContent = `Total Coins: ${totalCoins}`;
               purchasedTrails.push(trail.id);
               localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
               renderShopItems();
