@@ -1,33 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Shadow Flappy</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flying Seal</title>
+  <!-- Добавляем viewport-fit=cover -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+
   <!-- Пиксельный шрифт -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
   <style>
-    body, html {
+    /* Сбрасываем отступы и учитываем safe area */
+    html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
-      font-family: 'Press Start 2P', cursive;
-      background: #000;
-    }
-    #gameCanvas {
-      display: block;
+      box-sizing: border-box;
+      background-color: #000;
       width: 100vw;
       height: 100vh;
-      border: none;
+      overflow: hidden;
+      font-family: 'Press Start 2P', cursive;
     }
+    body {
+      /* Отступы под вырез (notch) */
+      padding-top: env(safe-area-inset-top);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+    }
+
+    /* Растягиваем канвас на всё окно */
+    #gameCanvas {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: block;
+    }
+
     /* Главное меню */
     #menu {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.5);
       color: white;
       display: flex;
@@ -38,19 +52,17 @@
     }
     #menu img {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       z-index: -1;
     }
-    /* Отображение общего количества монет в меню */
     #menu p {
       font-size: 3vw;
       margin: 10px 0;
     }
-    /* leaderboard с дизайном кнопок и отступом */
+    /* leaderboard */
     #leaderboard {
       margin-top: 40px;
       text-align: center;
@@ -62,14 +74,11 @@
       border-radius: 0;
       image-rendering: pixelated;
     }
+
     /* Магазин */
     #shop {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      /* Фон магазина: наложение черного градиента и фон из главного меню */
+      top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), 
                   url('https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg') center/cover no-repeat;
       color: white;
@@ -103,34 +112,30 @@
       border-color: #fff;
       box-shadow: 4px 4px 0 #00ffff;
     }
+
     /* Оверлей для Game Over */
     #gameOverOverlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.8);
       color: white;
       display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 20;
       text-align: center;
-      padding: 20px;
+      z-index: 20;
     }
-    /* Контейнер для награды за Hard Mode */
     #hardModeRewardContainer {
       margin-top: 20px;
       display: none;
     }
+
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-20px); }
       60% { transform: translateY(-10px); }
     }
-    /* Анимация для плавающих кнопок */
     @keyframes float {
       0%   { transform: translateX(0); }
       50%  { transform: translateX(5px); }
@@ -197,32 +202,35 @@
     <button id="startBtn">GO!</button>
     <button id="telegramBtn">TELEGRAM</button>
     <button id="shopBtn">SHOP</button>
-    <!-- Блок топ результатов в главном меню -->
     <div id="leaderboard">
       <h3>Топ результатов</h3>
       <ul id="topScores"></ul>
     </div>
   </div>
+
   <!-- Магазин трейлов -->
   <div id="shop">
     <h2>Shop</h2>
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
+
   <!-- Оверлей для Game Over -->
   <div id="gameOverOverlay">
     <h2>Share the result with your friends!</h2>
     <button id="shareBtn">Share the result!</button>
     <button id="continueBtn">Continue game!</button>
     <button id="mainMenuBtn">MAIN MENU</button>
-    <!-- Контейнер для награды за Hard Mode -->
+    <!-- Блок награды за Hard Mode -->
     <div id="hardModeRewardContainer">
       <p id="hardModeCountText"></p>
       <button id="rewardBtn">GET REWARD</button>
     </div>
   </div>
+
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
+
   <script>
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
@@ -252,11 +260,10 @@
 
     let gameStarted = false;
     let score = 0;
-    let coinCount = 0; // монеты, собранные в текущей игре
+    let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
 
-    // Храним список купленных трейлов и выбранный трейл
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
@@ -266,7 +273,7 @@
     let particles = [];
     let coins = [];
 
-    // Эффекты (glow, реакции)
+    // Glow-эффект и реакции
     let glowEffect = {
       active: false,
       color: '',
@@ -274,17 +281,16 @@
     };
     let reactionMessages = [];
 
-    // --- Настройка эвентов Hard Mode ---
-    // Состояния: "waiting", "countdown", "active", "chill"
+    // Hard Mode эвенты
     let hardEventState = "waiting";
     let nextHardEventTimer = getRandomEventTimer();
-    let countdownTimer = 0; // обратный отсчёт (3,2,1)
-    let hardModeCountdown = 0; // длительность Hard Mode (7 сек = 420 кадров)
-    let chillTimer = 0; // время для сообщения CHILL (например, 60 кадров)
-    let hardModeCount = 0; // количество успешно пройденных Hard Mode
+    let countdownTimer = 0;
+    let hardModeCountdown = 0;
+    let chillTimer = 0;
+    let hardModeCount = 0;
 
+    // Настройка эвентов: 3-4 раза в минуту => 900-1200 кадров
     function getRandomEventTimer() {
-      // 3-4 раза в минуту => 900-1200 кадров
       return Math.floor(Math.random() * (1200 - 900 + 1)) + 900;
     }
 
@@ -318,6 +324,7 @@
     const pipeSpeed = 2.5;
     const pipeColors = ["#00ccff", "#00aaff", "#0099ff", "#33ccff", "#66d9ff"];
 
+    // Генерация "рваного" края для труб
     function generateEdgePoints(width, numPoints) {
       let points = [];
       for (let i = 0; i <= numPoints; i++) {
@@ -368,6 +375,7 @@
       });
     }
 
+    // Частицы воды
     function updateWaterDrips() {
       let gravityDrip = 0.3;
       waterDrips.forEach((drip, index) => {
@@ -387,46 +395,20 @@
       });
     }
 
-    // Настройки трейлов магазина
+    // Трейлы (частицы)
     const trailsConfig = {
-      "1": {
-        id: "1",
-        name: "Default",
-        price: 0,
-        gradient: ["rgba(0,255,255,1)", "rgba(0,255,255,0)"],
-        random: false
-      },
-      "2": {
-        id: "2",
-        name: "Blue Glow",
-        price: 50,
-        gradient: ["rgba(0,150,255,1)", "rgba(0,150,255,0)"],
-        random: false
-      },
-      "3": {
-        id: "3",
-        name: "Rainbow",
-        price: 100,
-        gradient: ["rainbow", "rainbow"],
-        random: true
-      },
-      "4": {
-        id: "4",
-        name: "Fire",
-        price: 75,
-        gradient: ["rgba(255,69,0,1)", "rgba(255,69,0,0)"],
-        random: false
-      },
-      "5": {
-        id: "5",
-        name: "Electric",
-        price: 150,
-        gradient: ["rgba(255,255,0,1)", "rgba(255,255,0,0)"],
-        random: false
-      }
+      "1": { id: "1", name: "Default", price: 0,
+        gradient: ["rgba(0,255,255,1)", "rgba(0,255,255,0)"], random: false },
+      "2": { id: "2", name: "Blue Glow", price: 50,
+        gradient: ["rgba(0,150,255,1)", "rgba(0,150,255,0)"], random: false },
+      "3": { id: "3", name: "Rainbow", price: 100,
+        gradient: ["rainbow", "rainbow"], random: true },
+      "4": { id: "4", name: "Fire", price: 75,
+        gradient: ["rgba(255,69,0,1)", "rgba(255,69,0,0)"], random: false },
+      "5": { id: "5", name: "Electric", price: 150,
+        gradient: ["rgba(255,255,0,1)", "rgba(255,255,0,0)"], random: false }
     };
 
-    // Частицы трейла
     function drawParticles() {
       let currentTrail = trailsConfig[currentTrailId];
       particles.forEach(p => {
@@ -434,7 +416,11 @@
         ctx.globalAlpha = p.alpha;
         let gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
         if (currentTrail.random) {
-          const rainbowColors = ["rgba(255,0,0,1)", "rgba(255,127,0,1)", "rgba(255,255,0,1)", "rgba(0,255,0,1)", "rgba(0,0,255,1)", "rgba(75,0,130,1)", "rgba(148,0,211,1)"];
+          const rainbowColors = [
+            "rgba(255,0,0,1)", "rgba(255,127,0,1)", "rgba(255,255,0,1)",
+            "rgba(0,255,0,1)", "rgba(0,0,255,1)", "rgba(75,0,130,1)",
+            "rgba(148,0,211,1)"
+          ];
           let randColor = rainbowColors[Math.floor(Math.random() * rainbowColors.length)];
           gradient.addColorStop(0, randColor);
           gradient.addColorStop(1, randColor.replace("1)", "0)"));
@@ -470,7 +456,7 @@
       }
     }
 
-    // Создание монетки
+    // Создание монеты
     function createCoin(gapPosition) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
@@ -480,8 +466,6 @@
       };
       coins.push(coin);
     }
-
-    // Монетка
     function drawPixelCoin(coin) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
@@ -511,12 +495,9 @@
     }
 
     function checkCoinCollision(coin) {
-      let cx = coin.x;
-      let cy = coin.y;
-      let rx = shadow.x;
-      let ry = shadow.y;
-      let rw = shadow.width;
-      let rh = shadow.height;
+      let cx = coin.x, cy = coin.y;
+      let rx = shadow.x, ry = shadow.y;
+      let rw = shadow.width, rh = shadow.height;
       let nearestX = Math.max(rx, Math.min(cx, rx + rw));
       let nearestY = Math.max(ry, Math.min(cy, ry + rh));
       let dx = cx - nearestX;
@@ -524,12 +505,14 @@
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
 
-    // Функции эффектов
+    // Glow-эффект
     function activateGlow(color, intensity) {
       glowEffect.active = true;
       glowEffect.color = color;
       glowEffect.intensity = intensity;
     }
+
+    // Текстовые реакции
     function showReaction(message) {
       reactionMessages.push({
         text: message,
@@ -554,13 +537,12 @@
       });
     }
 
-    // Оверлей для Hard Mode эвента
+    // Hard Mode оверлей
     function drawHardModeOverlay() {
       ctx.save();
       ctx.textAlign = "center";
       if (hardEventState === "countdown") {
         let secondsLeft = Math.ceil(countdownTimer / 60);
-        // Меньший размер надписи для мобильных устройств
         ctx.font = "40px 'Press Start 2P'";
         ctx.fillStyle = "rgba(255,255,255,0.8)";
         ctx.fillText(secondsLeft, canvas.width / 2, canvas.height / 2);
@@ -579,12 +561,13 @@
       ctx.restore();
     }
 
-    // Определяем зазор труб в зависимости от режима
+    // Определяем зазор труб
     function effectiveGap() {
+      // Hard Mode: чуть сложнее (25% высоты)
       return (hardEventState === "active") ? canvas.height * 0.25 : canvas.height * 0.3;
     }
 
-    // Обработчики ввода
+    // Управление вводом
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted) {
         shadow.velocity = shadow.jump;
@@ -601,6 +584,7 @@
         shadow.velocity = shadow.jump;
       }
     });
+
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value || "Player";
       menu.style.display = 'none';
@@ -653,6 +637,7 @@
       coins = [];
       reactionMessages = [];
       glowEffect.active = false;
+
       // Сброс эвентов
       hardEventState = "waiting";
       nextHardEventTimer = getRandomEventTimer();
@@ -660,6 +645,7 @@
       hardModeCountdown = 0;
       chillTimer = 0;
       hardModeCount = 0;
+
       shadow.y = canvas.height * 0.5;
       shadow.velocity = 0;
       shadowImg.src = originalShadowSrc;
@@ -705,7 +691,7 @@
     function gameLoop() {
       if (!gameStarted) return;
       
-      // Обновление состояний Hard Mode эвента
+      // Обновление состояний Hard Mode
       if (hardEventState === "waiting") {
         nextHardEventTimer--;
         if (nextHardEventTimer <= 0) {
@@ -716,7 +702,7 @@
         countdownTimer--;
         if (countdownTimer <= 0) {
           hardEventState = "active";
-          hardModeCountdown = 7 * 60;
+          hardModeCountdown = 7 * 60; // 7 секунд
         }
       } else if (hardEventState === "active") {
         hardModeCountdown--;
@@ -748,7 +734,7 @@
           score++;
           pipe.passed = true;
 
-          // Эффекты при достижении определённых очков
+          // Пороговые эффекты
           if (score === 10) {
             activateGlow('rgba(0,255,255,0.8)', 20);
             showReaction('wow, 10!');
@@ -781,6 +767,7 @@
           return;
         }
       }
+
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -794,7 +781,7 @@
       drawCoins();
       drawParticles();
 
-      // Отрисовка тюленя с glow-эффектом
+      // Отрисовка тюленя с учётом glow
       if (glowEffect.active) {
         ctx.save();
         ctx.shadowColor = glowEffect.color;
@@ -809,7 +796,6 @@
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       
-      // Отрисовка реакций и эвентов Hard Mode
       drawReactions();
       if (hardEventState !== "waiting") {
         drawHardModeOverlay();
@@ -833,7 +819,7 @@
     }
     updateLeaderboard();
 
-    // Магазин: отрисовка списка трейлов
+    // Магазин
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
       for (let id in trailsConfig) {
