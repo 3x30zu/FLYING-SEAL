@@ -227,7 +227,7 @@
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      /* Добавляем фон, аналогичный главному меню */
+      /* Фон аналогичный главному меню */
       background: rgba(0,0,0,0.5);
       background-image: url('https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg');
       background-size: cover;
@@ -384,9 +384,13 @@
     let glowEffect = { active: false, color: '', intensity: 0 };
     let reactionMessages = [];
 
-    // При включённом Hard Mode игра становится сложнее: зазор между трубами уменьшается
+    // Функция для расчёта зазора между трубами.
+    // Изменено: если включён Hard Mode, зазор равен 25% от высоты канваса (было 20%).
+    function effectiveGapValue() {
+      return hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
+    }
     function effectiveGap() {
-      return hardModeEnabled ? canvas.height * 0.2 : canvas.height * 0.3;
+      return effectiveGapValue();
     }
 
     function resizeCanvas() {
@@ -630,14 +634,6 @@
       } else {
         shadowImg.src = originalShadowSrc;
       }
-    }
-
-    // Определяем зазор труб (зависит от Hard Mode)
-    function effectiveGapValue() {
-      return hardModeEnabled ? canvas.height * 0.2 : canvas.height * 0.3;
-    }
-    function effectiveGap() {
-      return effectiveGapValue();
     }
 
     // Управление вводом
