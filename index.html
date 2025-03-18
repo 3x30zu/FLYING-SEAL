@@ -253,7 +253,7 @@
     let gameStarted = false;
     let score = 0;
     let coinCount = 0; // монеты, собранные в текущей игре
-    let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0"); // постоянный счёт монет
+    let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
 
     // Храним список купленных трейлов и выбранный трейл
@@ -275,16 +275,16 @@
     let reactionMessages = [];
 
     // --- Настройка эвентов Hard Mode ---
-    // Возможные состояния: "waiting" (ожидание), "countdown", "active", "chill"
+    // Состояния: "waiting", "countdown", "active", "chill"
     let hardEventState = "waiting";
-    let nextHardEventTimer = getRandomEventTimer(); // в кадрах (примерно 900-1200 кадров)
-    let countdownTimer = 0; // для обратного отсчёта (3,2,1)
-    let hardModeCountdown = 0; // длительность Hard Mode (10 сек = 600 кадров)
+    let nextHardEventTimer = getRandomEventTimer();
+    let countdownTimer = 0; // обратный отсчёт (3,2,1)
+    let hardModeCountdown = 0; // длительность Hard Mode (7 сек = 420 кадров)
     let chillTimer = 0; // время для сообщения CHILL (например, 60 кадров)
     let hardModeCount = 0; // количество успешно пройденных Hard Mode
 
     function getRandomEventTimer() {
-      // 3-4 раза в минуту => 900-1200 кадров (при 60 fps)
+      // 3-4 раза в минуту => 900-1200 кадров
       return Math.floor(Math.random() * (1200 - 900 + 1)) + 900;
     }
 
@@ -554,24 +554,25 @@
       });
     }
 
-    // Рисуем оверлей для Hard Mode эвента
+    // Оверлей для Hard Mode эвента
     function drawHardModeOverlay() {
       ctx.save();
       ctx.textAlign = "center";
       if (hardEventState === "countdown") {
         let secondsLeft = Math.ceil(countdownTimer / 60);
-        ctx.font = "80px 'Press Start 2P'";
+        // Меньший размер надписи для мобильных устройств
+        ctx.font = "40px 'Press Start 2P'";
         ctx.fillStyle = "rgba(255,255,255,0.8)";
         ctx.fillText(secondsLeft, canvas.width / 2, canvas.height / 2);
       } else if (hardEventState === "active") {
         let secondsLeft = Math.ceil(hardModeCountdown / 60);
-        ctx.font = "80px 'Press Start 2P'";
+        ctx.font = "40px 'Press Start 2P'";
         ctx.fillStyle = "rgba(255,0,0,1)";
         ctx.fillText("HARD MODE", canvas.width / 2, canvas.height / 2);
-        ctx.font = "40px 'Press Start 2P'";
-        ctx.fillText(secondsLeft, canvas.width / 2, canvas.height / 2 + 60);
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.fillText(secondsLeft, canvas.width / 2, canvas.height / 2 + 40);
       } else if (hardEventState === "chill") {
-        ctx.font = "80px 'Press Start 2P'";
+        ctx.font = "40px 'Press Start 2P'";
         ctx.fillStyle = "rgba(0,255,0,1)";
         ctx.fillText("CHILL", canvas.width / 2, canvas.height / 2);
       }
@@ -580,7 +581,7 @@
 
     // Определяем зазор труб в зависимости от режима
     function effectiveGap() {
-      return (hardEventState === "active") ? canvas.height * 0.2 : canvas.height * 0.3;
+      return (hardEventState === "active") ? canvas.height * 0.25 : canvas.height * 0.3;
     }
 
     // Обработчики ввода
@@ -715,7 +716,7 @@
         countdownTimer--;
         if (countdownTimer <= 0) {
           hardEventState = "active";
-          hardModeCountdown = 10 * 60;
+          hardModeCountdown = 7 * 60;
         }
       } else if (hardEventState === "active") {
         hardModeCountdown--;
@@ -747,7 +748,7 @@
           score++;
           pipe.passed = true;
 
-          // Эффекты при достижении определённых очков (как ранее)
+          // Эффекты при достижении определённых очков
           if (score === 10) {
             activateGlow('rgba(0,255,255,0.8)', 20);
             showReaction('wow, 10!');
@@ -769,7 +770,6 @@
           gameStarted = false;
           setTimeout(() => {
             saveScore(username, score);
-            // Отображаем информацию по Hard Mode
             if (hardModeCount > 0) {
               hardModeCountText.textContent = "Hard Modes completed: " + hardModeCount;
               hardModeRewardContainer.style.display = 'block';
@@ -794,7 +794,7 @@
       drawCoins();
       drawParticles();
 
-      // Отрисовка тюленя с glow-эффектом (как ранее)
+      // Отрисовка тюленя с glow-эффектом
       if (glowEffect.active) {
         ctx.save();
         ctx.shadowColor = glowEffect.color;
