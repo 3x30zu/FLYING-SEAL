@@ -20,7 +20,33 @@
             height: 100vh;
             border: none;
         }
+        /* Главное меню */
         #menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        /* Растянутое фоновое изображение меню */
+        #menu img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -1;
+        }
+        /* Оверлей для Game Over */
+        #gameOverOverlay {
             position: absolute;
             top: 0;
             left: 0;
@@ -28,11 +54,13 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
             color: white;
-            display: flex;
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 20;
+            text-align: center;
+            padding: 20px;
         }
         /* Анимация заголовка */
         @keyframes bounce {
@@ -45,26 +73,24 @@
             margin-bottom: 20px;
             animation: bounce 2s infinite;
         }
-        /* Стили для изображения в меню */
-        #menu img {
-            width: 30vw;
-            max-width: 300px;
-            margin-bottom: 20px;
-        }
         #menu input {
             font-size: 3vw;
             padding: 10px;
             text-align: center;
             margin-bottom: 15px;
         }
-        #menu button {
+        /* Ледяной пиксельный дизайн для кнопок */
+        button {
             padding: 10px 20px;
             font-size: 3vw;
-            background: #e74c3c;
-            border: none;
-            border-radius: 5px;
+            background: #3498db;
+            border: 3px solid #fff;
+            border-radius: 0;
+            box-shadow: 2px 2px 0px #00ffff;
             cursor: pointer;
             color: white;
+            margin-bottom: 15px;
+            text-transform: uppercase;
         }
         #score {
             position: absolute;
@@ -85,18 +111,25 @@
             border-radius: 5px;
             text-align: center;
             font-size: 12px;
+            z-index: 5;
         }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+    <!-- Главное меню -->
     <div id="menu">
-        <!-- Добавлено изображение в меню -->
-        <img src="https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18c6fc8411fcee93b0.jpg" alt="Menu Image">
+        <img src="https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg" alt="Menu Background">
         <h1>FLYING SEAL</h1>
         <input type="text" id="nickname" placeholder="Введите никнейм">
-        <!-- Изменён текст кнопки -->
         <button id="startBtn">GO!</button>
+        <button id="telegramBtn">TELEGRAM</button>
+    </div>
+    <!-- Оверлей для Game Over -->
+    <div id="gameOverOverlay">
+        <h2>Share the result with your friends!</h2>
+        <button id="shareBtn">Share the result!</button>
+        <button id="continueBtn">Continue game!</button>
     </div>
     <div id="score"></div>
     <div id="leaderboard">
@@ -111,7 +144,11 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
     const startBtn = document.getElementById('startBtn');
+    const telegramBtn = document.getElementById('telegramBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const continueBtn = document.getElementById('continueBtn');
     const nicknameInput = document.getElementById('nickname');
     const scoreElement = document.getElementById('score');
     const topScoresList = document.getElementById('topScores');
@@ -127,7 +164,7 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Изображения для нерпы: исходное (при прыжке) и при падении (когда velocity >= 0)
+    // Изображения для персонажа
     const originalShadowSrc = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
     const fallingShadowSrc = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
     const shadowImg = new Image();
@@ -160,14 +197,14 @@
         }
     });
 
-    // Обработчик для клика мышью
+    // Обработчик кликов для прыжка
     canvas.addEventListener('click', () => {
         if (gameStarted) {
             shadow.velocity = shadow.jump;
         }
     });
 
-    // Обработчик для касаний (iOS и сенсорные устройства)
+    // Обработчик для сенсорных устройств
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (gameStarted) {
@@ -177,6 +214,28 @@
 
     startBtn.addEventListener('click', () => {
         username = nicknameInput.value || "Player";
+        menu.style.display = 'none';
+        gameOverOverlay.style.display = 'none';
+        startGame();
+    });
+    
+    telegramBtn.addEventListener('click', () => {
+        window.open('https://t.me/FlyingSealCoin', '_blank');
+    });
+    
+    shareBtn.addEventListener('click', () => {
+        // Формируем текст для шаринга с результатом
+        const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
+        // URL, который будем передавать, например, ссылка на бота
+        const shareUrl = "https://t.me/FlyingSealBot/FLYING";
+        // Формируем ссылку для шаринга в Telegram
+        const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+        window.open(telegramShareLink, '_blank');
+    });
+    
+    continueBtn.addEventListener('click', () => {
+        // Перезапускаем игру, скрывая оверлей
+        gameOverOverlay.style.display = 'none';
         startGame();
     });
 
@@ -186,9 +245,7 @@
         pipes = [];
         shadow.y = canvas.height * 0.5;
         shadow.velocity = 0;
-        // Сброс изображения персонажа на исходное
         shadowImg.src = originalShadowSrc;
-        menu.style.display = 'none';
         gameLoop();
     }
 
@@ -210,7 +267,6 @@
         );
     }
 
-    // Рисуем фон с использованием фонового изображения
     function drawBackground() {
         if (backgroundImg.complete) {
             ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
@@ -253,14 +309,12 @@
                 gameStarted = false;
                 setTimeout(() => {
                     saveScore(username, score);
-                    menu.style.display = 'flex';
+                    gameOverOverlay.style.display = 'flex';
                 }, 1000);
-                break;
+                return;
             }
         }
 
-        // Смена изображения в зависимости от направления движения:
-        // Если velocity >= 0 (падение), используем изображение падения, иначе — исходное.
         shadowImg.src = shadow.velocity >= 0 ? fallingShadowSrc : originalShadowSrc;
 
         drawPipes();
