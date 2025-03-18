@@ -253,6 +253,15 @@
     let particles = [];
     let coins = [];
 
+    // Переменные для эффектов
+    let glowEffect = {
+      active: false,
+      timer: 0,
+      color: '',
+      intensity: 0
+    };
+    let reactionMessages = [];
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -492,6 +501,38 @@
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
 
+    // Функции для эффектов
+    function activateGlow(color, intensity, duration) {
+      glowEffect.active = true;
+      glowEffect.color = color;
+      glowEffect.intensity = intensity;
+      glowEffect.timer = duration;
+    }
+    function showReaction(message) {
+      reactionMessages.push({
+        text: message,
+        timer: 120,
+        x: shadow.x + shadow.width / 2,
+        y: shadow.y - 20
+      });
+    }
+    function drawReactions() {
+      reactionMessages.forEach((msg, index) => {
+        ctx.save();
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.globalAlpha = msg.timer / 120;
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(msg.text, msg.x, msg.y);
+        ctx.restore();
+        msg.y -= 0.5;
+        msg.timer--;
+        if (msg.timer <= 0) {
+          reactionMessages.splice(index, 1);
+        }
+      });
+    }
+
     // Обработчики ввода для прыжка
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted) {
@@ -551,6 +592,8 @@
       waterDrips = [];
       particles = [];
       coins = [];
+      reactionMessages = [];
+      glowEffect.active = false;
       shadow.y = canvas.height * 0.5;
       shadow.velocity = 0;
       shadowImg.src = originalShadowSrc;
@@ -607,6 +650,24 @@
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
+
+          // Эффекты при достижении определённых очков
+          if (score === 10) {
+            activateGlow('rgba(0,255,255,0.8)', 20, 60);
+            showReaction('wow, 10!');
+          } else if (score === 25) {
+            activateGlow('rgba(255,0,255,0.8)', 30, 60);
+            showReaction('wow, 25!');
+          } else if (score === 50) {
+            activateGlow('rgba(255,255,0,0.8)', 40, 60);
+            showReaction('wow, 50!');
+          } else if (score === 75) {
+            activateGlow('rgba(0,255,0,0.8)', 50, 60);
+            showReaction('wow, 75!');
+          } else if (score === 100) {
+            activateGlow('rgba(255,0,0,0.8)', 60, 60);
+            showReaction('wow, 100!');
+          }
         }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           gameStarted = false;
@@ -629,11 +690,33 @@
       });
       drawCoins();
       drawParticles();
-      shadowImg.src = shadow.velocity >= 0 ? fallingShadowSrc : originalShadowSrc;
+
+      // Отрисовка тюленя с учетом glow-эффекта
+      if (glowEffect.active) {
+        ctx.save();
+        ctx.shadowColor = glowEffect.color;
+        ctx.shadowBlur = glowEffect.intensity;
+        ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
+        ctx.restore();
+      } else {
+        ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
+      }
+      
+      // Обновление glow-эффекта
+      if (glowEffect.active) {
+        glowEffect.timer--;
+        if (glowEffect.timer <= 0) {
+          glowEffect.active = false;
+        }
+      }
+      
       drawPipes();
-      ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
+      
+      // Отрисовка реакционных сообщений
+      drawReactions();
+      
       requestAnimationFrame(gameLoop);
     }
 
