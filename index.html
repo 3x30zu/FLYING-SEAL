@@ -254,12 +254,13 @@
     let coins = [];
 
     // Переменные для эффектов
+    // Glow-эффект теперь остаётся активным до смены порога
     let glowEffect = {
       active: false,
-      timer: 0,
       color: '',
       intensity: 0
     };
+    // Текстовые сообщения – позиция фиксирована по центру экрана
     let reactionMessages = [];
 
     function resizeCanvas() {
@@ -502,18 +503,19 @@
     }
 
     // Функции для эффектов
-    function activateGlow(color, intensity, duration) {
+    // Glow-эффект теперь активируется без таймера и остается до смены
+    function activateGlow(color, intensity) {
       glowEffect.active = true;
       glowEffect.color = color;
       glowEffect.intensity = intensity;
-      glowEffect.timer = duration;
     }
+    // Сообщение теперь появляется по центру экрана
     function showReaction(message) {
       reactionMessages.push({
         text: message,
-        timer: 120,
-        x: shadow.x + shadow.width / 2,
-        y: shadow.y - 20
+        timer: 120, // время жизни сообщения
+        x: canvas.width / 2,
+        y: canvas.height / 2
       });
     }
     function drawReactions() {
@@ -525,7 +527,6 @@
         ctx.textAlign = "center";
         ctx.fillText(msg.text, msg.x, msg.y);
         ctx.restore();
-        msg.y -= 0.5;
         msg.timer--;
         if (msg.timer <= 0) {
           reactionMessages.splice(index, 1);
@@ -651,21 +652,21 @@
           score++;
           pipe.passed = true;
 
-          // Эффекты при достижении определённых очков
+          // При достижении порогов обновляем glow-эффект и выводим сообщение
           if (score === 10) {
-            activateGlow('rgba(0,255,255,0.8)', 20, 60);
+            activateGlow('rgba(255,0,255,0.8)', 30); // фиолетовый glow
             showReaction('wow, 10!');
           } else if (score === 25) {
-            activateGlow('rgba(255,0,255,0.8)', 30, 60);
+            activateGlow('rgba(0,255,255,0.8)', 20);
             showReaction('wow, 25!');
           } else if (score === 50) {
-            activateGlow('rgba(255,255,0,0.8)', 40, 60);
+            activateGlow('rgba(255,255,0,0.8)', 40);
             showReaction('wow, 50!');
           } else if (score === 75) {
-            activateGlow('rgba(0,255,0,0.8)', 50, 60);
+            activateGlow('rgba(0,255,0,0.8)', 50);
             showReaction('wow, 75!');
           } else if (score === 100) {
-            activateGlow('rgba(255,0,0,0.8)', 60, 60);
+            activateGlow('rgba(255,0,0,0.8)', 60);
             showReaction('wow, 100!');
           }
         }
@@ -702,19 +703,11 @@
         ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
       }
       
-      // Обновление glow-эффекта
-      if (glowEffect.active) {
-        glowEffect.timer--;
-        if (glowEffect.timer <= 0) {
-          glowEffect.active = false;
-        }
-      }
-      
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       
-      // Отрисовка реакционных сообщений
+      // Отрисовка реакционных сообщений (в центре экрана)
       drawReactions();
       
       requestAnimationFrame(gameLoop);
