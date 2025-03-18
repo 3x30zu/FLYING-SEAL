@@ -24,7 +24,7 @@
       font-family: 'Press Start 2P', cursive;
     }
     body {
-      /* Отступы под вырез (notch) */
+      /* Отступы под вырез (notch) на iOS */
       padding-top: env(safe-area-inset-top);
       padding-right: env(safe-area-inset-right);
       padding-bottom: env(safe-area-inset-bottom);
@@ -582,6 +582,14 @@
       e.preventDefault();
       if (gameStarted) {
         shadow.velocity = shadow.jump;
+      }
+    });
+
+    // Закрытие клавиатуры при нажатии вне поля ввода
+    document.addEventListener('touchstart', (event) => {
+      // Если касание было не по самому инпуту, скрываем клавиатуру
+      if (event.target !== nicknameInput) {
+        nicknameInput.blur();
       }
     });
 
