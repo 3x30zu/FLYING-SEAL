@@ -6,11 +6,9 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-
   <!-- Пиксельный шрифт -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
   <style>
     /* Сбрасываем отступы и учитываем safe area */
     html, body {
@@ -30,14 +28,12 @@
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
     }
-
     /* Растягиваем канвас на всё окно */
     #gameCanvas {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       display: block;
     }
-
     /* Главное меню */
     #menu {
       position: absolute;
@@ -62,6 +58,18 @@
       font-size: 3vw;
       margin: 10px 0;
     }
+    /* Мигающее предупреждение при пустом нике */
+    #nicknameWarning {
+      display: none;
+      color: red;
+      font-size: 3vw;
+      margin-bottom: 10px;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0; }
+    }
     /* leaderboard */
     #leaderboard {
       margin-top: 40px;
@@ -74,12 +82,11 @@
       border-radius: 0;
       image-rendering: pixelated;
     }
-
     /* Магазин */
     #shop {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), 
+      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
                   url('https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg') center/cover no-repeat;
       color: white;
       display: none;
@@ -112,7 +119,6 @@
       border-color: #fff;
       box-shadow: 4px 4px 0 #00ffff;
     }
-
     /* Оверлей для Game Over */
     #gameOverOverlay {
       position: absolute;
@@ -130,7 +136,6 @@
       margin-top: 20px;
       display: none;
     }
-
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-20px); }
@@ -198,6 +203,8 @@
     <img src="https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg" alt="Menu Background">
     <h1>FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
+    <!-- Моргающее предупреждение -->
+    <p id="nicknameWarning">Введите никнейм!</p>
     <input type="text" id="nickname" placeholder="Введите никнейм">
     <button id="startBtn">GO!</button>
     <button id="telegramBtn">TELEGRAM</button>
@@ -207,27 +214,24 @@
       <ul id="topScores"></ul>
     </div>
   </div>
-
   <!-- Магазин трейлов -->
   <div id="shop">
     <h2>Shop</h2>
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
-
   <!-- Оверлей для Game Over -->
   <div id="gameOverOverlay">
     <h2>Share the result with your friends!</h2>
     <button id="shareBtn">Share the result!</button>
     <button id="continueBtn">Continue game!</button>
     <button id="mainMenuBtn">MAIN MENU</button>
-    <!-- Блок награды за Hard Mode -->
+    <!-- Награда за Hard Mode -->
     <div id="hardModeRewardContainer">
       <p id="hardModeCountText"></p>
       <button id="rewardBtn">GET REWARD</button>
     </div>
   </div>
-
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
 
@@ -250,6 +254,7 @@
     const continueBtn = document.getElementById('continueBtn');
     const mainMenuBtn = document.getElementById('mainMenuBtn');
     const nicknameInput = document.getElementById('nickname');
+    const nicknameWarning = document.getElementById('nicknameWarning');
     const scoreElement = document.getElementById('score');
     const coinCountElement = document.getElementById('coinCount');
     const menuTotalCoinsElement = document.getElementById('menuTotalCoins');
@@ -587,14 +592,26 @@
 
     // Закрытие клавиатуры при нажатии вне поля ввода
     document.addEventListener('touchstart', (event) => {
-      // Если касание было не по самому инпуту, скрываем клавиатуру
       if (event.target !== nicknameInput) {
         nicknameInput.blur();
       }
     });
 
+    // Убираем предупреждение, когда пользователь начинает вводить
+    nicknameInput.addEventListener('input', () => {
+      if (nicknameInput.value.trim() !== '') {
+        nicknameWarning.style.display = 'none';
+      }
+    });
+
+    // При нажатии GO! проверяем ник
     startBtn.addEventListener('click', () => {
-      username = nicknameInput.value || "Player";
+      username = nicknameInput.value.trim();
+      if (!username) {
+        nicknameWarning.style.display = 'block';
+        return;
+      }
+      nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
       startGame();
@@ -741,7 +758,6 @@
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
-
           // Пороговые эффекты
           if (score === 10) {
             activateGlow('rgba(0,255,255,0.8)', 20);
@@ -775,7 +791,6 @@
           return;
         }
       }
-
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -789,7 +804,14 @@
       drawCoins();
       drawParticles();
 
-      // Отрисовка тюленя с учётом glow
+      // Обновление изображения нерпы: если падает (velocity >= 0) – используем fallingShadowSrc, иначе originalShadowSrc
+      if (shadow.velocity >= 0) {
+        shadowImg.src = fallingShadowSrc;
+      } else {
+        shadowImg.src = originalShadowSrc;
+      }
+
+      // Отрисовка нерпы с glow-эффектом
       if (glowEffect.active) {
         ctx.save();
         ctx.shadowColor = glowEffect.color;
