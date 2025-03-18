@@ -89,7 +89,7 @@
       border: 4px solid #fff;
       box-shadow: 4px 4px 0 #00ffff;
       padding: 10px;
-      margin: 20px 0; /* увеличенный отступ между товарами */
+      margin: 20px 0;
       width: 80%;
       text-align: center;
       image-rendering: pixelated;
@@ -119,6 +119,11 @@
       z-index: 20;
       text-align: center;
       padding: 20px;
+    }
+    /* Контейнер для награды за Hard Mode */
+    #hardModeRewardContainer {
+      margin-top: 20px;
+      display: none;
     }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
@@ -210,6 +215,11 @@
     <button id="shareBtn">Share the result!</button>
     <button id="continueBtn">Continue game!</button>
     <button id="mainMenuBtn">MAIN MENU</button>
+    <!-- Контейнер для награды за Hard Mode -->
+    <div id="hardModeRewardContainer">
+      <p id="hardModeCountText"></p>
+      <button id="rewardBtn">GET REWARD</button>
+    </div>
   </div>
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
@@ -236,6 +246,9 @@
     const coinCountElement = document.getElementById('coinCount');
     const menuTotalCoinsElement = document.getElementById('menuTotalCoins');
     const topScoresList = document.getElementById('topScores');
+    const hardModeRewardContainer = document.getElementById('hardModeRewardContainer');
+    const hardModeCountText = document.getElementById('hardModeCountText');
+    const rewardBtn = document.getElementById('rewardBtn');
 
     let gameStarted = false;
     let score = 0;
@@ -244,7 +257,7 @@
     let username = "";
 
     // Храним список купленных трейлов и выбранный трейл
-    let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]'); // трейл 1 (default) куплен по умолчанию
+    let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
@@ -253,15 +266,27 @@
     let particles = [];
     let coins = [];
 
-    // Переменные для эффектов
-    // Glow-эффект теперь остаётся активным до смены порога
+    // Эффекты (glow, реакции)
     let glowEffect = {
       active: false,
       color: '',
       intensity: 0
     };
-    // Текстовые сообщения – позиция фиксирована по центру экрана
     let reactionMessages = [];
+
+    // --- Настройка эвентов Hard Mode ---
+    // Возможные состояния: "waiting" (ожидание), "countdown", "active", "chill"
+    let hardEventState = "waiting";
+    let nextHardEventTimer = getRandomEventTimer(); // в кадрах (примерно 900-1200 кадров)
+    let countdownTimer = 0; // для обратного отсчёта (3,2,1)
+    let hardModeCountdown = 0; // длительность Hard Mode (10 сек = 600 кадров)
+    let chillTimer = 0; // время для сообщения CHILL (например, 60 кадров)
+    let hardModeCount = 0; // количество успешно пройденных Hard Mode
+
+    function getRandomEventTimer() {
+      // 3-4 раза в минуту => 900-1200 кадров (при 60 fps)
+      return Math.floor(Math.random() * (1200 - 900 + 1)) + 900;
+    }
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -290,10 +315,7 @@
 
     let pipes = [];
     const pipeWidth = canvas.width * 0.1;
-    const pipeGap = canvas.height * 0.3;
-    const pipeSpacing = canvas.width * 0.5;
     const pipeSpeed = 2.5;
-
     const pipeColors = ["#00ccff", "#00aaff", "#0099ff", "#33ccff", "#66d9ff"];
 
     function generateEdgePoints(width, numPoints) {
@@ -367,7 +389,7 @@
 
     // Настройки трейлов магазина
     const trailsConfig = {
-      "1": { // Default (бесплатный)
+      "1": {
         id: "1",
         name: "Default",
         price: 0,
@@ -404,7 +426,7 @@
       }
     };
 
-    // Функция отрисовки частиц с настройками выбранного трейла
+    // Частицы трейла
     function drawParticles() {
       let currentTrail = trailsConfig[currentTrailId];
       particles.forEach(p => {
@@ -448,18 +470,18 @@
       }
     }
 
-    // Создание монетки в центре зазора между трубами.
+    // Создание монетки
     function createCoin(gapPosition) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
-        y: gapPosition + pipeGap / 2,
+        y: gapPosition + effectiveGap() / 2,
         radius: canvas.width * 0.02,
         collected: false
       };
       coins.push(coin);
     }
 
-    // Новый дизайн монетки: округлая монетка с маленьким кругом в центре.
+    // Монетка
     function drawPixelCoin(coin) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
@@ -502,18 +524,16 @@
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
 
-    // Функции для эффектов
-    // Glow-эффект теперь активируется без таймера и остается до смены
+    // Функции эффектов
     function activateGlow(color, intensity) {
       glowEffect.active = true;
       glowEffect.color = color;
       glowEffect.intensity = intensity;
     }
-    // Сообщение теперь появляется по центру экрана
     function showReaction(message) {
       reactionMessages.push({
         text: message,
-        timer: 120, // время жизни сообщения
+        timer: 120,
         x: canvas.width / 2,
         y: canvas.height / 2
       });
@@ -534,7 +554,36 @@
       });
     }
 
-    // Обработчики ввода для прыжка
+    // Рисуем оверлей для Hard Mode эвента
+    function drawHardModeOverlay() {
+      ctx.save();
+      ctx.textAlign = "center";
+      if (hardEventState === "countdown") {
+        let secondsLeft = Math.ceil(countdownTimer / 60);
+        ctx.font = "80px 'Press Start 2P'";
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.fillText(secondsLeft, canvas.width / 2, canvas.height / 2);
+      } else if (hardEventState === "active") {
+        let secondsLeft = Math.ceil(hardModeCountdown / 60);
+        ctx.font = "80px 'Press Start 2P'";
+        ctx.fillStyle = "rgba(255,0,0,1)";
+        ctx.fillText("HARD MODE", canvas.width / 2, canvas.height / 2);
+        ctx.font = "40px 'Press Start 2P'";
+        ctx.fillText(secondsLeft, canvas.width / 2, canvas.height / 2 + 60);
+      } else if (hardEventState === "chill") {
+        ctx.font = "80px 'Press Start 2P'";
+        ctx.fillStyle = "rgba(0,255,0,1)";
+        ctx.fillText("CHILL", canvas.width / 2, canvas.height / 2);
+      }
+      ctx.restore();
+    }
+
+    // Определяем зазор труб в зависимости от режима
+    function effectiveGap() {
+      return (hardEventState === "active") ? canvas.height * 0.2 : canvas.height * 0.3;
+    }
+
+    // Обработчики ввода
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted) {
         shadow.velocity = shadow.jump;
@@ -584,6 +633,14 @@
       menu.style.display = 'flex';
       gameStarted = false;
     });
+    rewardBtn.addEventListener('click', () => {
+      let rewardCoins = hardModeCount * 25;
+      totalCoins += rewardCoins;
+      localStorage.setItem("totalCoins", totalCoins);
+      menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+      hardModeRewardContainer.style.display = 'none';
+      alert("You got " + rewardCoins + " coins for Hard Mode!");
+    });
 
     function startGame() {
       gameStarted = true;
@@ -595,6 +652,13 @@
       coins = [];
       reactionMessages = [];
       glowEffect.active = false;
+      // Сброс эвентов
+      hardEventState = "waiting";
+      nextHardEventTimer = getRandomEventTimer();
+      countdownTimer = 0;
+      hardModeCountdown = 0;
+      chillTimer = 0;
+      hardModeCount = 0;
       shadow.y = canvas.height * 0.5;
       shadow.velocity = 0;
       shadowImg.src = originalShadowSrc;
@@ -602,7 +666,8 @@
     }
 
     function createPipe() {
-      const gapPosition = Math.random() * (canvas.height - pipeGap - 100) + 50;
+      let effective_gap = effectiveGap();
+      const gapPosition = Math.random() * (canvas.height - effective_gap - 100) + 50;
       let color = pipeColors[Math.floor(Math.random() * pipeColors.length)];
       let numPoints = 7;
       let topEdge = generateEdgePoints(pipeWidth, numPoints);
@@ -610,7 +675,7 @@
       pipes.push({
         x: canvas.width,
         topHeight: gapPosition,
-        bottomY: gapPosition + pipeGap,
+        bottomY: gapPosition + effective_gap,
         passed: false,
         color: color,
         topEdge: topEdge,
@@ -638,12 +703,42 @@
 
     function gameLoop() {
       if (!gameStarted) return;
+      
+      // Обновление состояний Hard Mode эвента
+      if (hardEventState === "waiting") {
+        nextHardEventTimer--;
+        if (nextHardEventTimer <= 0) {
+          hardEventState = "countdown";
+          countdownTimer = 3 * 60;
+        }
+      } else if (hardEventState === "countdown") {
+        countdownTimer--;
+        if (countdownTimer <= 0) {
+          hardEventState = "active";
+          hardModeCountdown = 10 * 60;
+        }
+      } else if (hardEventState === "active") {
+        hardModeCountdown--;
+        if (hardModeCountdown <= 0) {
+          hardEventState = "chill";
+          chillTimer = 60;
+          hardModeCount++;
+        }
+      } else if (hardEventState === "chill") {
+        chillTimer--;
+        if (chillTimer <= 0) {
+          hardEventState = "waiting";
+          nextHardEventTimer = getRandomEventTimer();
+        }
+      }
+      
       drawBackground();
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
-      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - pipeSpacing) {
+      
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
       for (let pipe of pipes) {
@@ -652,12 +747,12 @@
           score++;
           pipe.passed = true;
 
-          // При достижении порогов обновляем glow-эффект и выводим сообщение
+          // Эффекты при достижении определённых очков (как ранее)
           if (score === 10) {
-            activateGlow('rgba(255,0,255,0.8)', 30); // фиолетовый glow
+            activateGlow('rgba(0,255,255,0.8)', 20);
             showReaction('wow, 10!');
           } else if (score === 25) {
-            activateGlow('rgba(0,255,255,0.8)', 20);
+            activateGlow('rgba(255,0,255,0.8)', 30);
             showReaction('wow, 25!');
           } else if (score === 50) {
             activateGlow('rgba(255,255,0,0.8)', 40);
@@ -674,6 +769,13 @@
           gameStarted = false;
           setTimeout(() => {
             saveScore(username, score);
+            // Отображаем информацию по Hard Mode
+            if (hardModeCount > 0) {
+              hardModeCountText.textContent = "Hard Modes completed: " + hardModeCount;
+              hardModeRewardContainer.style.display = 'block';
+            } else {
+              hardModeRewardContainer.style.display = 'none';
+            }
             gameOverOverlay.style.display = 'flex';
           }, 1000);
           return;
@@ -692,7 +794,7 @@
       drawCoins();
       drawParticles();
 
-      // Отрисовка тюленя с учетом glow-эффекта
+      // Отрисовка тюленя с glow-эффектом (как ранее)
       if (glowEffect.active) {
         ctx.save();
         ctx.shadowColor = glowEffect.color;
@@ -707,8 +809,11 @@
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       
-      // Отрисовка реакционных сообщений (в центре экрана)
+      // Отрисовка реакций и эвентов Hard Mode
       drawReactions();
+      if (hardEventState !== "waiting") {
+        drawHardModeOverlay();
+      }
       
       requestAnimationFrame(gameLoop);
     }
