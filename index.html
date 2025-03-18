@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* Общие стили с учётом safe area */
+    /* Стили остаются без изменений */
     html, body {
       margin: 0;
       padding: 0;
@@ -27,7 +27,6 @@
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
     }
-    /* Канвас занимает весь экран */
     #gameCanvas {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -62,7 +61,6 @@
       font-size: 3vw;
       margin: 10px 0;
     }
-    /* Мигающее предупреждение для пустого ника */
     #nicknameWarning {
       display: none;
       color: red;
@@ -74,7 +72,6 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
     }
-    /* Окно описания Hard Mode */
     #hardModeDescription {
       position: absolute;
       top: 20%;
@@ -99,7 +96,6 @@
       color: #fff;
       cursor: pointer;
     }
-    /* leaderboard */
     #leaderboard {
       margin-top: 40px;
       text-align: center;
@@ -111,7 +107,6 @@
       border-radius: 0;
       image-rendering: pixelated;
     }
-    /* Магазин */
     #shop {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -129,7 +124,6 @@
       font-size: 5vw;
       margin-bottom: 20px;
     }
-    /* Баланс монет в SHOP */
     #shopBalance {
       font-size: 3vw;
       margin-bottom: 20px;
@@ -156,7 +150,6 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    /* Оверлей для Game Over */
     #gameOverOverlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -222,12 +215,10 @@
       top: 5%;
       right: 5%;
     }
-    /* Стили для вкладки MODES */
     #modesTab {
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      /* Фон аналогичный главному меню */
       background: rgba(0,0,0,0.5);
       background-image: url('https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg');
       background-size: cover;
@@ -237,18 +228,15 @@
       align-items: center;
       justify-content: center;
     }
-    /* Кнопка включения режима во вкладке MODES */
     #hardModeButton {
       padding: 10px 20px;
       font-size: 3vw;
       cursor: pointer;
       transition: background 0.2s;
     }
-    /* Когда режим включён – кнопка становится красной */
     #hardModeButton.hard-on {
       background: red;
     }
-    /* Секция с текстом монет */
     #hardModeCoin {
       margin-top: 10px;
       display: inline-block;
@@ -260,20 +248,16 @@
 <body>
   <canvas id="gameCanvas"></canvas>
 
-  <!-- Главное меню (без элементов для Hard Mode) -->
+  <!-- Главное меню -->
   <div id="menu">
     <img src="https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg" alt="Menu Background">
     <h1>FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
-
-    <!-- Предупреждение о нике -->
     <p id="nicknameWarning">Введите никнейм!</p>
     <input type="text" id="nickname" placeholder="Введите никнейм">
-
     <button id="startBtn">GO!</button>
     <button id="telegramBtn">TELEGRAM</button>
     <button id="shopBtn">SHOP</button>
-    <!-- Кнопка для перехода во вкладку MODES -->
     <button id="modesBtn">MODES</button>
     <div id="leaderboard">
       <h3>Топ результатов</h3>
@@ -285,12 +269,10 @@
   <div id="modesTab">
     <h2 style="color:white; font-size:5vw;">MODES</h2>
     <div id="hardModeSection" style="margin-top:20px; text-align:center;">
-      <!-- Кнопка для переключения Hard Mode, с вопросительным значком в квадрате -->
       <button id="hardModeButton" style="padding:10px 20px; font-size:3vw;">
         <span id="hardModeText">HARD MODE OFF</span>
         <span id="hardModeQuestion" style="border:2px solid #fff; padding:2px 6px; cursor:pointer; font-size:3vw; margin-left:10px;">?</span>
       </button>
-      <!-- Текст рядом с кнопкой -->
       <div id="hardModeCoin">X2 COINS</div>
     </div>
     <button id="modesBackBtn" style="margin-top:20px; padding:10px 20px; font-size:3vw;">Back</button>
@@ -308,7 +290,6 @@
   <!-- Магазин трейлов -->
   <div id="shop">
     <h2>Shop</h2>
-    <!-- Баланс монет в SHOP -->
     <p id="shopBalance">Total Coins: 0</p>
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
@@ -330,6 +311,14 @@
       window.Telegram.WebApp.ready();
     }
 
+    // Создаём аудио-объекты для разных звуков
+    const buttonSound = new Audio('sounds/button.mp3');
+    const jumpSound = new Audio('sounds/jump.mp3');
+    const coinSound = new Audio('sounds/coin.mp3');
+    const scoreSound = new Audio('sounds/score.mp3');
+    const gameOverSound = new Audio('sounds/gameover.mp3');
+    const toggleSound = new Audio('sounds/toggle.mp3');
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
@@ -350,7 +339,6 @@
     const nicknameWarning = document.getElementById('nicknameWarning');
     const menuTotalCoinsElement = document.getElementById('menuTotalCoins');
     const topScoresList = document.getElementById('topScores');
-    // Элементы для Hard Mode во вкладке MODES
     const hardModeButton = document.getElementById('hardModeButton');
     const hardModeText = document.getElementById('hardModeText');
     const hardModeQuestion = document.getElementById('hardModeQuestion');
@@ -358,7 +346,6 @@
     const closeHardModeDesc = document.getElementById('closeHardModeDesc');
     const scoreElement = document.getElementById('score');
     const coinCountElement = document.getElementById('coinCount');
-    // Баланс монет в SHOP
     const shopBalance = document.getElementById('shopBalance');
 
     let gameStarted = false;
@@ -367,9 +354,7 @@
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
 
-    // Флаг для включения Hard Mode (по умолчанию выключен)
     let hardModeEnabled = false;
-
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
@@ -379,13 +364,9 @@
     let waterDrips = [];
     let particles = [];
     let coins = [];
-
-    // Glow-эффект и реакции
     let glowEffect = { active: false, color: '', intensity: 0 };
     let reactionMessages = [];
 
-    // Функция для расчёта зазора между трубами.
-    // Изменено: если включён Hard Mode, зазор равен 25% от высоты канваса (было 20%).
     function effectiveGapValue() {
       return hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
     }
@@ -423,7 +404,6 @@
     const pipeSpeed = 2.5;
     const pipeColors = ["#00ccff", "#00aaff", "#0099ff", "#33ccff", "#66d9ff"];
 
-    // Генерация "рваного" края для труб
     function generateEdgePoints(width, numPoints) {
       let points = [];
       for (let i = 0; i <= numPoints; i++) {
@@ -474,7 +454,6 @@
       });
     }
 
-    // Частицы воды
     function updateWaterDrips() {
       let gravityDrip = 0.3;
       waterDrips.forEach((drip, index) => {
@@ -494,7 +473,6 @@
       });
     }
 
-    // Трейлы (частицы)
     const trailsConfig = {
       "1": { id: "1", name: "Default", price: 0, gradient: ["rgba(0,255,255,1)", "rgba(0,255,255,0)"], random: false },
       "2": { id: "2", name: "Blue Glow", price: 50, gradient: ["rgba(0,150,255,1)", "rgba(0,150,255,0)"], random: false },
@@ -550,7 +528,6 @@
       }
     }
 
-    // Монетки в стиле Super Mario
     function drawPixelCoin(coin) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
@@ -595,14 +572,12 @@
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
 
-    // Glow-эффект
     function activateGlow(color, intensity) {
       glowEffect.active = true;
       glowEffect.color = color;
       glowEffect.intensity = intensity;
     }
 
-    // Текстовые реакции
     function showReaction(message) {
       reactionMessages.push({
         text: message,
@@ -627,7 +602,6 @@
       });
     }
 
-    // Обновление изображения нерпы (смена в зависимости от скорости)
     function updateShadowImage() {
       if (shadow.velocity >= 0) {
         shadowImg.src = fallingShadowSrc;
@@ -636,21 +610,27 @@
       }
     }
 
-    // Управление вводом
+    // Управление вводом: при нажатии клавиши, клике или touch на канвасе – прыжок и звук прыжка
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted) {
         shadow.velocity = shadow.jump;
+        jumpSound.currentTime = 0;
+        jumpSound.play();
       }
     });
     canvas.addEventListener('click', () => {
       if (gameStarted) {
         shadow.velocity = shadow.jump;
+        jumpSound.currentTime = 0;
+        jumpSound.play();
       }
     });
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
       if (gameStarted) {
         shadow.velocity = shadow.jump;
+        jumpSound.currentTime = 0;
+        jumpSound.play();
       }
     });
 
@@ -666,9 +646,11 @@
       }
     });
 
-    // Во вкладке MODES – переключатель Hard Mode
+    // Hard Mode: переключение с воспроизведением звука
     hardModeButton.addEventListener('click', () => {
       hardModeEnabled = !hardModeEnabled;
+      toggleSound.currentTime = 0;
+      toggleSound.play();
       if (hardModeEnabled) {
         hardModeButton.classList.add("hard-on");
         hardModeText.textContent = "HARD MODE ON";
@@ -677,16 +659,22 @@
         hardModeText.textContent = "HARD MODE OFF";
       }
     });
-    // Клик по вопросительному значку открывает окно описания
     hardModeQuestion.addEventListener('click', (e) => {
       e.stopPropagation();
       hardModeDescription.style.display = 'block';
+      buttonSound.currentTime = 0;
+      buttonSound.play();
     });
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
+      buttonSound.currentTime = 0;
+      buttonSound.play();
     });
 
+    // Обработчики кнопок меню с проигрыванием звука
     startBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       username = nicknameInput.value.trim();
       if (!username) {
         nicknameWarning.style.display = 'block';
@@ -698,39 +686,52 @@
       startGame();
     });
     telegramBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
     shopBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       menu.style.display = 'none';
       shop.style.display = 'flex';
       renderShopItems();
     });
-    // Переход во вкладку MODES
     modesBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       menu.style.display = 'none';
       modesTab.style.display = 'flex';
     });
-    // Обратно в меню из вкладки MODES
     modesBackBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       modesTab.style.display = 'none';
       menu.style.display = 'flex';
     });
-    // Кнопка BACK в SHOP возвращает в главное меню
     shopBackBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       shop.style.display = 'none';
       menu.style.display = 'flex';
     });
     shareBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
       const shareUrl = "https://t.me/FlyingSealBot/FLYING";
       const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
       window.open(telegramShareLink, '_blank');
     });
     continueBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       gameOverOverlay.style.display = 'none';
       startGame();
     });
     mainMenuBtn.addEventListener('click', () => {
+      buttonSound.currentTime = 0;
+      buttonSound.play();
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
@@ -805,6 +806,8 @@
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
+          scoreSound.currentTime = 0;
+          scoreSound.play();
           if (score === 10) {
             activateGlow('rgba(0,255,255,0.8)', 20);
             showReaction('wow, 10!');
@@ -824,6 +827,8 @@
         }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           gameStarted = false;
+          gameOverSound.currentTime = 0;
+          gameOverSound.play();
           setTimeout(() => {
             saveScore(username, score);
             gameOverOverlay.style.display = 'flex';
@@ -836,6 +841,8 @@
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
           coin.collected = true;
+          coinSound.currentTime = 0;
+          coinSound.play();
           if (hardModeEnabled) {
             coinCount += 2;
             totalCoins += 2;
@@ -901,6 +908,8 @@
             let selectBtn = document.createElement("button");
             selectBtn.textContent = "Select";
             selectBtn.addEventListener("click", () => {
+              buttonSound.currentTime = 0;
+              buttonSound.play();
               currentTrailId = trail.id;
               localStorage.setItem("selectedTrail", currentTrailId);
               renderShopItems();
@@ -911,6 +920,8 @@
           let buyBtn = document.createElement("button");
           buyBtn.textContent = "Buy";
           buyBtn.addEventListener("click", () => {
+            buttonSound.currentTime = 0;
+            buttonSound.play();
             if (totalCoins >= trail.price) {
               totalCoins -= trail.price;
               localStorage.setItem("totalCoins", totalCoins);
