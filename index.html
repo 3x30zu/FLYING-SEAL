@@ -4,6 +4,7 @@
     <title>Shadow Flappy</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- Пиксельный шрифт -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -68,7 +69,7 @@
             40% { transform: translateY(-20px); }
             60% { transform: translateY(-10px); }
         }
-        #menu h1 {
+        #menu h1, #gameOverOverlay h2 {
             font-size: 5vw;
             margin-bottom: 20px;
             animation: bounce 2s infinite;
@@ -78,19 +79,29 @@
             padding: 10px;
             text-align: center;
             margin-bottom: 15px;
+            font-family: 'Press Start 2P', cursive;
+            letter-spacing: 2px;
         }
-        /* Ледяной пиксельный дизайн для кнопок */
+        /* Пиксельный дизайн для кнопок */
         button {
             padding: 10px 20px;
             font-size: 3vw;
-            background: #3498db;
-            border: 3px solid #fff;
-            border-radius: 0;
-            box-shadow: 2px 2px 0px #00ffff;
-            cursor: pointer;
-            color: white;
-            margin-bottom: 15px;
+            font-family: 'Press Start 2P', cursive;
+            letter-spacing: 2px;
             text-transform: uppercase;
+            color: #fff;
+            background: #3498db;
+            border: 4px solid #fff;
+            border-radius: 0;
+            box-shadow: 4px 4px 0 #00ffff;
+            image-rendering: pixelated;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: all 0.1s;
+        }
+        button:active {
+            box-shadow: 2px 2px 0 #00ffff;
+            transform: translate(2px, 2px);
         }
         #score {
             position: absolute;
@@ -190,6 +201,55 @@
     const pipeSpacing = canvas.width * 0.5;
     const pipeSpeed = 2.5;
 
+    // Функция для отрисовки глыбы льда в виде труб
+    // isTop = true для верхней трубы, false для нижней
+    function drawIceBlock(x, y, width, height, isTop) {
+        ctx.fillStyle = "#00ccff";
+        ctx.beginPath();
+        if (isTop) {
+            // Верхняя труба: верхняя сторона прямая, нижняя сторона с угловатыми осколками
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + width, y);
+            // Генерируем несколько точек вдоль нижней границы
+            let numPoints = 5;
+            for (let i = 0; i <= numPoints; i++) {
+                let px = x + width - (width / numPoints) * i;
+                // Смещение для эффекта осколков
+                let offset = Math.random() * (width / 5) - (width / 10);
+                let py = y + height + offset;
+                ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+        } else {
+            // Нижняя труба: нижняя сторона прямая, верхняя – угловатая
+            ctx.moveTo(x, y + height);
+            ctx.lineTo(x + width, y + height);
+            let numPoints = 5;
+            for (let i = 0; i <= numPoints; i++) {
+                let px = x + width - (width / numPoints) * i;
+                let offset = Math.random() * (width / 5) - (width / 10);
+                let py = y + offset;
+                ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+        }
+        ctx.fill();
+        // Детали – белый контур для эффекта льда
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    // Отрисовка труб в виде глыб льда
+    function drawPipes() {
+        pipes.forEach(pipe => {
+            // Верхняя труба
+            drawIceBlock(pipe.x, 0, pipeWidth, pipe.topHeight, true);
+            // Нижняя труба
+            drawIceBlock(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY, false);
+        });
+    }
+
     // Управление клавиатурой
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && gameStarted) {
@@ -224,17 +284,13 @@
     });
     
     shareBtn.addEventListener('click', () => {
-        // Формируем текст для шаринга с результатом
         const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
-        // URL, который будем передавать, например, ссылка на бота
         const shareUrl = "https://t.me/FlyingSealBot/FLYING";
-        // Формируем ссылку для шаринга в Telegram
         const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
         window.open(telegramShareLink, '_blank');
     });
     
     continueBtn.addEventListener('click', () => {
-        // Перезапускаем игру, скрывая оверлей
         gameOverOverlay.style.display = 'none';
         startGame();
     });
@@ -274,17 +330,6 @@
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-    }
-
-    function drawPipes() {
-        pipes.forEach(pipe => {
-            let grad = ctx.createLinearGradient(pipe.x, 0, pipe.x, canvas.height);
-            grad.addColorStop(0, "#FF5733");
-            grad.addColorStop(1, "#C70039");
-            ctx.fillStyle = grad;
-            ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
-            ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
-        });
     }
 
     function gameLoop() {
