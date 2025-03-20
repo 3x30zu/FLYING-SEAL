@@ -214,11 +214,12 @@
       top: 5%;
       right: 5%;
       z-index: 50;
-      font-size: 3vw; /* уменьшено с 4vw */
+      font-size: 3vw;
       background: rgba(0,0,0,0.5);
       border: none;
       color: white;
       cursor: pointer;
+      display: none;
     }
     /* Кнопки управления в режиме PLATFORMER */
     #platformerControls {
@@ -230,20 +231,30 @@
       display: none;
       text-align: center;
     }
-    /* Раскладка кнопок в 2 строки */
-    #platformerControls .controls-row {
+    #platformerControls .row {
+      display: flex;
+      justify-content: center;
       margin: 5px 0;
     }
+    /* Стили кнопок управления (3 кнопки: вверх, влево, вправо) */
     #platformerControls button {
-      background: rgba(255, 255, 255, 0.3);
+      width: 60px;
+      height: 60px;
+      background: #444;
       border: 4px solid #fff;
       color: #fff;
-      font-size: 6vw;
-      padding: 10px 20px;
+      font-size: 2rem;
       margin: 0 10px;
       cursor: pointer;
       font-family: 'Press Start 2P', cursive;
       image-rendering: pixelated;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #platformerControls button:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 #00ffff;
     }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
@@ -337,20 +348,28 @@
         padding: 3px;
         font-size: 3vw;
       }
+      #platformerControls button {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+      }
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
 
-  <!-- Видимые кнопки управления для PLATFORMER -->
+  <!-- Кнопка паузы для платформера -->
+  <button id="pauseBtn">||</button>
+
+  <!-- Видимые кнопки управления для PLATFORMER (3 кнопки: вверх, влево, вправо) -->
   <div id="platformerControls">
-    <div class="controls-row">
-      <button id="btnJump">↑</button>
+    <div class="row">
+      <button id="btnJump">▲</button>
     </div>
-    <div class="controls-row">
-      <button id="btnLeft">←</button>
-      <button id="btnRight">→</button>
+    <div class="row">
+      <button id="btnLeft">◀</button>
+      <button id="btnRight">▶</button>
     </div>
   </div>
 
@@ -420,8 +439,6 @@
     <button id="resumeBtn" style="margin:10px;">Resume</button>
     <button id="exitBtn" style="margin:10px;">Main Menu</button>
   </div>
-  <!-- Кнопка паузы -->
-  <button id="pauseBtn">||</button>
 
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
@@ -431,7 +448,23 @@
       window.Telegram.WebApp.ready();
     }
 
-    // Глобальные переменные для режима FLYING
+    // --- Функции для отрисовки платформ и двери (для платформера) ---
+    function drawPlatform(x, y, width, height) {
+      ctx.fillStyle = "#8B4513";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, width, height);
+    }
+    function drawDoor(x, y, width, height) {
+      ctx.fillStyle = "#663300";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, width, height);
+    }
+
+    // --- Глобальные переменные ---
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 60;
@@ -486,15 +519,16 @@
     const closeHardModeDesc = document.getElementById('closeHardModeDesc');
     const scoreElement = document.getElementById('score');
     const coinCountElement = document.getElementById('coinCount');
-    const shopBalance = document.getElementById('shopBalance');
-    const pauseMenu = document.getElementById('pauseMenu');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const resumeBtn = document.getElementById('resumeBtn');
-    const exitBtn = document.getElementById('exitBtn');
+    
     const platformerControls = document.getElementById('platformerControls');
     const btnLeft = document.getElementById('btnLeft');
     const btnRight = document.getElementById('btnRight');
     const btnJump = document.getElementById('btnJump');
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const pauseMenu = document.getElementById('pauseMenu');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const exitBtn = document.getElementById('exitBtn');
 
     let gameStarted = false;
     let score = 0;
@@ -506,7 +540,7 @@
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
-    // Логика для дизайнов труб (оставляем как есть)
+    // Логика для дизайнов труб
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
@@ -519,28 +553,16 @@
       "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
-    let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
+    let currentPipeDesign = localStorage.getItem("selectedPipeDesign") ||
+                            (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
 
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+    const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
 
-    let waterDrips = [];
     let particles = [];
     let coins = [];
-    let glowEffect = { active: false, color: '', intensity: 0 };
     let reactionMessages = [];
-
-    let animationOffset = 0;
-    function updateAnimationOffset(){
-      animationOffset = Math.sin(Date.now()/500) * 5;
-    }
-
-    function effectiveGapValue() {
-      return hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
-    }
-    function effectiveGap() {
-      return effectiveGapValue();
-    }
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -555,7 +577,6 @@
     const nerpaFalling = new Image();
     nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
     let nerpaImg = new Image();
-    // Изначально используем нормальное изображение
     nerpaImg.src = nerpaNormal.src;
 
     const backgroundImg = new Image();
@@ -570,43 +591,54 @@
       }
     }
 
-    function drawPlatform(x, y, width, height) {
-      // Пиксельный стиль: плоский цвет без градиента
-      ctx.fillStyle = "#8B4513";
-      ctx.fillRect(x, y, width, height);
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, width, height);
-    }
-
-    function drawDoor(x, y, width, height) {
-      // Пиксельный стиль: прямоугольная дверь без округлостей
-      ctx.fillStyle = "#663300";
-      ctx.fillRect(x, y, width, height);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x, y, width, height);
-    }
-
-    // Управление в режиме FLYING
+    // --- Управление в режиме FLYING ---
     document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameStarted) { shadow.velocity = shadow.jump; }
+      if (e.code === 'Space' && gameStarted) {
+        shadow.velocity = shadow.jump;
+      }
     });
-    canvas.addEventListener('click', () => { if (gameStarted) { shadow.velocity = shadow.jump; } });
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameStarted) { shadow.velocity = shadow.jump; } });
-    document.addEventListener('touchstart', (event) => { if (event.target !== nicknameInput) { nicknameInput.blur(); } });
-    nicknameInput.addEventListener('input', () => { if (nicknameInput.value.trim() !== '') { nicknameWarning.style.display = 'none'; } });
+    canvas.addEventListener('click', () => {
+      if (gameStarted) {
+        shadow.velocity = shadow.jump;
+      }
+    });
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (gameStarted) {
+        shadow.velocity = shadow.jump;
+      }
+    });
+    document.addEventListener('touchstart', (event) => {
+      if (event.target !== nicknameInput) {
+        nicknameInput.blur();
+      }
+    });
+    nicknameInput.addEventListener('input', () => {
+      if (nicknameInput.value.trim() !== '') {
+        nicknameWarning.style.display = 'none';
+      }
+    });
 
-    // Hard Mode переключение
+    // --- Hard Mode переключение ---
     hardModeButton.addEventListener('click', () => {
       hardModeEnabled = !hardModeEnabled;
-      if (hardModeEnabled) { hardModeButton.classList.add("hard-on"); hardModeText.textContent = "HARD MODE ON"; }
-      else { hardModeButton.classList.remove("hard-on"); hardModeText.textContent = "HARD MODE OFF"; }
+      if (hardModeEnabled) {
+        hardModeButton.classList.add("hard-on");
+        hardModeText.textContent = "HARD MODE ON";
+      } else {
+        hardModeButton.classList.remove("hard-on");
+        hardModeText.textContent = "HARD MODE OFF";
+      }
     });
-    hardModeQuestion.addEventListener('click', (e) => { e.stopPropagation(); hardModeDescription.style.display = 'block'; });
-    closeHardModeDesc.addEventListener('click', () => { hardModeDescription.style.display = 'none'; });
+    hardModeQuestion.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hardModeDescription.style.display = 'block';
+    });
+    closeHardModeDesc.addEventListener('click', () => {
+      hardModeDescription.style.display = 'none';
+    });
 
-    // Обработчики меню
+    // --- Обработчики меню ---
     let selectedMode = "FLYING";
     document.querySelectorAll('.modeBtn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -618,40 +650,64 @@
     });
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
-      if (!username) { nicknameWarning.style.display = 'block'; return; }
+      if (!username) {
+        nicknameWarning.style.display = 'block';
+        return;
+      }
       nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // При выборе режима скрываем кнопки, если они были видимы
-      platformerControls.style.display = 'none';
+
+      // В режиме FLYING скрываем кнопку паузы,
+      // а в режиме PLATFORMER – показываем и запускаем игру.
       if (selectedMode === "FLYING") {
+        pauseBtn.style.display = 'none';
         startFlyingMode();
       } else if (selectedMode === "PLATFORMER") {
+        pauseBtn.style.display = 'block';
         platformerControls.style.display = 'block';
         startPlatformerMode();
       }
     });
-    telegramBtn.addEventListener('click', () => { window.open('https://t.me/FlyingSealCoin', '_blank'); });
-    shopBtn.addEventListener('click', () => { menu.style.display = 'none'; shop.style.display = 'flex'; renderShopItems(); });
-    modesBtn.addEventListener('click', () => { menu.style.display = 'none'; modesTab.style.display = 'flex'; });
-    modesBackBtn.addEventListener('click', () => { modesTab.style.display = 'none'; menu.style.display = 'flex'; });
-    shopBackBtn.addEventListener('click', () => { shop.style.display = 'none'; menu.style.display = 'flex'; });
+    telegramBtn.addEventListener('click', () => {
+      window.open('https://t.me/FlyingSealCoin', '_blank');
+    });
+    shopBtn.addEventListener('click', () => {
+      menu.style.display = 'none';
+      shop.style.display = 'flex';
+      renderShopItems();
+    });
+    modesBtn.addEventListener('click', () => {
+      menu.style.display = 'none';
+      modesTab.style.display = 'flex';
+    });
+    modesBackBtn.addEventListener('click', () => {
+      modesTab.style.display = 'none';
+      menu.style.display = 'flex';
+    });
+    shopBackBtn.addEventListener('click', () => {
+      shop.style.display = 'none';
+      menu.style.display = 'flex';
+    });
     shareBtn.addEventListener('click', () => {
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
       const shareUrl = "https://t.me/FlyingSealBot/FLYING";
       const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
       window.open(telegramShareLink, '_blank');
     });
-    continueBtn.addEventListener('click', () => { gameOverOverlay.style.display = 'none'; startFlyingMode(); });
+    continueBtn.addEventListener('click', () => {
+      gameOverOverlay.style.display = 'none';
+      startFlyingMode();
+    });
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
       platformerControls.style.display = 'none';
+      pauseBtn.style.display = 'none';
     });
 
-    // Обработчики паузы
-    let paused = false;
+    // --- Обработка кнопки паузы ---
     pauseBtn.addEventListener('click', () => {
       paused = true;
       pauseMenu.style.display = 'block';
@@ -659,6 +715,12 @@
     resumeBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
+      // Продолжаем игру: для flying и platformer – запускаем соответствующий цикл
+      if (selectedMode === "FLYING") {
+        flyingGameLoop();
+      } else if (selectedMode === "PLATFORMER") {
+        platformerLoop();
+      }
     });
     exitBtn.addEventListener('click', () => {
       paused = false;
@@ -666,34 +728,25 @@
       menu.style.display = 'flex';
       gameStarted = false;
       platformerControls.style.display = 'none';
+      pauseBtn.style.display = 'none';
     });
 
-    // --- Обработка кнопок управления PLATFORMER ---
-    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.left = true; });
-    btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); joystick.left = false; });
-    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.right = true; });
-    btnRight.addEventListener('touchend', (e) => { e.preventDefault(); joystick.right = false; });
-    btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.up = true; });
-    btnJump.addEventListener('touchend', (e) => { e.preventDefault(); joystick.up = false; });
-    btnLeft.addEventListener('mousedown', (e) => { joystick.left = true; });
-    btnLeft.addEventListener('mouseup', (e) => { joystick.left = false; });
-    btnRight.addEventListener('mousedown', (e) => { joystick.right = true; });
-    btnRight.addEventListener('mouseup', (e) => { joystick.right = false; });
-    btnJump.addEventListener('mousedown', (e) => { joystick.up = true; });
-    btnJump.addEventListener('mouseup', (e) => { joystick.up = false; });
+    let paused = false;
 
     // --- Режим FLYING ---
+    let shadow = null;
     function startFlyingMode() {
       gameStarted = true;
       score = 0;
       coinCount = 0;
       coins = [];
-      coinCountElement.style.display = 'block';
       pipes = [];
-      waterDrips = [];
       particles = [];
       reactionMessages = [];
-      glowEffect.active = false;
+      
+      coinCountElement.style.display = 'block';
+      nerpaImg.src = nerpaNormal.src;
+
       shadow = {
         x: canvas.width * 0.1,
         y: canvas.height * 0.5,
@@ -703,36 +756,43 @@
         gravity: 0.35,
         jump: -6
       };
-      nerpaImg.src = nerpaNormal.src;
+
       flyingGameLoop();
     }
     function flyingGameLoop() {
-      if (!gameStarted) return;
-      if (paused) { requestAnimationFrame(flyingGameLoop); return; }
+      if (!gameStarted || paused) return;
       drawBackground();
+
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
+
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
-      
+
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
-        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) { 
-          score++; 
-          pipe.passed = true; 
-          if (score % 10 === 0) { showReaction('Score ' + score); } 
+        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
+          score++;
+          pipe.passed = true;
+          if (score % 10 === 0) {
+            showReaction('Score ' + score);
+          }
         }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+          // Вместо очистки экрана перерисовываем фон
+          drawBackground();
           gameStarted = false;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          setTimeout(() => { saveScore(username, score); gameOverOverlay.style.display = 'flex'; }, 1000);
+          setTimeout(() => {
+            saveScore(username, score);
+            gameOverOverlay.style.display = 'flex';
+          }, 1000);
           return;
         }
       }
-      
+
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -744,14 +804,17 @@
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
+
       drawCoins();
       drawParticles();
       updateShadowImage();
       ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
       drawPipes();
+
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       drawReactions();
+
       requestAnimationFrame(flyingGameLoop);
     }
     function checkCollision(pipe) {
@@ -762,7 +825,7 @@
       );
     }
     function createPipe() {
-      let gap = effectiveGap();
+      let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
       let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
       let color = design ? design.colors[0] : pipeColors[Math.floor(Math.random() * pipeColors.length)];
@@ -774,11 +837,10 @@
         color: color,
         design: design
       });
-      createCoin(gapPosition, 0.015);
+      createCoin(gapPosition, gap);
     }
     function updateShadowImage() {
-      if (shadow.velocity >= 0) { nerpaImg.src = nerpaFalling.src; }
-      else { nerpaImg.src = nerpaNormal.src; }
+      nerpaImg.src = shadow.velocity >= 0 ? nerpaFalling.src : nerpaNormal.src;
     }
     function spawnParticle(x, y) {
       particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
@@ -809,11 +871,11 @@
     function drawCoins() {
       coins.forEach(coin => { if (!coin.collected) { drawPixelCoin(coin); } });
     }
-    function createCoin(gapPosition, sizeFactor = 0.02) {
+    function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
-        y: gapPosition + effectiveGap() / 2,
-        radius: canvas.width * sizeFactor,
+        y: gapPosition + gapSize / 2,
+        radius: canvas.width * 0.015,
         collected: false
       };
       coins.push(coin);
@@ -942,11 +1004,13 @@
 
     // --- Режим PLATFORMER ---
     let platformerLevel = 1;
+    let platformerGameStarted = false;
+    let keys = {};
+    let joystick = { left: false, right: false, up: false };
+
     function generatePlatforms() {
       let platforms = [];
-      // Нижняя платформа – пол
       platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
-      // Случайное количество платформ от 6 до 9
       let numPlatforms = Math.floor(Math.random() * 4) + 6;
       let gap = (canvas.height - 100) / (numPlatforms + 1);
       for (let i = 1; i <= numPlatforms; i++) {
@@ -957,16 +1021,14 @@
       platforms.sort((a, b) => b.y - a.y);
       return platforms;
     }
+    let door, player;
     function startPlatformerLevel() {
       let platforms = generatePlatforms();
-      // Берем самую верхнюю платформу
       let highestPlatform = platforms[platforms.length - 1];
-      // Размещаем дверь случайно по горизонтали и чуть выше верхней платформы
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
-      let door = { x: doorX, y: doorY, width: 50, height: 70 };
-      // Игрок стартует на нижней платформе
-      let player = {
+      door = { x: doorX, y: doorY, width: 50, height: 70 };
+      player = {
         x: canvas.width * 0.1,
         y: canvas.height - 150,
         width: 50,
@@ -978,85 +1040,97 @@
         onGround: false
       };
 
-      function platformerLoop() {
-        if (!platformerGameStarted) return;
-        if (paused) { requestAnimationFrame(platformerLoop); return; }
-        
-        ctx.imageSmoothingEnabled = false;
-        drawBackground();
-
-        // Управление игроком: клавиатура + joystick
-        if (keys['ArrowLeft'] || keys['KeyA'] || joystick.left) { player.vx = -player.speed; }
-        else if (keys['ArrowRight'] || keys['KeyD'] || joystick.right) { player.vx = player.speed; }
-        else { player.vx = 0; }
-        if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space'] || joystick.up) && player.onGround) {
-          player.vy = player.jumpForce;
-          player.onGround = false;
-        }
-        player.vy += 0.5;
-        player.x += player.vx;
-        player.y += player.vy;
-
-        // Столкновения с платформами
-        player.onGround = false;
-        platforms.forEach(plat => {
-          if (player.x < plat.x + plat.width &&
-              player.x + player.width > plat.x &&
-              player.y < plat.y + plat.height &&
-              player.y + player.height > plat.y) {
-            if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
-              player.y = plat.y - player.height;
-              player.vy = 0;
-              player.onGround = true;
-            }
-          }
-        });
-
-        if (player.vy >= 0) { nerpaImg.src = nerpaFalling.src; }
-        else { nerpaImg.src = nerpaNormal.src; }
-
-        // Проверка достижения двери
-        if (player.x < door.x + door.width &&
-            player.x + player.width > door.x &&
-            player.y < door.y + door.height &&
-            player.y + player.height > door.y) {
-          totalCoins += 10;
-          localStorage.setItem("totalCoins", totalCoins);
-          menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
-          shopBalance.textContent = `Total Coins: ${totalCoins}`;
-          platformerGameStarted = false;
-          // Скрываем кнопки управления
-          platformerControls.style.display = 'none';
-          ctx.fillStyle = "#fff";
-          ctx.font = "20px 'Press Start 2P'";
-          ctx.textAlign = "center";
-          ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
-          setTimeout(() => {
-            platformerLevel++;
-            startPlatformerLevel();
-          }, 1500);
-          return;
-        }
-
-        if (player.y > canvas.height) {
-          platformerGameStarted = false;
-          alert("Game Over");
-          menu.style.display = 'flex';
-          platformerControls.style.display = 'none';
-          return;
-        }
-
-        platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
-        drawDoor(door.x, door.y, door.width, door.height);
-        ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
-
-        requestAnimationFrame(platformerLoop);
-      }
-      platformerLoop();
+      platformerGameStarted = true;
+      platformerLoop(platforms);
     }
-    let platformerGameStarted = false;
-    let keys = {};
-    let joystick = { left: false, right: false, up: false };
+    function platformerLoop(platforms) {
+      if (!platformerGameStarted || paused) return;
+      drawBackground();
+
+      if (keys['ArrowLeft'] || keys['KeyA'] || joystick.left) { player.vx = -player.speed; }
+      else if (keys['ArrowRight'] || keys['KeyD'] || joystick.right) { player.vx = player.speed; }
+      else { player.vx = 0; }
+      if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space'] || joystick.up) && player.onGround) {
+        player.vy = player.jumpForce;
+        player.onGround = false;
+      }
+      player.vy += 0.5;
+      player.x += player.vx;
+      player.y += player.vy;
+
+      player.onGround = false;
+      platforms.forEach(plat => {
+        if (player.x < plat.x + plat.width &&
+            player.x + player.width > plat.x &&
+            player.y < plat.y + plat.height &&
+            player.y + player.height > plat.y) {
+          if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
+            player.y = plat.y - player.height;
+            player.vy = 0;
+            player.onGround = true;
+          }
+        }
+      });
+
+      nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
+
+      if (
+        player.x < door.x + door.width &&
+        player.x + player.width > door.x &&
+        player.y < door.y + door.height &&
+        player.y + player.height > door.y
+      ) {
+        totalCoins += 10;
+        localStorage.setItem("totalCoins", totalCoins);
+        menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+        shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        platformerGameStarted = false;
+        platformerControls.style.display = 'none';
+        ctx.fillStyle = "#fff";
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
+        setTimeout(() => {
+          platformerLevel++;
+          startPlatformerLevel();
+        }, 1500);
+        return;
+      }
+
+      if (player.y > canvas.height) {
+        platformerGameStarted = false;
+        alert("Game Over");
+        menu.style.display = 'flex';
+        platformerControls.style.display = 'none';
+        pauseBtn.style.display = 'none';
+        return;
+      }
+
+      platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
+      drawDoor(door.x, door.y, door.width, door.height);
+      ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
+
+      requestAnimationFrame(() => platformerLoop(platforms));
+    }
+    function startPlatformerMode() {
+      coinCountElement.style.display = 'block';
+      platformerControls.style.display = 'block';
+      startPlatformerLevel();
+    }
+
+    // Управление кнопками для PLATFORMER
+    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.left = true; });
+    btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); joystick.left = false; });
+    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.right = true; });
+    btnRight.addEventListener('touchend', (e) => { e.preventDefault(); joystick.right = false; });
+    btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.up = true; });
+    btnJump.addEventListener('touchend', (e) => { e.preventDefault(); joystick.up = false; });
+    btnLeft.addEventListener('mousedown', () => { joystick.left = true; });
+    btnLeft.addEventListener('mouseup', () => { joystick.left = false; });
+    btnRight.addEventListener('mousedown', () => { joystick.right = true; });
+    btnRight.addEventListener('mouseup', () => { joystick.right = false; });
+    btnJump.addEventListener('mousedown', () => { joystick.up = true; });
+    btnJump.addEventListener('mouseup', () => { joystick.up = false; });
     window.addEventListener('keydown', (e) => { keys[e.code] = true; });
     window.addEventListener('keyup', (e) => { keys[e.code] = false; });
     canvas.addEventListener('touchstart', handleTouch, false);
@@ -1067,18 +1141,10 @@
       let touch = e.touches[0];
       let touchX = touch.clientX;
       let touchY = touch.clientY;
-      joystick.up = touchY < canvas.height * 0.3;
+      joystick.up = (touchY < canvas.height * 0.3);
       if (touchX < canvas.width / 2) { joystick.left = true; joystick.right = false; }
       else { joystick.right = true; joystick.left = false; }
     }
-    function startPlatformerMode() {
-      platformerGameStarted = true;
-      coinCountElement.style.display = 'none';
-      platformerControls.style.display = 'block';
-      startPlatformerLevel();
-    }
-    // --- Конец режима PLATFORMER ---
-
   </script>
 </body>
 </html>
