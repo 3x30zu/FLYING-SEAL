@@ -220,6 +220,25 @@
       color: white;
       cursor: pointer;
     }
+    /* Кнопки управления в режиме PLATFORMER */
+    #platformerControls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 100;
+      display: none;
+    }
+    #platformerControls button {
+      background: rgba(255, 255, 255, 0.3);
+      border: 4px solid #fff;
+      color: #fff;
+      font-size: 4vw;
+      padding: 10px;
+      margin-right: 5px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+      image-rendering: pixelated;
+    }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-20px); }
@@ -317,6 +336,13 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
+
+  <!-- Видимые кнопки управления для PLATFORMER -->
+  <div id="platformerControls">
+    <button id="btnLeft">←</button>
+    <button id="btnJump">↑</button>
+    <button id="btnRight">→</button>
+  </div>
 
   <!-- Главное меню -->
   <div id="menu">
@@ -455,6 +481,10 @@
     const pauseBtn = document.getElementById('pauseBtn');
     const resumeBtn = document.getElementById('resumeBtn');
     const exitBtn = document.getElementById('exitBtn');
+    const platformerControls = document.getElementById('platformerControls');
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    const btnJump = document.getElementById('btnJump');
 
     let gameStarted = false;
     let score = 0;
@@ -582,8 +612,13 @@
       nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      if (selectedMode === "FLYING") { startFlyingMode(); }
-      else if (selectedMode === "PLATFORMER") { startPlatformerMode(); }
+      if (selectedMode === "FLYING") {
+        platformerControls.style.display = 'none';
+        startFlyingMode();
+      } else if (selectedMode === "PLATFORMER") {
+        platformerControls.style.display = 'block';
+        startPlatformerMode();
+      }
     });
     telegramBtn.addEventListener('click', () => { window.open('https://t.me/FlyingSealCoin', '_blank'); });
     shopBtn.addEventListener('click', () => { menu.style.display = 'none'; shop.style.display = 'flex'; renderShopItems(); });
@@ -615,6 +650,22 @@
       menu.style.display = 'flex';
       gameStarted = false;
     });
+
+    // --- Обработка кнопок управления PLATFORMER ---
+    // При касании кнопок выставляем соответствующие флаги в объекте joystick
+    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.left = true; });
+    btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); joystick.left = false; });
+    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.right = true; });
+    btnRight.addEventListener('touchend', (e) => { e.preventDefault(); joystick.right = false; });
+    btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.up = true; });
+    btnJump.addEventListener('touchend', (e) => { e.preventDefault(); joystick.up = false; });
+    // Для мыши (опционально)
+    btnLeft.addEventListener('mousedown', (e) => { joystick.left = true; });
+    btnLeft.addEventListener('mouseup', (e) => { joystick.left = false; });
+    btnRight.addEventListener('mousedown', (e) => { joystick.right = true; });
+    btnRight.addEventListener('mouseup', (e) => { joystick.right = false; });
+    btnJump.addEventListener('mousedown', (e) => { joystick.up = true; });
+    btnJump.addEventListener('mouseup', (e) => { joystick.up = false; });
 
     // --- Режим FLYING ---
     function startFlyingMode() {
@@ -658,7 +709,6 @@
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) { score++; pipe.passed = true; if (score % 10 === 0) { showReaction('Score ' + score); } }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           gameStarted = false;
-          // Очищаем канвас, чтобы не осталось фоновых элементов
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           setTimeout(() => { saveScore(username, score); gameOverOverlay.style.display = 'flex'; }, 1000);
           return;
@@ -879,10 +929,11 @@
       let platforms = [];
       // Нижняя платформа – пол
       platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
-      let numPlatforms = 7;
-      let gap = (canvas.height - 100) / numPlatforms;
+      // Случайное количество платформ от 6 до 9
+      let numPlatforms = Math.floor(Math.random() * 4) + 6;
+      let gap = (canvas.height - 100) / (numPlatforms + 1);
       for (let i = 1; i <= numPlatforms; i++) {
-        let y = canvas.height - 50 - i * gap + (Math.random() * 10 - 5); // небольшая случайность
+        let y = canvas.height - 50 - i * gap + (Math.random() * 10 - 5);
         let x = Math.random() * (canvas.width - 120);
         platforms.push({ x: x, y: y, width: 120, height: 20 });
       }
@@ -894,9 +945,10 @@
       let platforms = generatePlatforms();
       // Берем самую верхнюю платформу для гарантии, что до двери можно допрыгать
       let highestPlatform = platforms[platforms.length - 1];
-      // Размещаем дверь немного выше самой верхней платформы
+      // Размещаем дверь случайно по горизонтали, но чуть выше самой верхней платформы
+      let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
-      let door = { x: canvas.width / 2 - 25, y: doorY, width: 50, height: 70 };
+      let door = { x: doorX, y: doorY, width: 50, height: 70 };
       // Игрок стартует на нижней платформе
       let player = {
         x: canvas.width * 0.1,
@@ -919,7 +971,7 @@
         
         drawBackground();
 
-        // Управление игроком
+        // Управление игроком: клавиши и кнопки (joystick + platformerControls)
         if (keys['ArrowLeft'] || keys['KeyA'] || joystick.left) { player.vx = -player.speed; }
         else if (keys['ArrowRight'] || keys['KeyD'] || joystick.right) { player.vx = player.speed; }
         else { player.vx = 0; }
@@ -977,6 +1029,7 @@
           platformerGameStarted = false;
           alert("Game Over");
           menu.style.display = 'flex';
+          platformerControls.style.display = 'none';
           return;
         }
 
@@ -1009,6 +1062,7 @@
     function startPlatformerMode() {
       platformerGameStarted = true;
       coinCountElement.style.display = 'none'; // скрываем счётчик монет в платформере
+      platformerControls.style.display = 'block';
       startPlatformerLevel();
     }
     // --- Конец режима PLATFORMER ---
