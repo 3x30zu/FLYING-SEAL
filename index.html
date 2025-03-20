@@ -107,7 +107,29 @@
       border-radius: 0;
       image-rendering: pixelated;
     }
-    /* Магазин – витрина в виде сетки */
+    /* Панель выбора режима */
+    #modeSelection {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .modeBtn {
+      padding: 10px 20px;
+      font-size: 3vw;
+      font-family: 'Press Start 2P', cursive;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      background: #555;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .modeBtn.selected {
+      background: #3498db;
+    }
+    /* Остальные стили */
     #shop {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -172,6 +194,31 @@
       align-items: center;
       text-align: center;
       z-index: 20;
+    }
+    /* Оверлей паузы */
+    #pauseMenu {
+      display: none;
+      position: absolute;
+      top: 40%;
+      left: 20%;
+      width: 60%;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      text-align: center;
+      padding: 20px;
+      z-index: 30;
+    }
+    /* Кнопка паузы */
+    #pauseBtn {
+      position: absolute;
+      top: 5%;
+      right: 5%;
+      z-index: 50;
+      font-size: 3vw; /* уменьшено с 4vw */
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: white;
+      cursor: pointer;
     }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
@@ -254,7 +301,6 @@
       color: #fff;
       font-size: 3vw;
     }
-    /* Адаптация для маленьких экранов */
     @media (max-width: 480px) {
       #shop {
         padding: 5px;
@@ -275,10 +321,15 @@
   <!-- Главное меню -->
   <div id="menu">
     <img src="https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg" alt="Menu Background">
-    <h1>FLYING SEAL</h1>
+    <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
     <p id="nicknameWarning">Введите никнейм!</p>
     <input type="text" id="nickname" placeholder="Введите никнейм">
+    <!-- Панель выбора режима -->
+    <div id="modeSelection">
+      <button class="modeBtn selected" data-mode="FLYING">FLYING</button>
+      <button class="modeBtn" data-mode="PLATFORMER">PLATFORMER</button>
+    </div>
     <button id="startBtn">GO!</button>
     <button id="telegramBtn">TELEGRAM</button>
     <button id="shopBtn">SHOP</button>
@@ -311,7 +362,7 @@
     </p>
   </div>
 
-  <!-- Магазин: трейлы и дизайны труб -->
+  <!-- Магазин -->
   <div id="shop">
     <h2>Shop</h2>
     <p id="shopBalance">Total Coins: 0</p>
@@ -327,6 +378,15 @@
     <button id="mainMenuBtn">MAIN MENU</button>
   </div>
 
+  <!-- Оверлей для паузы -->
+  <div id="pauseMenu">
+    <h2>Paused</h2>
+    <button id="resumeBtn" style="margin:10px;">Resume</button>
+    <button id="exitBtn" style="margin:10px;">Main Menu</button>
+  </div>
+  <!-- Кнопка паузы -->
+  <button id="pauseBtn">||</button>
+
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
 
@@ -335,13 +395,33 @@
       window.Telegram.WebApp.ready();
     }
 
-    // Создаем аудио-объекты для звуков
-    const buttonSound = new Audio('sounds/button.mp3');
-    const jumpSound = new Audio('sounds/jump.mp3');
-    const coinSound = new Audio('sounds/coin.mp3');
-    const scoreSound = new Audio('sounds/score.mp3');
-    const gameOverSound = new Audio('sounds/gameover.mp3');
-    const toggleSound = new Audio('sounds/toggle.mp3');
+    // Глобальные переменные для режима FLYING
+    let pipes = [];
+    let pipeSpeed = 2;
+    let pipeWidth = 60;
+    let pipeColors = ["#00FF00", "#FF0000", "#0000FF"];
+
+    // Функция отрисовки труб
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.fillStyle = pipe.color;
+        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
+        ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+      });
+    }
+
+    // Функция отрисовки частиц
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -371,6 +451,10 @@
     const scoreElement = document.getElementById('score');
     const coinCountElement = document.getElementById('coinCount');
     const shopBalance = document.getElementById('shopBalance');
+    const pauseMenu = document.getElementById('pauseMenu');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const exitBtn = document.getElementById('exitBtn');
 
     let gameStarted = false;
     let score = 0;
@@ -382,57 +466,20 @@
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
-    // --- Логика для дизайнов труб ---
-    // SVG-изображения для каждого варианта:
+    // Логика для дизайнов труб (оставляем как есть)
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
     const retroArcadeSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ffff00'/></svg>";
 
-    // Добавляем дизайн "Standard" с ценой 0
     const pipeDesigns = {
-      "0": {
-        id: "0",
-        name: "Standard",
-        price: 0,
-        preview: standardSVG,
-        colors: ["#0000ff"],
-        animation: "none"
-      },
-      "1": {
-        id: "1",
-        name: "Pixel Frost",
-        price: 25,
-        preview: pixelFrostSVG,
-        colors: ["#a0e9ff"],
-        animation: "blink"  // мигание
-      },
-      "2": {
-        id: "2",
-        name: "Neon Pulse",
-        price: 50,
-        preview: neonPulseSVG,
-        colors: ["#ff00ff"],
-        animation: "pulse"  // пульсация
-      },
-      "3": {
-        id: "3",
-        name: "Retro Arcade",
-        price: 100,
-        preview: retroArcadeSVG,
-        colors: ["#ffff00"],
-        animation: "glow"  // свечение
-      }
+      "0": { id: "0", name: "Standard", price: 0, preview: standardSVG, colors: ["#0000ff"], animation: "none" },
+      "1": { id: "1", name: "Pixel Frost", price: 25, preview: pixelFrostSVG, colors: ["#a0e9ff"], animation: "blink" },
+      "2": { id: "2", name: "Neon Pulse", price: 50, preview: neonPulseSVG, colors: ["#ff00ff"], animation: "pulse" },
+      "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
-    let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || null;
-    if (!currentPipeDesign && purchasedPipeDesigns.length > 0) {
-      currentPipeDesign = purchasedPipeDesigns[0];
-    }
-    if (!currentPipeDesign) {
-      currentPipeDesign = "0";
-    }
-    // -------------------------------
+    let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
 
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
@@ -443,7 +490,6 @@
     let glowEffect = { active: false, color: '', intensity: 0 };
     let reactionMessages = [];
 
-    // Переменная для анимации труб
     let animationOffset = 0;
     function updateAnimationOffset(){
       animationOffset = Math.sin(Date.now()/500) * 5;
@@ -463,180 +509,221 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    const originalShadowSrc = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
-    const fallingShadowSrc = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
-    const shadowImg = new Image();
-    shadowImg.src = originalShadowSrc;
+    // Спрайты нерпы – два изображения: normal и falling
+    const nerpaNormal = new Image();
+    nerpaNormal.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
+    const nerpaFalling = new Image();
+    nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
+    let nerpaImg = new Image();
+    // Изначально используем нормальное изображение
+    nerpaImg.src = nerpaNormal.src;
 
     const backgroundImg = new Image();
     backgroundImg.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg';
 
-    const shadow = {
-      x: canvas.width * 0.1,
-      y: canvas.height * 0.5,
-      width: canvas.width * 0.1,
-      height: canvas.width * 0.1,
-      velocity: 0,
-      gravity: 0.35,
-      jump: -6
-    };
-
-    let pipes = [];
-    const pipeWidth = canvas.width * 0.1;
-    const pipeSpeed = 2.5;
-    const pipeColors = ["#00ccff", "#00aaff", "#0099ff", "#33ccff", "#66d9ff"];
-
-    function generateEdgePoints(width, numPoints) {
-      let points = [];
-      for (let i = 0; i <= numPoints; i++) {
-        let offset = (Math.random() * (width / 8)) - (width / 16);
-        points.push(offset);
-      }
-      return points;
-    }
-
-    function drawIceBlock(x, y, width, height, isTop, edgePoints, color) {
-      ctx.save();
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      if (isTop) {
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + width, y);
-        let numPoints = edgePoints.length - 1;
-        for (let i = 0; i <= numPoints; i++) {
-          let px = x + width - (width / numPoints) * i;
-          let py = y + height + edgePoints[i];
-          ctx.lineTo(px, py);
-        }
-        ctx.closePath();
+    function drawBackground() {
+      if (backgroundImg.complete) {
+        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
       } else {
-        ctx.moveTo(x, y + height);
-        ctx.lineTo(x + width, y + height);
-        let numPoints = edgePoints.length - 1;
-        for (let i = 0; i <= numPoints; i++) {
-          let px = x + width - (width / numPoints) * i;
-          let py = y + edgePoints[i];
-          ctx.lineTo(px, py);
-        }
-        ctx.closePath();
+        ctx.fillStyle = "#222";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-      ctx.fill();
-      ctx.strokeStyle = "#ffffff";
+    }
+
+    function drawPlatform(x, y, width, height) {
+      // Пиксельный стиль: плоский цвет без градиента
+      ctx.fillStyle = "#8B4513";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "#000";
       ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.restore();
+      ctx.strokeRect(x, y, width, height);
     }
 
-    // Отрисовка труб с выбранным дизайном и дополнительными эффектами
-    function drawPipes() {
-      updateAnimationOffset();
-      pipes.forEach(pipe => {
-        ctx.save();
-        // Применяем базовую анимацию, если она задана
-        if (pipe.design && pipe.design.animation === "pulse") {
-          ctx.shadowBlur = Math.abs(animationOffset);
-        } else if (pipe.design && pipe.design.animation === "glow") {
-          ctx.shadowBlur = 20 + Math.abs(animationOffset);
-        } else if (pipe.design && pipe.design.animation === "blink") {
-          ctx.globalAlpha = (Math.sin(Date.now()/300) + 1) / 2;
-        }
-        drawIceBlock(pipe.x, 0, pipeWidth, pipe.topHeight, true, pipe.topEdge, pipe.color);
-        drawIceBlock(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY, false, pipe.bottomEdge, pipe.color);
-        ctx.restore();
+    function drawDoor(x, y, width, height) {
+      // Пиксельный стиль: прямоугольная дверь без округлостей
+      ctx.fillStyle = "#663300";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, width, height);
+    }
 
-        // Если выбран не стандартный дизайн, добавляем дополнительные "искры"
-        if (pipe.design && pipe.design.animation !== "none") {
-          for (let i = 0; i < 5; i++) {
-            let sparkleX = pipe.x + Math.random() * pipeWidth;
-            let sparkleY = Math.random() > 0.5 ? pipe.topHeight + Math.random()*10 : pipe.bottomY - Math.random()*10;
-            ctx.save();
-            ctx.fillStyle = pipe.design.colors[0];
-            ctx.globalAlpha = (Math.sin(Date.now()/300 + i) + 1)/2;
-            ctx.beginPath();
-            ctx.arc(sparkleX, sparkleY, 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-          }
+    // Управление в режиме FLYING
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && gameStarted) { shadow.velocity = shadow.jump; }
+    });
+    canvas.addEventListener('click', () => { if (gameStarted) { shadow.velocity = shadow.jump; } });
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameStarted) { shadow.velocity = shadow.jump; } });
+    document.addEventListener('touchstart', (event) => { if (event.target !== nicknameInput) { nicknameInput.blur(); } });
+    nicknameInput.addEventListener('input', () => { if (nicknameInput.value.trim() !== '') { nicknameWarning.style.display = 'none'; } });
+
+    // Hard Mode переключение
+    hardModeButton.addEventListener('click', () => {
+      hardModeEnabled = !hardModeEnabled;
+      if (hardModeEnabled) { hardModeButton.classList.add("hard-on"); hardModeText.textContent = "HARD MODE ON"; }
+      else { hardModeButton.classList.remove("hard-on"); hardModeText.textContent = "HARD MODE OFF"; }
+    });
+    hardModeQuestion.addEventListener('click', (e) => { e.stopPropagation(); hardModeDescription.style.display = 'block'; });
+    closeHardModeDesc.addEventListener('click', () => { hardModeDescription.style.display = 'none'; });
+
+    // Обработчики меню
+    let selectedMode = "FLYING";
+    document.querySelectorAll('.modeBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        selectedMode = e.target.dataset.mode;
+        document.querySelectorAll('.modeBtn').forEach(b => b.classList.remove('selected'));
+        e.target.classList.add('selected');
+        document.getElementById('gameTitle').textContent = selectedMode;
+      });
+    });
+    startBtn.addEventListener('click', () => {
+      username = nicknameInput.value.trim();
+      if (!username) { nicknameWarning.style.display = 'block'; return; }
+      nicknameWarning.style.display = 'none';
+      menu.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      if (selectedMode === "FLYING") { startFlyingMode(); }
+      else if (selectedMode === "PLATFORMER") { startPlatformerMode(); }
+    });
+    telegramBtn.addEventListener('click', () => { window.open('https://t.me/FlyingSealCoin', '_blank'); });
+    shopBtn.addEventListener('click', () => { menu.style.display = 'none'; shop.style.display = 'flex'; renderShopItems(); });
+    modesBtn.addEventListener('click', () => { menu.style.display = 'none'; modesTab.style.display = 'flex'; });
+    modesBackBtn.addEventListener('click', () => { modesTab.style.display = 'none'; menu.style.display = 'flex'; });
+    shopBackBtn.addEventListener('click', () => { shop.style.display = 'none'; menu.style.display = 'flex'; });
+    shareBtn.addEventListener('click', () => {
+      const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
+      const shareUrl = "https://t.me/FlyingSealBot/FLYING";
+      const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+      window.open(telegramShareLink, '_blank');
+    });
+    continueBtn.addEventListener('click', () => { gameOverOverlay.style.display = 'none'; startFlyingMode(); });
+    mainMenuBtn.addEventListener('click', () => { gameOverOverlay.style.display = 'none'; menu.style.display = 'flex'; gameStarted = false; });
+
+    // Обработчики паузы
+    let paused = false;
+    pauseBtn.addEventListener('click', () => {
+      paused = true;
+      pauseMenu.style.display = 'block';
+    });
+    resumeBtn.addEventListener('click', () => {
+      paused = false;
+      pauseMenu.style.display = 'none';
+    });
+    exitBtn.addEventListener('click', () => {
+      paused = false;
+      pauseMenu.style.display = 'none';
+      menu.style.display = 'flex';
+      gameStarted = false;
+    });
+
+    // --- Режим FLYING ---
+    function startFlyingMode() {
+      gameStarted = true;
+      score = 0;
+      coinCount = 0;
+      coins = [];
+      coinCountElement.style.display = 'block'; // отображаем для режима FLYING
+      pipes = [];
+      waterDrips = [];
+      particles = [];
+      reactionMessages = [];
+      glowEffect.active = false;
+      shadow = {
+        x: canvas.width * 0.1,
+        y: canvas.height * 0.5,
+        width: canvas.width * 0.1,
+        height: canvas.width * 0.1,
+        velocity: 0,
+        gravity: 0.35,
+        jump: -6
+      };
+      // Используем нормальный спрайт для FLYING
+      nerpaImg.src = nerpaNormal.src;
+      flyingGameLoop();
+    }
+    function flyingGameLoop() {
+      if (!gameStarted) return;
+      if (paused) { requestAnimationFrame(flyingGameLoop); return; }
+      drawBackground();
+      shadow.velocity += shadow.gravity;
+      shadow.y += shadow.velocity;
+      spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      updateParticles();
+      
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
+        createPipe();
+      }
+      for (let pipe of pipes) {
+        pipe.x -= pipeSpeed;
+        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) { score++; pipe.passed = true; if (score % 10 === 0) { showReaction('Score ' + score); } }
+        if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+          gameStarted = false;
+          // Очищаем канвас, чтобы не осталось фоновых элементов
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setTimeout(() => { saveScore(username, score); gameOverOverlay.style.display = 'flex'; }, 1000);
+          return;
+        }
+      }
+      
+      coins.forEach(coin => {
+        coin.x -= pipeSpeed;
+        if (!coin.collected && checkCoinCollision(coin)) {
+          coin.collected = true;
+          coinCount++;
+          totalCoins++;
+          localStorage.setItem("totalCoins", totalCoins);
+          menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
+      drawCoins();
+      drawParticles();
+      updateShadowImage();
+      ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
+      drawPipes();
+      scoreElement.textContent = `Score: ${score}`;
+      coinCountElement.textContent = `Coins: ${coinCount}`;
+      drawReactions();
+      requestAnimationFrame(flyingGameLoop);
     }
-
-    function updateWaterDrips() {
-      let gravityDrip = 0.3;
-      waterDrips.forEach((drip, index) => {
-        drip.vy += gravityDrip;
-        drip.y += drip.vy;
-        if (drip.y > canvas.height || drip.y < 0) {
-          waterDrips.splice(index, 1);
-        }
+    function checkCollision(pipe) {
+      return (
+        shadow.x < pipe.x + pipeWidth &&
+        shadow.x + shadow.width > pipe.x &&
+        (shadow.y < pipe.topHeight || shadow.y + shadow.height > pipe.bottomY)
+      );
+    }
+    function createPipe() {
+      let gap = effectiveGap();
+      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+      let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
+      let color = design ? design.colors[0] : pipeColors[Math.floor(Math.random() * pipeColors.length)];
+      pipes.push({
+        x: canvas.width,
+        topHeight: gapPosition,
+        bottomY: gapPosition + gap,
+        passed: false,
+        color: color,
+        design: design
       });
+      // Создаем монету с уменьшенным размером
+      createCoin(gapPosition, 0.015);
     }
-    function drawWaterDrips() {
-      ctx.fillStyle = "#00aaff";
-      waterDrips.forEach(drip => {
-        ctx.beginPath();
-        ctx.arc(drip.x, drip.y, 3, 0, Math.PI * 2);
-        ctx.fill();
-      });
+    function updateShadowImage() {
+      if (shadow.velocity >= 0) { nerpaImg.src = nerpaFalling.src; }
+      else { nerpaImg.src = nerpaNormal.src; }
     }
-
-    const trailsConfig = {
-      "1": { id: "1", name: "Default", price: 0, gradient: ["rgba(0,255,255,1)", "rgba(0,255,255,0)"], random: false },
-      "2": { id: "2", name: "Blue Glow", price: 50, gradient: ["rgba(0,150,255,1)", "rgba(0,150,255,0)"], random: false },
-      "3": { id: "3", name: "Rainbow", price: 100, gradient: ["rainbow", "rainbow"], random: true },
-      "4": { id: "4", name: "Fire", price: 75, gradient: ["rgba(255,69,0,1)", "rgba(255,69,0,0)"], random: false },
-      "5": { id: "5", name: "Electric", price: 150, gradient: ["rgba(255,255,0,1)", "rgba(255,255,0,0)"], random: false }
-    };
-
-    function drawParticles() {
-      let currentTrail = trailsConfig[currentTrailId];
-      particles.forEach(p => {
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        let gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-        if (currentTrail.random) {
-          const rainbowColors = [
-            "rgba(255,0,0,1)", "rgba(255,127,0,1)", "rgba(255,255,0,1)",
-            "rgba(0,255,0,1)", "rgba(0,0,255,1)", "rgba(75,0,130,1)",
-            "rgba(148,0,211,1)"
-          ];
-          let randColor = rainbowColors[Math.floor(Math.random() * rainbowColors.length)];
-          gradient.addColorStop(0, randColor);
-          gradient.addColorStop(1, randColor.replace("1)", "0)"));
-        } else {
-          gradient.addColorStop(0, currentTrail.gradient[0]);
-          gradient.addColorStop(1, currentTrail.gradient[1]);
-        }
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
-    }
-    
     function spawnParticle(x, y) {
-      particles.push({
-        x: x,
-        y: y,
-        size: Math.random() * 4 + 4,
-        alpha: 1,
-        decay: Math.random() * 0.03 + 0.01
-      });
+      particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
     }
     function updateParticles() {
       for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i];
         p.alpha -= p.decay;
         p.x -= 0.5;
-        if (p.alpha <= 0) {
-          particles.splice(i, 1);
-        }
+        if (p.alpha <= 0) { particles.splice(i, 1); }
       }
     }
-
     function drawPixelCoin(coin) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
@@ -653,23 +740,17 @@
       ctx.restore();
     }
     function drawCoins() {
-      coins.forEach(coin => {
-        if (!coin.collected) {
-          drawPixelCoin(coin);
-        }
-      });
+      coins.forEach(coin => { if (!coin.collected) { drawPixelCoin(coin); } });
     }
-
-    function createCoin(gapPosition) {
+    function createCoin(gapPosition, sizeFactor = 0.02) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
         y: gapPosition + effectiveGap() / 2,
-        radius: canvas.width * 0.02,
+        radius: canvas.width * sizeFactor,
         collected: false
       };
       coins.push(coin);
     }
-
     function checkCoinCollision(coin) {
       let cx = coin.x, cy = coin.y;
       let rx = shadow.x, ry = shadow.y;
@@ -680,20 +761,8 @@
       let dy = cy - nearestY;
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
-
-    function activateGlow(color, intensity) {
-      glowEffect.active = true;
-      glowEffect.color = color;
-      glowEffect.intensity = intensity;
-    }
-
     function showReaction(message) {
-      reactionMessages.push({
-        text: message,
-        timer: 120,
-        x: canvas.width / 2,
-        y: canvas.height / 2
-      });
+      reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
     }
     function drawReactions() {
       reactionMessages.forEach((msg, index) => {
@@ -705,294 +774,9 @@
         ctx.fillText(msg.text, msg.x, msg.y);
         ctx.restore();
         msg.timer--;
-        if (msg.timer <= 0) {
-          reactionMessages.splice(index, 1);
-        }
+        if (msg.timer <= 0) { reactionMessages.splice(index, 1); }
       });
     }
-
-    function updateShadowImage() {
-      if (shadow.velocity >= 0) {
-        shadowImg.src = fallingShadowSrc;
-      } else {
-        shadowImg.src = originalShadowSrc;
-      }
-    }
-
-    // Управление вводом: прыжок при нажатии клавиши, клике или touch
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameStarted) {
-        shadow.velocity = shadow.jump;
-        jumpSound.currentTime = 0;
-        jumpSound.play();
-      }
-    });
-    canvas.addEventListener('click', () => {
-      if (gameStarted) {
-        shadow.velocity = shadow.jump;
-        jumpSound.currentTime = 0;
-        jumpSound.play();
-      }
-    });
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (gameStarted) {
-        shadow.velocity = shadow.jump;
-        jumpSound.currentTime = 0;
-        jumpSound.play();
-      }
-    });
-
-    document.addEventListener('touchstart', (event) => {
-      if (event.target !== nicknameInput) {
-        nicknameInput.blur();
-      }
-    });
-
-    nicknameInput.addEventListener('input', () => {
-      if (nicknameInput.value.trim() !== '') {
-        nicknameWarning.style.display = 'none';
-      }
-    });
-
-    // Hard Mode переключение
-    hardModeButton.addEventListener('click', () => {
-      hardModeEnabled = !hardModeEnabled;
-      toggleSound.currentTime = 0;
-      toggleSound.play();
-      if (hardModeEnabled) {
-        hardModeButton.classList.add("hard-on");
-        hardModeText.textContent = "HARD MODE ON";
-      } else {
-        hardModeButton.classList.remove("hard-on");
-        hardModeText.textContent = "HARD MODE OFF";
-      }
-    });
-    hardModeQuestion.addEventListener('click', (e) => {
-      e.stopPropagation();
-      hardModeDescription.style.display = 'block';
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-    });
-    closeHardModeDesc.addEventListener('click', () => {
-      hardModeDescription.style.display = 'none';
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-    });
-
-    // Обработчики кнопок меню
-    startBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      username = nicknameInput.value.trim();
-      if (!username) {
-        nicknameWarning.style.display = 'block';
-        return;
-      }
-      nicknameWarning.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      startGame();
-    });
-    telegramBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      window.open('https://t.me/FlyingSealCoin', '_blank');
-    });
-    shopBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      menu.style.display = 'none';
-      shop.style.display = 'flex';
-      renderShopItems();
-    });
-    modesBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      menu.style.display = 'none';
-      modesTab.style.display = 'flex';
-    });
-    modesBackBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      modesTab.style.display = 'none';
-      menu.style.display = 'flex';
-    });
-    shopBackBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      shop.style.display = 'none';
-      menu.style.display = 'flex';
-    });
-    shareBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
-      const shareUrl = "https://t.me/FlyingSealBot/FLYING";
-      const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
-      window.open(telegramShareLink, '_blank');
-    });
-    continueBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      gameOverOverlay.style.display = 'none';
-      startGame();
-    });
-    mainMenuBtn.addEventListener('click', () => {
-      buttonSound.currentTime = 0;
-      buttonSound.play();
-      gameOverOverlay.style.display = 'none';
-      menu.style.display = 'flex';
-      gameStarted = false;
-    });
-
-    function startGame() {
-      gameStarted = true;
-      score = 0;
-      coinCount = 0;
-      pipes = [];
-      waterDrips = [];
-      particles = [];
-      coins = [];
-      reactionMessages = [];
-      glowEffect.active = false;
-      shadow.y = canvas.height * 0.5;
-      shadow.velocity = 0;
-      shadowImg.src = originalShadowSrc;
-      gameLoop();
-    }
-
-    // Функция создания труб с учетом выбранного дизайна
-    function createPipe() {
-      let gap = effectiveGap();
-      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
-      let design = null;
-      if (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) {
-        design = pipeDesigns[currentPipeDesign];
-      }
-      let color = design ? design.colors[0] : pipeColors[Math.floor(Math.random() * pipeColors.length)];
-      let numPoints = 7;
-      let topEdge = generateEdgePoints(pipeWidth, numPoints);
-      let bottomEdge = generateEdgePoints(pipeWidth, numPoints);
-      pipes.push({
-        x: canvas.width,
-        topHeight: gapPosition,
-        bottomY: gapPosition + gap,
-        passed: false,
-        color: color,
-        topEdge: topEdge,
-        bottomEdge: bottomEdge,
-        design: design
-      });
-      createCoin(gapPosition);
-    }
-
-    function checkCollision(pipe) {
-      return (
-        shadow.x < pipe.x + pipeWidth &&
-        shadow.x + shadow.width > pipe.x &&
-        (shadow.y < pipe.topHeight || shadow.y + shadow.height > pipe.bottomY)
-      );
-    }
-
-    function drawBackground() {
-      if (backgroundImg.complete) {
-        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-      } else {
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-    }
-
-    function gameLoop() {
-      if (!gameStarted) return;
-      
-      drawBackground();
-      shadow.velocity += shadow.gravity;
-      shadow.y += shadow.velocity;
-      spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
-      updateParticles();
-      
-      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
-        createPipe();
-      }
-      for (let pipe of pipes) {
-        pipe.x -= pipeSpeed;
-        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
-          score++;
-          pipe.passed = true;
-          scoreSound.currentTime = 0;
-          scoreSound.play();
-          if (score === 10) {
-            activateGlow('rgba(0,255,255,0.8)', 20);
-            showReaction('wow, 10!');
-          } else if (score === 25) {
-            activateGlow('rgba(255,0,255,0.8)', 30);
-            showReaction('wow, 25!');
-          } else if (score === 50) {
-            activateGlow('rgba(255,255,0,0.8)', 40);
-            showReaction('wow, 50!');
-          } else if (score === 75) {
-            activateGlow('rgba(0,255,0,0.8)', 50);
-            showReaction('wow, 75!');
-          } else if (score === 100) {
-            activateGlow('rgba(255,0,0,0.8)', 60);
-            showReaction('wow, 100!');
-          }
-        }
-        if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
-          gameStarted = false;
-          gameOverSound.currentTime = 0;
-          gameOverSound.play();
-          setTimeout(() => {
-            saveScore(username, score);
-            gameOverOverlay.style.display = 'flex';
-          }, 1000);
-          return;
-        }
-      }
-      
-      coins.forEach(coin => {
-        coin.x -= pipeSpeed;
-        if (!coin.collected && checkCoinCollision(coin)) {
-          coin.collected = true;
-          coinSound.currentTime = 0;
-          coinSound.play();
-          if (hardModeEnabled) {
-            coinCount += 2;
-            totalCoins += 2;
-          } else {
-            coinCount++;
-            totalCoins++;
-          }
-          localStorage.setItem("totalCoins", totalCoins);
-          menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
-          shopBalance.textContent = `Total Coins: ${totalCoins}`;
-        }
-      });
-      drawCoins();
-      drawParticles();
-
-      updateShadowImage();
-      if (glowEffect.active) {
-        ctx.save();
-        ctx.shadowColor = glowEffect.color;
-        ctx.shadowBlur = glowEffect.intensity;
-        ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
-        ctx.restore();
-      } else {
-        ctx.drawImage(shadowImg, shadow.x, shadow.y, shadow.width, shadow.height);
-      }
-      
-      drawPipes();
-      scoreElement.textContent = `Score: ${score}`;
-      coinCountElement.textContent = `Coins: ${coinCount}`;
-      
-      drawReactions();
-      
-      requestAnimationFrame(gameLoop);
-    }
-
     function saveScore(name, points) {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       scores.push({ name, points });
@@ -1001,69 +785,53 @@
       localStorage.setItem("scores", JSON.stringify(scores));
       updateLeaderboard();
     }
-
     function updateLeaderboard() {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
     }
     updateLeaderboard();
-
-    // Отрисовка витрины магазина в виде сетки
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
-      
-      // Секция трейлов
-      let trailsHeader = document.createElement("h3");
-      trailsHeader.textContent = "Trails";
-      shopItemsDiv.appendChild(trailsHeader);
-      let trailsGrid = document.createElement("div");
-      trailsGrid.className = "shop-grid";
-      for (let id in trailsConfig) {
-        let trail = trailsConfig[id];
-        let div = document.createElement("div");
-        div.className = "shop-item";
-        div.innerHTML = `<strong>${trail.name}</strong><br>
-                         Price: ${trail.price} coins<br>`;
-        if (purchasedTrails.includes(trail.id)) {
-          if (currentTrailId === trail.id) {
-            div.innerHTML += `<em>Selected</em>`;
-          } else {
-            let selectBtn = document.createElement("button");
-            selectBtn.textContent = "Select";
-            selectBtn.addEventListener("click", () => {
-              buttonSound.currentTime = 0;
-              buttonSound.play();
-              currentTrailId = trail.id;
-              localStorage.setItem("selectedTrail", currentTrailId);
-              renderShopItems();
-            });
-            div.appendChild(selectBtn);
-          }
-        } else {
-          let buyBtn = document.createElement("button");
-          buyBtn.textContent = "Buy";
-          buyBtn.addEventListener("click", () => {
-            buttonSound.currentTime = 0;
-            buttonSound.play();
-            if (totalCoins >= trail.price) {
-              totalCoins -= trail.price;
-              localStorage.setItem("totalCoins", totalCoins);
-              menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
-              shopBalance.textContent = `Total Coins: ${totalCoins}`;
-              purchasedTrails.push(trail.id);
-              localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
-              renderShopItems();
-            } else {
-              alert("Not enough coins!");
+      if (typeof trailsConfig !== 'undefined') {
+        let trailsHeader = document.createElement("h3");
+        trailsHeader.textContent = "Trails";
+        shopItemsDiv.appendChild(trailsHeader);
+        let trailsGrid = document.createElement("div");
+        trailsGrid.className = "shop-grid";
+        for (let id in trailsConfig) {
+          let trail = trailsConfig[id];
+          let div = document.createElement("div");
+          div.className = "shop-item";
+          div.innerHTML = `<strong>${trail.name}</strong><br>
+                           Price: ${trail.price} coins<br>`;
+          if (purchasedTrails.includes(trail.id)) {
+            if (currentTrailId === trail.id) { div.innerHTML += `<em>Selected</em>`; }
+            else {
+              let selectBtn = document.createElement("button");
+              selectBtn.textContent = "Select";
+              selectBtn.addEventListener("click", () => { currentTrailId = trail.id; localStorage.setItem("selectedTrail", currentTrailId); renderShopItems(); });
+              div.appendChild(selectBtn);
             }
-          });
-          div.appendChild(buyBtn);
+          } else {
+            let buyBtn = document.createElement("button");
+            buyBtn.textContent = "Buy";
+            buyBtn.addEventListener("click", () => {
+              if (totalCoins >= trail.price) {
+                totalCoins -= trail.price;
+                localStorage.setItem("totalCoins", totalCoins);
+                menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+                shopBalance.textContent = `Total Coins: ${totalCoins}`;
+                purchasedTrails.push(trail.id);
+                localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
+                renderShopItems();
+              } else { alert("Not enough coins!"); }
+            });
+            div.appendChild(buyBtn);
+          }
+          trailsGrid.appendChild(div);
         }
-        trailsGrid.appendChild(div);
+        shopItemsDiv.appendChild(trailsGrid);
       }
-      shopItemsDiv.appendChild(trailsGrid);
-      
-      // Секция дизайнов труб
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
@@ -1077,26 +845,17 @@
                          Price: ${design.price} coins<br>
                          <img src="${design.preview}" alt="${design.name}"><br>`;
         if (purchasedPipeDesigns.includes(design.id)) {
-          if (currentPipeDesign === design.id) {
-            div.innerHTML += `<em>Selected</em>`;
-          } else {
+          if (currentPipeDesign === design.id) { div.innerHTML += `<em>Selected</em>`; }
+          else {
             let selectBtn = document.createElement("button");
             selectBtn.textContent = "Select";
-            selectBtn.addEventListener("click", () => {
-              buttonSound.currentTime = 0;
-              buttonSound.play();
-              currentPipeDesign = design.id;
-              localStorage.setItem("selectedPipeDesign", currentPipeDesign);
-              renderShopItems();
-            });
+            selectBtn.addEventListener("click", () => { currentPipeDesign = design.id; localStorage.setItem("selectedPipeDesign", currentPipeDesign); renderShopItems(); });
             div.appendChild(selectBtn);
           }
         } else {
           let buyBtn = document.createElement("button");
           buyBtn.textContent = "Buy";
           buyBtn.addEventListener("click", () => {
-            buttonSound.currentTime = 0;
-            buttonSound.play();
             if (totalCoins >= design.price) {
               totalCoins -= design.price;
               localStorage.setItem("totalCoins", totalCoins);
@@ -1105,9 +864,7 @@
               purchasedPipeDesigns.push(design.id);
               localStorage.setItem("purchasedPipeDesigns", JSON.stringify(purchasedPipeDesigns));
               renderShopItems();
-            } else {
-              alert("Not enough coins!");
-            }
+            } else { alert("Not enough coins!"); }
           });
           div.appendChild(buyBtn);
         }
@@ -1115,6 +872,147 @@
       }
       shopItemsDiv.appendChild(pipesGrid);
     }
+
+    // --- Режим PLATFORMER ---
+    let platformerLevel = 1;
+    function generatePlatforms() {
+      let platforms = [];
+      // Нижняя платформа – пол
+      platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
+      let numPlatforms = 7;
+      let gap = (canvas.height - 100) / numPlatforms;
+      for (let i = 1; i <= numPlatforms; i++) {
+        let y = canvas.height - 50 - i * gap + (Math.random() * 10 - 5); // небольшая случайность
+        let x = Math.random() * (canvas.width - 120);
+        platforms.push({ x: x, y: y, width: 120, height: 20 });
+      }
+      // Сортируем по Y по убыванию (от нижней к верхней)
+      platforms.sort((a, b) => b.y - a.y);
+      return platforms;
+    }
+    function startPlatformerLevel() {
+      let platforms = generatePlatforms();
+      // Берем самую верхнюю платформу для гарантии, что до двери можно допрыгать
+      let highestPlatform = platforms[platforms.length - 1];
+      // Размещаем дверь немного выше самой верхней платформы
+      let doorY = highestPlatform.y - 80;
+      let door = { x: canvas.width / 2 - 25, y: doorY, width: 50, height: 70 };
+      // Игрок стартует на нижней платформе
+      let player = {
+        x: canvas.width * 0.1,
+        y: canvas.height - 150,
+        width: 50,
+        height: 50,
+        vx: 0,
+        vy: 0,
+        speed: 3,
+        jumpForce: -12,
+        onGround: false
+      };
+
+      function platformerLoop() {
+        if (!platformerGameStarted) return;
+        if (paused) { requestAnimationFrame(platformerLoop); return; }
+        
+        // Отключаем сглаживание для пиксельного стиля
+        ctx.imageSmoothingEnabled = false;
+        
+        drawBackground();
+
+        // Управление игроком
+        if (keys['ArrowLeft'] || keys['KeyA'] || joystick.left) { player.vx = -player.speed; }
+        else if (keys['ArrowRight'] || keys['KeyD'] || joystick.right) { player.vx = player.speed; }
+        else { player.vx = 0; }
+        if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space'] || joystick.up) && player.onGround) {
+          player.vy = player.jumpForce;
+          player.onGround = false;
+        }
+        player.vy += 0.5;
+        player.x += player.vx;
+        player.y += player.vy;
+
+        // Проверка столкновений с платформами
+        player.onGround = false;
+        platforms.forEach(plat => {
+          if (player.x < plat.x + plat.width &&
+              player.x + player.width > plat.x &&
+              player.y < plat.y + plat.height &&
+              player.y + player.height > plat.y) {
+            if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
+              player.y = plat.y - player.height;
+              player.vy = 0;
+              player.onGround = true;
+            }
+          }
+        });
+
+        // Обновляем спрайт нерпы
+        if (player.vy >= 0) { nerpaImg.src = nerpaFalling.src; }
+        else { nerpaImg.src = nerpaNormal.src; }
+
+        // Если игрок достигает двери – показываем сообщение и запускаем новый уровень через 1.5 сек.
+        if (player.x < door.x + door.width &&
+            player.x + player.width > door.x &&
+            player.y < door.y + door.height &&
+            player.y + player.height > door.y) {
+          totalCoins += 10;
+          localStorage.setItem("totalCoins", totalCoins);
+          menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
+          platformerGameStarted = false;
+          // Отрисовываем сообщение "GREAT! +10 coins"
+          ctx.fillStyle = "#fff";
+          ctx.font = "20px 'Press Start 2P'";
+          ctx.textAlign = "center";
+          ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
+          setTimeout(() => {
+            platformerLevel++;
+            startPlatformerLevel();
+          }, 1500);
+          return;
+        }
+
+        // Если игрок падает за экран – Game Over
+        if (player.y > canvas.height) {
+          platformerGameStarted = false;
+          alert("Game Over");
+          menu.style.display = 'flex';
+          return;
+        }
+
+        // Отрисовка платформ в пиксельном стиле
+        platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
+        drawDoor(door.x, door.y, door.width, door.height);
+        ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
+
+        requestAnimationFrame(platformerLoop);
+      }
+      platformerLoop();
+    }
+    let platformerGameStarted = false;
+    let keys = {};
+    let joystick = { left: false, right: false, up: false };
+    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+    canvas.addEventListener('touchstart', handleTouch, false);
+    canvas.addEventListener('touchmove', handleTouch, false);
+    canvas.addEventListener('touchend', () => { joystick.left = joystick.right = joystick.up = false; }, false);
+    function handleTouch(e) {
+      e.preventDefault();
+      let touch = e.touches[0];
+      let touchX = touch.clientX;
+      let touchY = touch.clientY;
+      joystick.up = touchY < canvas.height * 0.3;
+      if (touchX < canvas.width / 2) { joystick.left = true; joystick.right = false; }
+      else { joystick.right = true; joystick.left = false; }
+    }
+    function startPlatformerMode() {
+      platformerGameStarted = true;
+      coinCountElement.style.display = 'none'; // скрываем счётчик монет в платформере
+      startPlatformerLevel();
+    }
+    // --- Конец режима PLATFORMER ---
+
   </script>
 </body>
 </html>
