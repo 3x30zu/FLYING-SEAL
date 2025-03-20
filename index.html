@@ -221,41 +221,27 @@
       cursor: pointer;
       display: none;
     }
-    /* Кнопки управления в режиме PLATFORMER */
-    #platformerControls {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 100;
+    /* Оверлей с инструкцией HOW TO PLAY? для платформера */
+    #howToPlayOverlay {
       display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg') center/cover;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
       text-align: center;
-    }
-    #platformerControls .row {
-      display: flex;
-      justify-content: center;
-      margin: 5px 0;
-    }
-    /* Стили кнопок управления (3 кнопки: вверх, влево, вправо) */
-    #platformerControls button {
-      width: 60px;
-      height: 60px;
-      background: #444;
-      border: 4px solid #fff;
-      color: #fff;
-      font-size: 2rem;
-      margin: 0 10px;
+      padding: 20px;
+      z-index: 60;
+      font-size: 3vw;
       cursor: pointer;
-      font-family: 'Press Start 2P', cursive;
-      image-rendering: pixelated;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
-    #platformerControls button:active {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 #00ffff;
+    #howToPlayOverlay h2 {
+      margin-bottom: 10px;
     }
+    /* Анимации */
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-20px); }
@@ -348,11 +334,6 @@
         padding: 3px;
         font-size: 3vw;
       }
-      #platformerControls button {
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
-      }
     }
   </style>
 </head>
@@ -362,15 +343,12 @@
   <!-- Кнопка паузы для платформера -->
   <button id="pauseBtn">||</button>
 
-  <!-- Видимые кнопки управления для PLATFORMER (3 кнопки: вверх, влево, вправо) -->
-  <div id="platformerControls">
-    <div class="row">
-      <button id="btnJump">▲</button>
-    </div>
-    <div class="row">
-      <button id="btnLeft">◀</button>
-      <button id="btnRight">▶</button>
-    </div>
+  <!-- Оверлей с инструкцией HOW TO PLAY? для PLATFORMER -->
+  <div id="howToPlayOverlay">
+    <h2>HOW TO PLAY?</h2>
+    <p>when you press on the top of the screen you jump,<br>
+    to move left and right press on the left and right side of the screen!</p>
+    <p>(Tap or click anywhere to start)</p>
   </div>
 
   <!-- Главное меню -->
@@ -441,6 +419,7 @@
   </div>
 
   <div id="score"></div>
+  <!-- В режиме PLATFORMER COINS не отображаются -->
   <div id="coinCount">Coins: 0</div>
 
   <script>
@@ -470,7 +449,6 @@
     let pipeWidth = 60;
     let pipeColors = ["#00FF00", "#FF0000", "#0000FF"];
 
-    // Функция отрисовки труб
     function drawPipes() {
       pipes.forEach(pipe => {
         ctx.fillStyle = pipe.color;
@@ -478,8 +456,6 @@
         ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
-
-    // Функция отрисовки частиц
     function drawParticles() {
       particles.forEach(p => {
         ctx.save();
@@ -520,16 +496,18 @@
     const scoreElement = document.getElementById('score');
     const coinCountElement = document.getElementById('coinCount');
     
-    const platformerControls = document.getElementById('platformerControls');
-    const btnLeft = document.getElementById('btnLeft');
-    const btnRight = document.getElementById('btnRight');
-    const btnJump = document.getElementById('btnJump');
-
+    // Для управления платформером через касания и мышь (убраны on-screen кнопки)
+    // Флаги управления
+    let touchLeft = false, touchRight = false, touchTop = false;
+    
     const pauseBtn = document.getElementById('pauseBtn');
     const pauseMenu = document.getElementById('pauseMenu');
     const resumeBtn = document.getElementById('resumeBtn');
     const exitBtn = document.getElementById('exitBtn');
-
+    
+    // Оверлей с инструкцией для платформера
+    const howToPlayOverlay = document.getElementById('howToPlayOverlay');
+    
     let gameStarted = false;
     let score = 0;
     let coinCount = 0;
@@ -540,7 +518,6 @@
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
-    // Логика для дизайнов труб
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
@@ -571,7 +548,6 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Спрайты нерпы – два изображения: normal и falling
     const nerpaNormal = new Image();
     nerpaNormal.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
     const nerpaFalling = new Image();
@@ -657,16 +633,15 @@
       nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-
-      // В режиме FLYING скрываем кнопку паузы,
-      // а в режиме PLATFORMER – показываем и запускаем игру.
       if (selectedMode === "FLYING") {
         pauseBtn.style.display = 'none';
         startFlyingMode();
       } else if (selectedMode === "PLATFORMER") {
         pauseBtn.style.display = 'block';
-        platformerControls.style.display = 'block';
-        startPlatformerMode();
+        // В режиме платформера скрываем счетчик монет
+        coinCountElement.style.display = 'none';
+        // Показываем инструкцию "HOW TO PLAY?" 
+        howToPlayOverlay.style.display = 'block';
       }
     });
     telegramBtn.addEventListener('click', () => {
@@ -703,11 +678,11 @@
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
-      platformerControls.style.display = 'none';
       pauseBtn.style.display = 'none';
     });
 
     // --- Обработка кнопки паузы ---
+    let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
       pauseMenu.style.display = 'block';
@@ -715,23 +690,18 @@
     resumeBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
-      // Продолжаем игру: для flying и platformer – запускаем соответствующий цикл
       if (selectedMode === "FLYING") {
         flyingGameLoop();
-      } else if (selectedMode === "PLATFORMER") {
-        platformerLoop();
       }
+      // Для платформера цикл уже продолжается в loop
     });
     exitBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
-      platformerControls.style.display = 'none';
       pauseBtn.style.display = 'none';
     });
-
-    let paused = false;
 
     // --- Режим FLYING ---
     let shadow = null;
@@ -743,10 +713,8 @@
       pipes = [];
       particles = [];
       reactionMessages = [];
-      
       coinCountElement.style.display = 'block';
       nerpaImg.src = nerpaNormal.src;
-
       shadow = {
         x: canvas.width * 0.1,
         y: canvas.height * 0.5,
@@ -756,19 +724,15 @@
         gravity: 0.35,
         jump: -6
       };
-
       flyingGameLoop();
     }
     function flyingGameLoop() {
       if (!gameStarted || paused) return;
       drawBackground();
-
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
-
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
-
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
@@ -777,12 +741,9 @@
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
-          if (score % 10 === 0) {
-            showReaction('Score ' + score);
-          }
+          if (score % 10 === 0) { showReaction('Score ' + score); }
         }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
-          // Вместо очистки экрана перерисовываем фон
           drawBackground();
           gameStarted = false;
           setTimeout(() => {
@@ -792,7 +753,6 @@
           return;
         }
       }
-
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -804,17 +764,14 @@
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
-
       drawCoins();
       drawParticles();
       updateShadowImage();
       ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
       drawPipes();
-
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       drawReactions();
-
       requestAnimationFrame(flyingGameLoop);
     }
     function checkCollision(pipe) {
@@ -1005,8 +962,9 @@
     // --- Режим PLATFORMER ---
     let platformerLevel = 1;
     let platformerGameStarted = false;
-    let keys = {};
-    let joystick = { left: false, right: false, up: false };
+    let door, player;
+    // Для управления через мульти-тач и мышь
+    let touchFlags = { left: false, right: false, top: false };
 
     function generatePlatforms() {
       let platforms = [];
@@ -1021,7 +979,6 @@
       platforms.sort((a, b) => b.y - a.y);
       return platforms;
     }
-    let door, player;
     function startPlatformerLevel() {
       let platforms = generatePlatforms();
       let highestPlatform = platforms[platforms.length - 1];
@@ -1039,31 +996,34 @@
         jumpForce: -12,
         onGround: false
       };
-
       platformerGameStarted = true;
       platformerLoop(platforms);
     }
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       drawBackground();
-
-      if (keys['ArrowLeft'] || keys['KeyA'] || joystick.left) { player.vx = -player.speed; }
-      else if (keys['ArrowRight'] || keys['KeyD'] || joystick.right) { player.vx = player.speed; }
-      else { player.vx = 0; }
-      if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space'] || joystick.up) && player.onGround) {
+      
+      // Обработка управления: 
+      if (touchFlags.top && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
       }
+      if (touchFlags.left) player.vx = -player.speed;
+      else if (touchFlags.right) player.vx = player.speed;
+      else player.vx = 0;
+      
       player.vy += 0.5;
       player.x += player.vx;
       player.y += player.vy;
-
+      
       player.onGround = false;
       platforms.forEach(plat => {
-        if (player.x < plat.x + plat.width &&
-            player.x + player.width > plat.x &&
-            player.y < plat.y + plat.height &&
-            player.y + player.height > plat.y) {
+        if (
+          player.x < plat.x + plat.width &&
+          player.x + player.width > plat.x &&
+          player.y < plat.y + plat.height &&
+          player.y + player.height > plat.y
+        ) {
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             player.y = plat.y - player.height;
             player.vy = 0;
@@ -1071,9 +1031,9 @@
           }
         }
       });
-
+      
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
-
+      
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1085,7 +1045,6 @@
         menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
         platformerGameStarted = false;
-        platformerControls.style.display = 'none';
         ctx.fillStyle = "#fff";
         ctx.font = "20px 'Press Start 2P'";
         ctx.textAlign = "center";
@@ -1096,54 +1055,75 @@
         }, 1500);
         return;
       }
-
+      
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
         menu.style.display = 'flex';
-        platformerControls.style.display = 'none';
         pauseBtn.style.display = 'none';
         return;
       }
-
+      
       platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
       drawDoor(door.x, door.y, door.width, door.height);
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
-
+      
       requestAnimationFrame(() => platformerLoop(platforms));
     }
     function startPlatformerMode() {
-      coinCountElement.style.display = 'block';
-      platformerControls.style.display = 'block';
+      coinCountElement.style.display = 'none';
       startPlatformerLevel();
     }
-
-    // Управление кнопками для PLATFORMER
-    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.left = true; });
-    btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); joystick.left = false; });
-    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.right = true; });
-    btnRight.addEventListener('touchend', (e) => { e.preventDefault(); joystick.right = false; });
-    btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); joystick.up = true; });
-    btnJump.addEventListener('touchend', (e) => { e.preventDefault(); joystick.up = false; });
-    btnLeft.addEventListener('mousedown', () => { joystick.left = true; });
-    btnLeft.addEventListener('mouseup', () => { joystick.left = false; });
-    btnRight.addEventListener('mousedown', () => { joystick.right = true; });
-    btnRight.addEventListener('mouseup', () => { joystick.right = false; });
-    btnJump.addEventListener('mousedown', () => { joystick.up = true; });
-    btnJump.addEventListener('mouseup', () => { joystick.up = false; });
-    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
-    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
-    canvas.addEventListener('touchstart', handleTouch, false);
-    canvas.addEventListener('touchmove', handleTouch, false);
-    canvas.addEventListener('touchend', () => { joystick.left = joystick.right = joystick.up = false; }, false);
-    function handleTouch(e) {
+    
+    // --- Обработка управления для платформера через касания ---
+    canvas.addEventListener('touchstart', platformerTouchHandler, false);
+    canvas.addEventListener('touchmove', platformerTouchHandler, false);
+    canvas.addEventListener('touchend', (e) => {
+      if (e.touches.length === 0) {
+        touchFlags.left = touchFlags.right = touchFlags.top = false;
+      }
+    }, false);
+    function platformerTouchHandler(e) {
       e.preventDefault();
-      let touch = e.touches[0];
-      let touchX = touch.clientX;
-      let touchY = touch.clientY;
-      joystick.up = (touchY < canvas.height * 0.3);
-      if (touchX < canvas.width / 2) { joystick.left = true; joystick.right = false; }
-      else { joystick.right = true; joystick.left = false; }
+      // Сбрасываем
+      touchFlags.left = touchFlags.right = touchFlags.top = false;
+      for (let i = 0; i < e.touches.length; i++) {
+        let touch = e.touches[i];
+        let x = touch.clientX;
+        let y = touch.clientY;
+        if (y < canvas.height * 0.3) {
+          touchFlags.top = true;
+        }
+        if (x < canvas.width / 2) {
+          touchFlags.left = true;
+        }
+        if (x >= canvas.width / 2) {
+          touchFlags.right = true;
+        }
+      }
+    }
+    
+    // --- Обработка управления для платформера через мышь (ПК) ---
+    canvas.addEventListener('mousedown', platformerMouseHandler, false);
+    canvas.addEventListener('mousemove', platformerMouseHandler, false);
+    canvas.addEventListener('mouseup', () => {
+      touchFlags.left = touchFlags.right = touchFlags.top = false;
+    }, false);
+    function platformerMouseHandler(e) {
+      // При нажатии или перемещении мыши считаем позицию
+      let x = e.clientX;
+      let y = e.clientY;
+      touchFlags.top = y < canvas.height * 0.3;
+      touchFlags.left = x < canvas.width / 2;
+      touchFlags.right = x >= canvas.width / 2;
+    }
+    
+    // --- Обработка касания/клика на оверлей HOW TO PLAY? ---
+    howToPlayOverlay.addEventListener('touchstart', dismissHowToPlay, false);
+    howToPlayOverlay.addEventListener('click', dismissHowToPlay, false);
+    function dismissHowToPlay() {
+      howToPlayOverlay.style.display = 'none';
+      startPlatformerMode();
     }
   </script>
 </body>
