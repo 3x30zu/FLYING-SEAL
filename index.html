@@ -1046,27 +1046,34 @@
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
     function handleTouchStart(e) {
       e.preventDefault();
-      let touch = e.touches[0];
-      let x = touch.clientX;
-      let y = touch.clientY;
-      // Если касание в верхней 30% экрана – прыжок (при условии, что игрок на земле)
-      if (y < canvas.height * 0.3 && player && player.onGround) {
-        keysDown["ArrowUp"] = true;
-      } else {
-        // Если в левой половине – движение влево, иначе вправо
-        if (x < canvas.width / 2) {
-          keysDown["ArrowLeft"] = true;
+      // Если режим FLYING – любой тап = прыжок
+      if(selectedMode === "FLYING" && gameStarted){
+        shadow.velocity = shadow.jump;
+      } else if(selectedMode === "PLATFORMER"){
+        let touch = e.touches[0];
+        let x = touch.clientX;
+        let y = touch.clientY;
+        // Если касание в верхней 30% экрана – прыжок (если игрок на земле)
+        if (y < canvas.height * 0.3 && player && player.onGround) {
+          keysDown["ArrowUp"] = true;
         } else {
-          keysDown["ArrowRight"] = true;
+          // Если в левой половине – движение влево, иначе вправо
+          if (x < canvas.width / 2) {
+            keysDown["ArrowLeft"] = true;
+          } else {
+            keysDown["ArrowRight"] = true;
+          }
         }
       }
     }
     function handleTouchEnd(e) {
       e.preventDefault();
-      // Сбрасываем флаги движения
-      keysDown["ArrowLeft"] = false;
-      keysDown["ArrowRight"] = false;
-      keysDown["ArrowUp"] = false;
+      if(selectedMode === "PLATFORMER"){
+        // Сбрасываем флаги движения для платформера
+        keysDown["ArrowLeft"] = false;
+        keysDown["ArrowRight"] = false;
+        keysDown["ArrowUp"] = false;
+      }
     }
     // При клике по инструкции скрываем её и запускаем платформер
     howToPlayOverlay.addEventListener('click', () => {
