@@ -5,7 +5,6 @@
   <!-- Добавляем viewport-fit=cover -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  
   <!-- Пиксельный шрифт -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -221,7 +220,7 @@
       cursor: pointer;
       display: none;
     }
-    /* Оверлей с инструкцией HOW TO PLAY? для платформера */
+    /* Оверлей с инструкцией HOW TO PLAY? для PLATFORMER */
     #howToPlayOverlay {
       display: none;
       position: absolute;
@@ -232,16 +231,21 @@
       background: url('https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg') center/cover;
       background-color: rgba(0, 0, 0, 0.6);
       color: white;
-      text-align: center;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       padding: 20px;
       z-index: 60;
       font-size: 3vw;
       cursor: pointer;
+      text-align: center;
     }
-    #howToPlayOverlay h2 {
-      margin-bottom: 10px;
+    #howToPlayOverlay h2,
+    #howToPlayOverlay p {
+      max-width: 90%;
+      margin: 10px auto;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
     }
-    /* Анимации */
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-20px); }
@@ -339,18 +343,15 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-
   <!-- Кнопка паузы для платформера -->
   <button id="pauseBtn">||</button>
-
   <!-- Оверлей с инструкцией HOW TO PLAY? для PLATFORMER -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
-    <p>when you press on the top of the screen you jump,<br>
-    to move left and right press on the left and right side of the screen!</p>
+    <p>Use left/right arrow keys to move,<br>
+    press up arrow or space to jump!</p>
     <p>(Tap or click anywhere to start)</p>
   </div>
-
   <!-- Главное меню -->
   <div id="menu">
     <img src="https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg" alt="Menu Background">
@@ -372,7 +373,6 @@
       <ul id="topScores"></ul>
     </div>
   </div>
-
   <!-- Вкладка MODES -->
   <div id="modesTab">
     <h2 style="color:white; font-size:5vw;">MODES</h2>
@@ -385,7 +385,6 @@
     </div>
     <button id="modesBackBtn" style="margin-top:20px; padding:10px 20px; font-size:3vw;">Back</button>
   </div>
-
   <!-- Окно описания Hard Mode -->
   <div id="hardModeDescription">
     <button id="closeHardModeDesc">X</button>
@@ -394,7 +393,6 @@
       При сборе монет вы получаете двойное количество монет!
     </p>
   </div>
-
   <!-- Магазин -->
   <div id="shop">
     <h2>Shop</h2>
@@ -402,7 +400,6 @@
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
-
   <!-- Оверлей для Game Over -->
   <div id="gameOverOverlay">
     <h2>Share the result with your friends!</h2>
@@ -410,45 +407,24 @@
     <button id="continueBtn">Continue game!</button>
     <button id="mainMenuBtn">MAIN MENU</button>
   </div>
-
   <!-- Оверлей для паузы -->
   <div id="pauseMenu">
     <h2>Paused</h2>
     <button id="resumeBtn" style="margin:10px;">Resume</button>
     <button id="exitBtn" style="margin:10px;">Main Menu</button>
   </div>
-
   <div id="score"></div>
   <!-- В режиме PLATFORMER COINS не отображаются -->
   <div id="coinCount">Coins: 0</div>
-
   <script>
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
     }
-
-    // --- Функции для отрисовки платформ и двери (для платформера) ---
-    function drawPlatform(x, y, width, height) {
-      ctx.fillStyle = "#8B4513";
-      ctx.fillRect(x, y, width, height);
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, width, height);
-    }
-    function drawDoor(x, y, width, height) {
-      ctx.fillStyle = "#663300";
-      ctx.fillRect(x, y, width, height);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x, y, width, height);
-    }
-
     // --- Глобальные переменные ---
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 60;
     let pipeColors = ["#00FF00", "#FF0000", "#0000FF"];
-
     function drawPipes() {
       pipes.forEach(pipe => {
         ctx.fillStyle = pipe.color;
@@ -467,7 +443,6 @@
         ctx.restore();
       });
     }
-
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
@@ -495,34 +470,24 @@
     const closeHardModeDesc = document.getElementById('closeHardModeDesc');
     const scoreElement = document.getElementById('score');
     const coinCountElement = document.getElementById('coinCount');
-    
-    // Для управления платформером через касания и мышь (убраны on-screen кнопки)
-    // Флаги управления
-    let touchLeft = false, touchRight = false, touchTop = false;
-    
     const pauseBtn = document.getElementById('pauseBtn');
     const pauseMenu = document.getElementById('pauseMenu');
     const resumeBtn = document.getElementById('resumeBtn');
     const exitBtn = document.getElementById('exitBtn');
-    
     // Оверлей с инструкцией для платформера
     const howToPlayOverlay = document.getElementById('howToPlayOverlay');
-    
     let gameStarted = false;
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
-
     let hardModeEnabled = false;
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
-
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
     const retroArcadeSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ffff00'/></svg>";
-
     const pipeDesigns = {
       "0": { id: "0", name: "Standard", price: 0, preview: standardSVG, colors: ["#0000ff"], animation: "none" },
       "1": { id: "1", name: "Pixel Frost", price: 25, preview: pixelFrostSVG, colors: ["#a0e9ff"], animation: "blink" },
@@ -530,34 +495,27 @@
       "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
-    let currentPipeDesign = localStorage.getItem("selectedPipeDesign") ||
-                            (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
-
+    let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
-
     let particles = [];
     let coins = [];
     let reactionMessages = [];
-
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
     const nerpaNormal = new Image();
     nerpaNormal.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
     const nerpaFalling = new Image();
     nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
     let nerpaImg = new Image();
     nerpaImg.src = nerpaNormal.src;
-
     const backgroundImg = new Image();
     backgroundImg.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_12-26-18.jpg';
-
     function drawBackground() {
       if (backgroundImg.complete) {
         ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
@@ -566,27 +524,15 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
-
-    // --- Управление в режиме FLYING ---
+    // --- Управление в режиме FLYING (пробел) ---
     document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameStarted) {
+      if (e.code === 'Space' && gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
       }
     });
     canvas.addEventListener('click', () => {
-      if (gameStarted) {
+      if (gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
-      }
-    });
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (gameStarted) {
-        shadow.velocity = shadow.jump;
-      }
-    });
-    document.addEventListener('touchstart', (event) => {
-      if (event.target !== nicknameInput) {
-        nicknameInput.blur();
       }
     });
     nicknameInput.addEventListener('input', () => {
@@ -594,7 +540,6 @@
         nicknameWarning.style.display = 'none';
       }
     });
-
     // --- Hard Mode переключение ---
     hardModeButton.addEventListener('click', () => {
       hardModeEnabled = !hardModeEnabled;
@@ -613,7 +558,6 @@
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
-
     // --- Обработчики меню ---
     let selectedMode = "FLYING";
     document.querySelectorAll('.modeBtn').forEach(btn => {
@@ -633,14 +577,15 @@
       nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
+      // Если выбран режим FLYING, скрываем overlay инструкции
       if (selectedMode === "FLYING") {
+        howToPlayOverlay.style.display = 'none';
         pauseBtn.style.display = 'none';
         startFlyingMode();
       } else if (selectedMode === "PLATFORMER") {
         pauseBtn.style.display = 'block';
-        // В режиме платформера скрываем счетчик монет
         coinCountElement.style.display = 'none';
-        // Показываем инструкцию "HOW TO PLAY?" 
+        // Показываем инструкцию только для режима PLATFORMER
         howToPlayOverlay.style.display = 'block';
       }
     });
@@ -677,10 +622,11 @@
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
+      // Гарантируем, что overlay инструкции скрыт
+      howToPlayOverlay.style.display = 'none';
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
-
     // --- Обработка кнопки паузы ---
     let paused = false;
     pauseBtn.addEventListener('click', () => {
@@ -693,16 +639,16 @@
       if (selectedMode === "FLYING") {
         flyingGameLoop();
       }
-      // Для платформера цикл уже продолжается в loop
     });
     exitBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
       menu.style.display = 'flex';
+      // Гарантируем, что overlay инструкции скрыт
+      howToPlayOverlay.style.display = 'none';
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
-
     // --- Режим FLYING ---
     let shadow = null;
     function startFlyingMode() {
@@ -741,7 +687,9 @@
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
-          if (score % 10 === 0) { showReaction('Score ' + score); }
+          if (score % 10 === 0) {
+            showReaction('Score ' + score);
+          }
         }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           drawBackground();
@@ -895,7 +843,11 @@
             else {
               let selectBtn = document.createElement("button");
               selectBtn.textContent = "Select";
-              selectBtn.addEventListener("click", () => { currentTrailId = trail.id; localStorage.setItem("selectedTrail", currentTrailId); renderShopItems(); });
+              selectBtn.addEventListener("click", () => { 
+                currentTrailId = trail.id; 
+                localStorage.setItem("selectedTrail", currentTrailId); 
+                renderShopItems(); 
+              });
               div.appendChild(selectBtn);
             }
           } else {
@@ -910,7 +862,9 @@
                 purchasedTrails.push(trail.id);
                 localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
                 renderShopItems();
-              } else { alert("Not enough coins!"); }
+              } else { 
+                alert("Not enough coins!"); 
+              }
             });
             div.appendChild(buyBtn);
           }
@@ -931,11 +885,16 @@
                          Price: ${design.price} coins<br>
                          <img src="${design.preview}" alt="${design.name}"><br>`;
         if (purchasedPipeDesigns.includes(design.id)) {
-          if (currentPipeDesign === design.id) { div.innerHTML += `<em>Selected</em>`; }
-          else {
+          if (currentPipeDesign === design.id) { 
+            div.innerHTML += `<em>Selected</em>`; 
+          } else {
             let selectBtn = document.createElement("button");
             selectBtn.textContent = "Select";
-            selectBtn.addEventListener("click", () => { currentPipeDesign = design.id; localStorage.setItem("selectedPipeDesign", currentPipeDesign); renderShopItems(); });
+            selectBtn.addEventListener("click", () => {
+              currentPipeDesign = design.id;
+              localStorage.setItem("selectedPipeDesign", currentPipeDesign);
+              renderShopItems();
+            });
             div.appendChild(selectBtn);
           }
         } else {
@@ -950,7 +909,9 @@
               purchasedPipeDesigns.push(design.id);
               localStorage.setItem("purchasedPipeDesigns", JSON.stringify(purchasedPipeDesigns));
               renderShopItems();
-            } else { alert("Not enough coins!"); }
+            } else {
+              alert("Not enough coins!");
+            }
           });
           div.appendChild(buyBtn);
         }
@@ -958,26 +919,14 @@
       }
       shopItemsDiv.appendChild(pipesGrid);
     }
-
     // --- Режим PLATFORMER ---
     let platformerLevel = 1;
     let platformerGameStarted = false;
     let door, player;
-    // Для управления через мульти-тач и мышь
-    let touchFlags = { left: false, right: false, top: false };
-
-    function generatePlatforms() {
-      let platforms = [];
-      platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
-      let numPlatforms = Math.floor(Math.random() * 4) + 6;
-      let gap = (canvas.height - 100) / (numPlatforms + 1);
-      for (let i = 1; i <= numPlatforms; i++) {
-        let y = canvas.height - 50 - i * gap + (Math.random() * 10 - 5);
-        let x = Math.random() * (canvas.width - 120);
-        platforms.push({ x: x, y: y, width: 120, height: 20 });
-      }
-      platforms.sort((a, b) => b.y - a.y);
-      return platforms;
+    let keysDown = {};
+    function startPlatformerMode() {
+      coinCountElement.style.display = 'none';
+      startPlatformerLevel();
     }
     function startPlatformerLevel() {
       let platforms = generatePlatforms();
@@ -1002,20 +951,20 @@
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       drawBackground();
-      
-      // Обработка управления: 
-      if (touchFlags.top && player.onGround) {
+      if ((keysDown["ArrowLeft"] || keysDown["KeyA"]) && !(keysDown["ArrowRight"] || keysDown["KeyD"])) {
+        player.vx = -player.speed;
+      } else if ((keysDown["ArrowRight"] || keysDown["KeyD"]) && !(keysDown["ArrowLeft"] || keysDown["KeyA"])) {
+        player.vx = player.speed;
+      } else {
+        player.vx = 0;
+      }
+      if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
       }
-      if (touchFlags.left) player.vx = -player.speed;
-      else if (touchFlags.right) player.vx = player.speed;
-      else player.vx = 0;
-      
       player.vy += 0.5;
       player.x += player.vx;
       player.y += player.vy;
-      
       player.onGround = false;
       platforms.forEach(plat => {
         if (
@@ -1031,9 +980,7 @@
           }
         }
       });
-      
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
-      
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1055,7 +1002,6 @@
         }, 1500);
         return;
       }
-      
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1063,67 +1009,46 @@
         pauseBtn.style.display = 'none';
         return;
       }
-      
       platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
       drawDoor(door.x, door.y, door.width, door.height);
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
-      
       requestAnimationFrame(() => platformerLoop(platforms));
     }
-    function startPlatformerMode() {
-      coinCountElement.style.display = 'none';
-      startPlatformerLevel();
-    }
-    
-    // --- Обработка управления для платформера через касания ---
-    canvas.addEventListener('touchstart', platformerTouchHandler, false);
-    canvas.addEventListener('touchmove', platformerTouchHandler, false);
-    canvas.addEventListener('touchend', (e) => {
-      if (e.touches.length === 0) {
-        touchFlags.left = touchFlags.right = touchFlags.top = false;
-      }
-    }, false);
-    function platformerTouchHandler(e) {
-      e.preventDefault();
-      // Сбрасываем
-      touchFlags.left = touchFlags.right = touchFlags.top = false;
-      for (let i = 0; i < e.touches.length; i++) {
-        let touch = e.touches[i];
-        let x = touch.clientX;
-        let y = touch.clientY;
-        if (y < canvas.height * 0.3) {
-          touchFlags.top = true;
-        }
-        if (x < canvas.width / 2) {
-          touchFlags.left = true;
-        }
-        if (x >= canvas.width / 2) {
-          touchFlags.right = true;
-        }
-      }
-    }
-    
-    // --- Обработка управления для платформера через мышь (ПК) ---
-    canvas.addEventListener('mousedown', platformerMouseHandler, false);
-    canvas.addEventListener('mousemove', platformerMouseHandler, false);
-    canvas.addEventListener('mouseup', () => {
-      touchFlags.left = touchFlags.right = touchFlags.top = false;
-    }, false);
-    function platformerMouseHandler(e) {
-      // При нажатии или перемещении мыши считаем позицию
-      let x = e.clientX;
-      let y = e.clientY;
-      touchFlags.top = y < canvas.height * 0.3;
-      touchFlags.left = x < canvas.width / 2;
-      touchFlags.right = x >= canvas.width / 2;
-    }
-    
-    // --- Обработка касания/клика на оверлей HOW TO PLAY? ---
-    howToPlayOverlay.addEventListener('touchstart', dismissHowToPlay, false);
-    howToPlayOverlay.addEventListener('click', dismissHowToPlay, false);
-    function dismissHowToPlay() {
+    window.addEventListener("keydown", (e) => {
+      keysDown[e.code] = true;
+    });
+    window.addEventListener("keyup", (e) => {
+      keysDown[e.code] = false;
+    });
+    // При клике по инструкции скрываем её и запускаем платформер
+    howToPlayOverlay.addEventListener('click', () => {
       howToPlayOverlay.style.display = 'none';
       startPlatformerMode();
+    });
+    // Функция для генерации платформ
+    function generatePlatforms() {
+      let platforms = [];
+      platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
+      platforms.push({ x: canvas.width * 0.2, y: canvas.height - 150, width: 100, height: 20 });
+      platforms.push({ x: canvas.width * 0.5, y: canvas.height - 250, width: 100, height: 20 });
+      platforms.push({ x: canvas.width * 0.7, y: canvas.height - 350, width: 100, height: 20 });
+      return platforms;
+    }
+    // Функция для отрисовки платформ (используется в платформерном режиме)
+    function drawPlatform(x, y, width, height) {
+      ctx.fillStyle = "#a0e9ff";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "#6ec6e6";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, width, height);
+    }
+    // Функция для отрисовки двери
+    function drawDoor(x, y, width, height) {
+      ctx.fillStyle = "#663300";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, width, height);
     }
   </script>
 </body>
