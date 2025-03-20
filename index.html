@@ -928,9 +928,28 @@
       coinCountElement.style.display = 'none';
       startPlatformerLevel();
     }
+    // Генерируем много платформ снизу вверх
+    function generatePlatforms() {
+      let platforms = [];
+      const platformCount = 10; // Количество платформ (можно увеличить)
+      const platformWidth = 100, platformHeight = 20;
+      // Платформа-земля
+      platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
+      // Равномерное распределение платформ между землёй и верхом экрана
+      const gap = (canvas.height - 150) / (platformCount - 1);
+      for (let i = 1; i < platformCount; i++) {
+        let y = canvas.height - 50 - i * gap;
+        let x = Math.random() * (canvas.width - platformWidth);
+        platforms.push({ x: x, y: y, width: platformWidth, height: platformHeight });
+      }
+      return platforms;
+    }
     function startPlatformerLevel() {
       let platforms = generatePlatforms();
-      let highestPlatform = platforms[platforms.length - 1];
+      // Определяем самую верхнюю платформу
+      platforms.sort((a, b) => a.y - b.y);
+      let highestPlatform = platforms[0];
+      // Устанавливаем дверь на самой верхней платформе
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
       door = { x: doorX, y: doorY, width: 50, height: 70 };
@@ -951,9 +970,10 @@
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       drawBackground();
-      if ((keysDown["ArrowLeft"] || keysDown["KeyA"]) && !(keysDown["ArrowRight"] || keysDown["KeyD"])) {
+      // Обработка клавиш
+      if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
-      } else if ((keysDown["ArrowRight"] || keysDown["KeyD"]) && !(keysDown["ArrowLeft"] || keysDown["KeyA"])) {
+      } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
         player.vx = player.speed;
       } else {
         player.vx = 0;
@@ -1014,26 +1034,45 @@
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
       requestAnimationFrame(() => platformerLoop(platforms));
     }
+    // Обработка клавиатуры
     window.addEventListener("keydown", (e) => {
       keysDown[e.code] = true;
     });
     window.addEventListener("keyup", (e) => {
       keysDown[e.code] = false;
     });
+    // Обработка касаний на мобильном устройстве
+    canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
+    canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+    function handleTouchStart(e) {
+      e.preventDefault();
+      let touch = e.touches[0];
+      let x = touch.clientX;
+      let y = touch.clientY;
+      // Если касание в верхней 30% экрана – прыжок (при условии, что игрок на земле)
+      if (y < canvas.height * 0.3 && player && player.onGround) {
+        keysDown["ArrowUp"] = true;
+      } else {
+        // Если в левой половине – движение влево, иначе вправо
+        if (x < canvas.width / 2) {
+          keysDown["ArrowLeft"] = true;
+        } else {
+          keysDown["ArrowRight"] = true;
+        }
+      }
+    }
+    function handleTouchEnd(e) {
+      e.preventDefault();
+      // Сбрасываем флаги движения
+      keysDown["ArrowLeft"] = false;
+      keysDown["ArrowRight"] = false;
+      keysDown["ArrowUp"] = false;
+    }
     // При клике по инструкции скрываем её и запускаем платформер
     howToPlayOverlay.addEventListener('click', () => {
       howToPlayOverlay.style.display = 'none';
       startPlatformerMode();
     });
-    // Функция для генерации платформ
-    function generatePlatforms() {
-      let platforms = [];
-      platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
-      platforms.push({ x: canvas.width * 0.2, y: canvas.height - 150, width: 100, height: 20 });
-      platforms.push({ x: canvas.width * 0.5, y: canvas.height - 250, width: 100, height: 20 });
-      platforms.push({ x: canvas.width * 0.7, y: canvas.height - 350, width: 100, height: 20 });
-      return platforms;
-    }
     // Функция для отрисовки платформ (используется в платформерном режиме)
     function drawPlatform(x, y, width, height) {
       ctx.fillStyle = "#a0e9ff";
