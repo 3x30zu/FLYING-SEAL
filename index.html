@@ -30,6 +30,8 @@
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       display: block;
+      /* Анимированный фон для canvas */
+      background: url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
     }
     /* Главное меню */
     #menu {
@@ -43,7 +45,7 @@
       align-items: center;
       z-index: 10;
     }
-    /* Заменили ссылку на фоновое изображение меню */
+    /* Фон главного меню */
     #menu img {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -96,6 +98,11 @@
       color: #fff;
       cursor: pointer;
     }
+    /* Укороченное описание Hard Mode */
+    #hardModeDescription p {
+      margin: 0;
+    }
+    /* Остальные стили */
     #leaderboard {
       margin-top: 40px;
       text-align: center;
@@ -129,7 +136,6 @@
     .modeBtn.selected {
       background: #3498db;
     }
-    /* Остальные стили */
     /* Заменили ссылку на фон для #shop */
     #shop {
       position: absolute;
@@ -358,7 +364,7 @@
   </div>
   <!-- Главное меню -->
   <div id="menu">
-    <!-- Заменили ссылку на фоновое изображение -->
+    <!-- Фон главного меню -->
     <img src="BACKGROUND/photo_2025-03-12_12-26-18.gif" alt="Menu Background">
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
@@ -393,10 +399,7 @@
   <!-- Окно описания Hard Mode -->
   <div id="hardModeDescription">
     <button id="closeHardModeDesc">X</button>
-    <p>
-      Включённый Hard Mode делает игру сложнее – зазор между трубами уменьшается, что требует большей реакции. 
-      При сборе монет вы получаете двойное количество монет!
-    </p>
+    <p>HARD MODE: Узкие зазоры и двойные монеты!</p>
   </div>
   <!-- Магазин -->
   <div id="shop">
@@ -517,18 +520,9 @@
     nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
     let nerpaImg = new Image();
     nerpaImg.src = nerpaNormal.src;
-
-    /* Заменили ссылку на фон (GIF) */
-    const backgroundImg = new Image();
-    backgroundImg.src = 'BACKGROUND/photo_2025-03-12_12-26-18.gif';
-
-    function drawBackground() {
-      if (backgroundImg.complete) {
-        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-      } else {
-        ctx.fillStyle = "#222";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
+    /* Фон теперь задаётся через CSS, поэтому функция drawBackground заменена на очистку холста */
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
     // --- Управление в режиме FLYING (пробел) ---
     document.addEventListener('keydown', (e) => {
@@ -628,7 +622,6 @@
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
-      // Гарантируем, что overlay инструкции скрыт
       howToPlayOverlay.style.display = 'none';
       gameStarted = false;
       pauseBtn.style.display = 'none';
@@ -650,7 +643,6 @@
       paused = false;
       pauseMenu.style.display = 'none';
       menu.style.display = 'flex';
-      // Гарантируем, что overlay инструкции скрыт
       howToPlayOverlay.style.display = 'none';
       gameStarted = false;
       pauseBtn.style.display = 'none';
@@ -680,7 +672,7 @@
     }
     function flyingGameLoop() {
       if (!gameStarted || paused) return;
-      drawBackground();
+      clearCanvas();
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
@@ -698,7 +690,7 @@
           }
         }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
-          drawBackground();
+          clearCanvas();
           gameStarted = false;
           setTimeout(() => {
             saveScore(username, score);
@@ -937,11 +929,9 @@
     // Генерируем много платформ снизу вверх
     function generatePlatforms() {
       let platforms = [];
-      const platformCount = 10; // Количество платформ (можно увеличить)
+      const platformCount = 10;
       const platformWidth = 100, platformHeight = 20;
-      // Платформа-земля
       platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
-      // Равномерное распределение платформ между землёй и верхом экрана
       const gap = (canvas.height - 150) / (platformCount - 1);
       for (let i = 1; i < platformCount; i++) {
         let y = canvas.height - 50 - i * gap;
@@ -952,10 +942,8 @@
     }
     function startPlatformerLevel() {
       let platforms = generatePlatforms();
-      // Определяем самую верхнюю платформу
       platforms.sort((a, b) => a.y - b.y);
       let highestPlatform = platforms[0];
-      // Устанавливаем дверь на самой верхней платформе
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
       door = { x: doorX, y: doorY, width: 50, height: 70 };
@@ -975,8 +963,7 @@
     }
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
-      drawBackground();
-      // Обработка клавиш
+      clearCanvas();
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -1040,30 +1027,25 @@
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
       requestAnimationFrame(() => platformerLoop(platforms));
     }
-    // Обработка клавиатуры
     window.addEventListener("keydown", (e) => {
       keysDown[e.code] = true;
     });
     window.addEventListener("keyup", (e) => {
       keysDown[e.code] = false;
     });
-    // Обработка касаний на мобильном устройстве
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
     function handleTouchStart(e) {
       e.preventDefault();
-      // Если режим FLYING – любой тап = прыжок
       if(selectedMode === "FLYING" && gameStarted){
         shadow.velocity = shadow.jump;
       } else if(selectedMode === "PLATFORMER"){
         let touch = e.touches[0];
         let x = touch.clientX;
         let y = touch.clientY;
-        // Если касание в верхней 30% экрана – прыжок (если игрок на земле)
         if (y < canvas.height * 0.3 && player && player.onGround) {
           keysDown["ArrowUp"] = true;
         } else {
-          // Если в левой половине – движение влево, иначе вправо
           if (x < canvas.width / 2) {
             keysDown["ArrowLeft"] = true;
           } else {
@@ -1075,18 +1057,15 @@
     function handleTouchEnd(e) {
       e.preventDefault();
       if(selectedMode === "PLATFORMER"){
-        // Сбрасываем флаги движения для платформера
         keysDown["ArrowLeft"] = false;
         keysDown["ArrowRight"] = false;
         keysDown["ArrowUp"] = false;
       }
     }
-    // При клике по инструкции скрываем её и запускаем платформер
     howToPlayOverlay.addEventListener('click', () => {
       howToPlayOverlay.style.display = 'none';
       startPlatformerMode();
     });
-    // Функция для отрисовки платформ (используется в платформерном режиме)
     function drawPlatform(x, y, width, height) {
       ctx.fillStyle = "#a0e9ff";
       ctx.fillRect(x, y, width, height);
@@ -1094,7 +1073,6 @@
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, width, height);
     }
-    // Функция для отрисовки двери
     function drawDoor(x, y, width, height) {
       ctx.fillStyle = "#663300";
       ctx.fillRect(x, y, width, height);
