@@ -136,7 +136,7 @@
     .modeBtn.selected {
       background: #3498db;
     }
-    /* Заменили ссылку на фон для #shop */
+    /* Фон магазина */
     #shop {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -229,7 +229,6 @@
       display: none;
     }
     /* Оверлей с инструкцией HOW TO PLAY? для PLATFORMER */
-    /* Заменили фон для howToPlayOverlay */
     #howToPlayOverlay {
       display: none;
       position: absolute;
@@ -308,7 +307,7 @@
       top: 5%;
       right: 5%;
     }
-    /* Заменили фон для #modesTab */
+    /* Фон вкладки MODES */
     #modesTab {
       display: none;
       position: absolute;
@@ -358,8 +357,7 @@
   <!-- Оверлей с инструкцией HOW TO PLAY? для PLATFORMER -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
-    <p>Use left/right arrow keys to move,<br>
-    press up arrow or space to jump!</p>
+    <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
     <p>(Tap or click anywhere to start)</p>
   </div>
   <!-- Главное меню -->
@@ -532,19 +530,17 @@
     const nerpaFalling = new Image();
     nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
 
-    // >>> ДОБАВЛЕНА GIF-АНИМАЦИЯ МОНЕТЫ <<<
+    // Загружаем GIF с монетой, который теперь должен иметь прозрачный фон
     const coinImg = new Image();
     coinImg.src = 'BACKGROUND/goldcoin.gif';
 
     let nerpaImg = new Image();
     nerpaImg.src = nerpaNormal.src;
 
-    /* Фон теперь задаётся через CSS, поэтому функция drawBackground заменена на очистку холста */
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    // --- Управление в режиме FLYING (пробел) ---
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
@@ -563,7 +559,6 @@
       }
     });
 
-    // --- Hard Mode переключение ---
     hardModeButton.addEventListener('click', () => {
       hardModeEnabled = !hardModeEnabled;
       if (hardModeEnabled) {
@@ -584,7 +579,6 @@
       hardModeDescription.style.display = 'none';
     });
 
-    // --- Обработчики меню ---
     let selectedMode = "FLYING";
     document.querySelectorAll('.modeBtn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -604,8 +598,6 @@
       nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-
-      // Если выбран режим FLYING, скрываем overlay инструкции
       if (selectedMode === "FLYING") {
         howToPlayOverlay.style.display = 'none';
         pauseBtn.style.display = 'none';
@@ -613,7 +605,6 @@
       } else if (selectedMode === "PLATFORMER") {
         pauseBtn.style.display = 'block';
         coinCountElement.style.display = 'none';
-        // Показываем инструкцию только для режима PLATFORMER
         howToPlayOverlay.style.display = 'block';
       }
     });
@@ -663,7 +654,6 @@
       pauseBtn.style.display = 'none';
     });
 
-    // --- Обработка кнопки паузы ---
     let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
@@ -687,7 +677,6 @@
       pauseBtn.style.display = 'none';
     });
 
-    // --- Режим FLYING ---
     let shadow = null;
 
     function startFlyingMode() {
@@ -698,10 +687,8 @@
       pipes = [];
       particles = [];
       reactionMessages = [];
-
       coinCountElement.style.display = 'block';
       nerpaImg.src = nerpaNormal.src;
-
       shadow = {
         x: canvas.width * 0.1,
         y: canvas.height * 0.5,
@@ -711,28 +698,21 @@
         gravity: 0.35,
         jump: -6
       };
-
       flyingGameLoop();
     }
 
     function flyingGameLoop() {
       if (!gameStarted || paused) return;
-
       clearCanvas();
-
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
-
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
-
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
-
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
-
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
@@ -740,7 +720,6 @@
             showReaction('Score ' + score);
           }
         }
-
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           clearCanvas();
           gameStarted = false;
@@ -751,7 +730,6 @@
           return;
         }
       }
-
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -763,17 +741,14 @@
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
-
       drawCoins();
       drawParticles();
       updateShadowImage();
       ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
       drawPipes();
-
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       drawReactions();
-
       requestAnimationFrame(flyingGameLoop);
     }
 
@@ -788,10 +763,8 @@
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
-
       let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
       let color = design ? design.colors[0] : pipeColors[Math.floor(Math.random() * pipeColors.length)];
-
       pipes.push({
         x: canvas.width,
         topHeight: gapPosition,
@@ -800,7 +773,6 @@
         color: color,
         design: design
       });
-
       createCoin(gapPosition, gap);
     }
 
@@ -817,17 +789,14 @@
         let p = particles[i];
         p.alpha -= p.decay;
         p.x -= 0.5;
-        if (p.alpha <= 0) {
-          particles.splice(i, 1);
-        }
+        if (p.alpha <= 0) { particles.splice(i, 1); }
       }
     }
 
-    // >>> ФУНКЦИЯ РИСОВАНИЯ МОНЕТ С ПОМОЩЬЮ GIF <<<
+    // Рисуем монету с использованием GIF с прозрачным фоном и увеличенным размером
     function drawCoins() {
       coins.forEach(coin => {
         if (!coin.collected) {
-          // Рисуем gif монеты, центрируя по X и Y
           ctx.drawImage(
             coinImg,
             coin.x - coin.radius,
@@ -839,11 +808,12 @@
       });
     }
 
+    // Создаем монету с увеличенным радиусом
     function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
         y: gapPosition + gapSize / 2,
-        radius: canvas.width * 0.015,
+        radius: canvas.width * 0.03,
         collected: false
       };
       coins.push(coin);
@@ -853,12 +823,10 @@
       let cx = coin.x, cy = coin.y;
       let rx = shadow.x, ry = shadow.y;
       let rw = shadow.width, rh = shadow.height;
-
       let nearestX = Math.max(rx, Math.min(cx, rx + rw));
       let nearestY = Math.max(ry, Math.min(cy, ry + rh));
       let dx = cx - nearestX;
       let dy = cy - nearestY;
-
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
 
@@ -875,11 +843,8 @@
         ctx.textAlign = "center";
         ctx.fillText(msg.text, msg.x, msg.y);
         ctx.restore();
-
         msg.timer--;
-        if (msg.timer <= 0) {
-          reactionMessages.splice(index, 1);
-        }
+        if (msg.timer <= 0) { reactionMessages.splice(index, 1); }
       });
     }
 
@@ -900,32 +865,27 @@
 
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
-
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
         shopItemsDiv.appendChild(trailsHeader);
-
         let trailsGrid = document.createElement("div");
         trailsGrid.className = "shop-grid";
-
         for (let id in trailsConfig) {
           let trail = trailsConfig[id];
           let div = document.createElement("div");
           div.className = "shop-item";
           div.innerHTML = `<strong>${trail.name}</strong><br>
                            Price: ${trail.price} coins<br>`;
-
           if (purchasedTrails.includes(trail.id)) {
-            if (currentTrailId === trail.id) {
-              div.innerHTML += `<em>Selected</em>`;
-            } else {
+            if (currentTrailId === trail.id) { div.innerHTML += `<em>Selected</em>`; }
+            else {
               let selectBtn = document.createElement("button");
               selectBtn.textContent = "Select";
-              selectBtn.addEventListener("click", () => {
-                currentTrailId = trail.id;
-                localStorage.setItem("selectedTrail", currentTrailId);
-                renderShopItems();
+              selectBtn.addEventListener("click", () => { 
+                currentTrailId = trail.id; 
+                localStorage.setItem("selectedTrail", currentTrailId); 
+                renderShopItems(); 
               });
               div.appendChild(selectBtn);
             }
@@ -941,25 +901,19 @@
                 purchasedTrails.push(trail.id);
                 localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
                 renderShopItems();
-              } else {
-                alert("Not enough coins!");
-              }
+              } else { alert("Not enough coins!"); }
             });
             div.appendChild(buyBtn);
           }
-
           trailsGrid.appendChild(div);
         }
         shopItemsDiv.appendChild(trailsGrid);
       }
-
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
-
       let pipesGrid = document.createElement("div");
       pipesGrid.className = "shop-grid";
-
       for (let id in pipeDesigns) {
         let design = pipeDesigns[id];
         let div = document.createElement("div");
@@ -967,10 +921,9 @@
         div.innerHTML = `<strong>${design.name}</strong><br>
                          Price: ${design.price} coins<br>
                          <img src="${design.preview}" alt="${design.name}"><br>`;
-
         if (purchasedPipeDesigns.includes(design.id)) {
-          if (currentPipeDesign === design.id) {
-            div.innerHTML += `<em>Selected</em>`;
+          if (currentPipeDesign === design.id) { 
+            div.innerHTML += `<em>Selected</em>`; 
           } else {
             let selectBtn = document.createElement("button");
             selectBtn.textContent = "Select";
@@ -993,16 +946,12 @@
               purchasedPipeDesigns.push(design.id);
               localStorage.setItem("purchasedPipeDesigns", JSON.stringify(purchasedPipeDesigns));
               renderShopItems();
-            } else {
-              alert("Not enough coins!");
-            }
+            } else { alert("Not enough coins!"); }
           });
           div.appendChild(buyBtn);
         }
-
         pipesGrid.appendChild(div);
       }
-
       shopItemsDiv.appendChild(pipesGrid);
     }
 
@@ -1017,17 +966,12 @@
       startPlatformerLevel();
     }
 
-    // Генерируем много платформ снизу вверх
     function generatePlatforms() {
       let platforms = [];
       const platformCount = 10;
       const platformWidth = 100, platformHeight = 20;
-
-      // Пол внизу
       platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
-
       const gap = (canvas.height - 150) / (platformCount - 1);
-
       for (let i = 1; i < platformCount; i++) {
         let y = canvas.height - 50 - i * gap;
         let x = Math.random() * (canvas.width - platformWidth);
@@ -1039,13 +983,10 @@
     function startPlatformerLevel() {
       let platforms = generatePlatforms();
       platforms.sort((a, b) => a.y - b.y);
-
       let highestPlatform = platforms[0];
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
-
       door = { x: doorX, y: doorY, width: 50, height: 70 };
-
       player = {
         x: canvas.width * 0.1,
         y: canvas.height - 150,
@@ -1057,16 +998,13 @@
         jumpForce: -12,
         onGround: false
       };
-
       platformerGameStarted = true;
       platformerLoop(platforms);
     }
 
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
-
       clearCanvas();
-
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -1074,17 +1012,14 @@
       } else {
         player.vx = 0;
       }
-
       if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
       }
-
       player.vy += 0.5;
       player.x += player.vx;
       player.y += player.vy;
       player.onGround = false;
-
       platforms.forEach(plat => {
         if (
           player.x < plat.x + plat.width &&
@@ -1099,10 +1034,7 @@
           }
         }
       });
-
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
-
-      // Проверяем пересечение с "дверью" (конец уровня)
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1113,20 +1045,17 @@
         localStorage.setItem("totalCoins", totalCoins);
         menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
-
         platformerGameStarted = false;
         ctx.fillStyle = "#fff";
         ctx.font = "20px 'Press Start 2P'";
         ctx.textAlign = "center";
         ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
-
         setTimeout(() => {
           platformerLevel++;
           startPlatformerLevel();
         }, 1500);
         return;
       }
-
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1134,22 +1063,14 @@
         pauseBtn.style.display = 'none';
         return;
       }
-
-      platforms.forEach(plat => {
-        drawPlatform(plat.x, plat.y, plat.width, plat.height);
-      });
+      platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
       drawDoor(door.x, door.y, door.width, door.height);
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
-
       requestAnimationFrame(() => platformerLoop(platforms));
     }
 
-    window.addEventListener("keydown", (e) => {
-      keysDown[e.code] = true;
-    });
-    window.addEventListener("keyup", (e) => {
-      keysDown[e.code] = false;
-    });
+    window.addEventListener("keydown", (e) => { keysDown[e.code] = true; });
+    window.addEventListener("keyup", (e) => { keysDown[e.code] = false; });
 
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
@@ -1162,15 +1083,11 @@
         let touch = e.touches[0];
         let x = touch.clientX;
         let y = touch.clientY;
-
         if (y < canvas.height * 0.3 && player && player.onGround) {
           keysDown["ArrowUp"] = true;
         } else {
-          if (x < canvas.width / 2) {
-            keysDown["ArrowLeft"] = true;
-          } else {
-            keysDown["ArrowRight"] = true;
-          }
+          if (x < canvas.width / 2) { keysDown["ArrowLeft"] = true; }
+          else { keysDown["ArrowRight"] = true; }
         }
       }
     }
