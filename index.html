@@ -428,11 +428,13 @@
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
     }
+
     // --- Глобальные переменные ---
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 60;
     let pipeColors = ["#00FF00", "#FF0000", "#0000FF"];
+
     function drawPipes() {
       pipes.forEach(pipe => {
         ctx.fillStyle = pipe.color;
@@ -440,6 +442,7 @@
         ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
+
     function drawParticles() {
       particles.forEach(p => {
         ctx.save();
@@ -451,6 +454,7 @@
         ctx.restore();
       });
     }
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
@@ -482,64 +486,83 @@
     const pauseMenu = document.getElementById('pauseMenu');
     // Оверлей с инструкцией для платформера
     const howToPlayOverlay = document.getElementById('howToPlayOverlay');
+
     let gameStarted = false;
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
     let hardModeEnabled = false;
+
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
+
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
     const retroArcadeSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ffff00'/></svg>";
+
     const pipeDesigns = {
       "0": { id: "0", name: "Standard", price: 0, preview: standardSVG, colors: ["#0000ff"], animation: "none" },
       "1": { id: "1", name: "Pixel Frost", price: 25, preview: pixelFrostSVG, colors: ["#a0e9ff"], animation: "blink" },
       "2": { id: "2", name: "Neon Pulse", price: 50, preview: neonPulseSVG, colors: ["#ff00ff"], animation: "pulse" },
       "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
+
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
     let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
+
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
+
     let particles = [];
     let coins = [];
     let reactionMessages = [];
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
     const nerpaNormal = new Image();
     nerpaNormal.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
     const nerpaFalling = new Image();
     nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
+
+    // >>> ДОБАВЛЕНА GIF-АНИМАЦИЯ МОНЕТЫ <<<
+    const coinImg = new Image();
+    coinImg.src = 'BACKGROUND/goldcoin.gif';
+
     let nerpaImg = new Image();
     nerpaImg.src = nerpaNormal.src;
+
     /* Фон теперь задаётся через CSS, поэтому функция drawBackground заменена на очистку холста */
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+
     // --- Управление в режиме FLYING (пробел) ---
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
       }
     });
+
     canvas.addEventListener('click', () => {
       if (gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
       }
     });
+
     nicknameInput.addEventListener('input', () => {
       if (nicknameInput.value.trim() !== '') {
         nicknameWarning.style.display = 'none';
       }
     });
+
     // --- Hard Mode переключение ---
     hardModeButton.addEventListener('click', () => {
       hardModeEnabled = !hardModeEnabled;
@@ -551,13 +574,16 @@
         hardModeText.textContent = "HARD MODE OFF";
       }
     });
+
     hardModeQuestion.addEventListener('click', (e) => {
       e.stopPropagation();
       hardModeDescription.style.display = 'block';
     });
+
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
+
     // --- Обработчики меню ---
     let selectedMode = "FLYING";
     document.querySelectorAll('.modeBtn').forEach(btn => {
@@ -568,6 +594,7 @@
         document.getElementById('gameTitle').textContent = selectedMode;
       });
     });
+
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
       if (!username) {
@@ -577,6 +604,7 @@
       nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
+
       // Если выбран режим FLYING, скрываем overlay инструкции
       if (selectedMode === "FLYING") {
         howToPlayOverlay.style.display = 'none';
@@ -589,36 +617,44 @@
         howToPlayOverlay.style.display = 'block';
       }
     });
+
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
+
     shopBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       shop.style.display = 'flex';
       renderShopItems();
     });
+
     modesBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       modesTab.style.display = 'flex';
     });
+
     modesBackBtn.addEventListener('click', () => {
       modesTab.style.display = 'none';
       menu.style.display = 'flex';
     });
+
     shopBackBtn.addEventListener('click', () => {
       shop.style.display = 'none';
       menu.style.display = 'flex';
     });
+
     shareBtn.addEventListener('click', () => {
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
       const shareUrl = "https://t.me/FlyingSealBot/FLYING";
       const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
       window.open(telegramShareLink, '_blank');
     });
+
     continueBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       startFlyingMode();
     });
+
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
@@ -626,12 +662,14 @@
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
+
     // --- Обработка кнопки паузы ---
     let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
       pauseMenu.style.display = 'block';
     });
+
     resumeBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
@@ -639,6 +677,7 @@
         flyingGameLoop();
       }
     });
+
     exitBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
@@ -647,8 +686,10 @@
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
+
     // --- Режим FLYING ---
     let shadow = null;
+
     function startFlyingMode() {
       gameStarted = true;
       score = 0;
@@ -657,8 +698,10 @@
       pipes = [];
       particles = [];
       reactionMessages = [];
+
       coinCountElement.style.display = 'block';
       nerpaImg.src = nerpaNormal.src;
+
       shadow = {
         x: canvas.width * 0.1,
         y: canvas.height * 0.5,
@@ -668,20 +711,28 @@
         gravity: 0.35,
         jump: -6
       };
+
       flyingGameLoop();
     }
+
     function flyingGameLoop() {
       if (!gameStarted || paused) return;
+
       clearCanvas();
+
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
+
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
+
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
+
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
+
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
@@ -689,6 +740,7 @@
             showReaction('Score ' + score);
           }
         }
+
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           clearCanvas();
           gameStarted = false;
@@ -699,6 +751,7 @@
           return;
         }
       }
+
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -710,16 +763,20 @@
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
+
       drawCoins();
       drawParticles();
       updateShadowImage();
       ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
       drawPipes();
+
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       drawReactions();
+
       requestAnimationFrame(flyingGameLoop);
     }
+
     function checkCollision(pipe) {
       return (
         shadow.x < pipe.x + pipeWidth &&
@@ -727,11 +784,14 @@
         (shadow.y < pipe.topHeight || shadow.y + shadow.height > pipe.bottomY)
       );
     }
+
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+
       let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
       let color = design ? design.colors[0] : pipeColors[Math.floor(Math.random() * pipeColors.length)];
+
       pipes.push({
         x: canvas.width,
         topHeight: gapPosition,
@@ -740,40 +800,45 @@
         color: color,
         design: design
       });
+
       createCoin(gapPosition, gap);
     }
+
     function updateShadowImage() {
       nerpaImg.src = shadow.velocity >= 0 ? nerpaFalling.src : nerpaNormal.src;
     }
+
     function spawnParticle(x, y) {
       particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
     }
+
     function updateParticles() {
       for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i];
         p.alpha -= p.decay;
         p.x -= 0.5;
-        if (p.alpha <= 0) { particles.splice(i, 1); }
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
       }
     }
-    function drawPixelCoin(coin) {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      let radius = coin.radius;
-      ctx.fillStyle = "#FFD700";
-      ctx.beginPath();
-      ctx.arc(coin.x, coin.y, radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#B8860B";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.fillStyle = "#FFF8DC";
-      ctx.fillRect(coin.x - radius * 0.3, coin.y - radius * 0.3, radius * 0.6, radius * 0.6);
-      ctx.restore();
-    }
+
+    // >>> ФУНКЦИЯ РИСОВАНИЯ МОНЕТ С ПОМОЩЬЮ GIF <<<
     function drawCoins() {
-      coins.forEach(coin => { if (!coin.collected) { drawPixelCoin(coin); } });
+      coins.forEach(coin => {
+        if (!coin.collected) {
+          // Рисуем gif монеты, центрируя по X и Y
+          ctx.drawImage(
+            coinImg,
+            coin.x - coin.radius,
+            coin.y - coin.radius,
+            coin.radius * 2,
+            coin.radius * 2
+          );
+        }
+      });
     }
+
     function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
@@ -783,19 +848,24 @@
       };
       coins.push(coin);
     }
+
     function checkCoinCollision(coin) {
       let cx = coin.x, cy = coin.y;
       let rx = shadow.x, ry = shadow.y;
       let rw = shadow.width, rh = shadow.height;
+
       let nearestX = Math.max(rx, Math.min(cx, rx + rw));
       let nearestY = Math.max(ry, Math.min(cy, ry + rh));
       let dx = cx - nearestX;
       let dy = cy - nearestY;
+
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
+
     function showReaction(message) {
       reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
     }
+
     function drawReactions() {
       reactionMessages.forEach((msg, index) => {
         ctx.save();
@@ -805,10 +875,14 @@
         ctx.textAlign = "center";
         ctx.fillText(msg.text, msg.x, msg.y);
         ctx.restore();
+
         msg.timer--;
-        if (msg.timer <= 0) { reactionMessages.splice(index, 1); }
+        if (msg.timer <= 0) {
+          reactionMessages.splice(index, 1);
+        }
       });
     }
+
     function saveScore(name, points) {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       scores.push({ name, points });
@@ -817,34 +891,41 @@
       localStorage.setItem("scores", JSON.stringify(scores));
       updateLeaderboard();
     }
+
     function updateLeaderboard() {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
     }
     updateLeaderboard();
+
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
+
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
         shopItemsDiv.appendChild(trailsHeader);
+
         let trailsGrid = document.createElement("div");
         trailsGrid.className = "shop-grid";
+
         for (let id in trailsConfig) {
           let trail = trailsConfig[id];
           let div = document.createElement("div");
           div.className = "shop-item";
           div.innerHTML = `<strong>${trail.name}</strong><br>
                            Price: ${trail.price} coins<br>`;
+
           if (purchasedTrails.includes(trail.id)) {
-            if (currentTrailId === trail.id) { div.innerHTML += `<em>Selected</em>`; }
-            else {
+            if (currentTrailId === trail.id) {
+              div.innerHTML += `<em>Selected</em>`;
+            } else {
               let selectBtn = document.createElement("button");
               selectBtn.textContent = "Select";
-              selectBtn.addEventListener("click", () => { 
-                currentTrailId = trail.id; 
-                localStorage.setItem("selectedTrail", currentTrailId); 
-                renderShopItems(); 
+              selectBtn.addEventListener("click", () => {
+                currentTrailId = trail.id;
+                localStorage.setItem("selectedTrail", currentTrailId);
+                renderShopItems();
               });
               div.appendChild(selectBtn);
             }
@@ -860,21 +941,25 @@
                 purchasedTrails.push(trail.id);
                 localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
                 renderShopItems();
-              } else { 
-                alert("Not enough coins!"); 
+              } else {
+                alert("Not enough coins!");
               }
             });
             div.appendChild(buyBtn);
           }
+
           trailsGrid.appendChild(div);
         }
         shopItemsDiv.appendChild(trailsGrid);
       }
+
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
+
       let pipesGrid = document.createElement("div");
       pipesGrid.className = "shop-grid";
+
       for (let id in pipeDesigns) {
         let design = pipeDesigns[id];
         let div = document.createElement("div");
@@ -882,9 +967,10 @@
         div.innerHTML = `<strong>${design.name}</strong><br>
                          Price: ${design.price} coins<br>
                          <img src="${design.preview}" alt="${design.name}"><br>`;
+
         if (purchasedPipeDesigns.includes(design.id)) {
-          if (currentPipeDesign === design.id) { 
-            div.innerHTML += `<em>Selected</em>`; 
+          if (currentPipeDesign === design.id) {
+            div.innerHTML += `<em>Selected</em>`;
           } else {
             let selectBtn = document.createElement("button");
             selectBtn.textContent = "Select";
@@ -913,26 +999,35 @@
           });
           div.appendChild(buyBtn);
         }
+
         pipesGrid.appendChild(div);
       }
+
       shopItemsDiv.appendChild(pipesGrid);
     }
+
     // --- Режим PLATFORMER ---
     let platformerLevel = 1;
     let platformerGameStarted = false;
     let door, player;
     let keysDown = {};
+
     function startPlatformerMode() {
       coinCountElement.style.display = 'none';
       startPlatformerLevel();
     }
+
     // Генерируем много платформ снизу вверх
     function generatePlatforms() {
       let platforms = [];
       const platformCount = 10;
       const platformWidth = 100, platformHeight = 20;
+
+      // Пол внизу
       platforms.push({ x: 0, y: canvas.height - 50, width: canvas.width, height: 50 });
+
       const gap = (canvas.height - 150) / (platformCount - 1);
+
       for (let i = 1; i < platformCount; i++) {
         let y = canvas.height - 50 - i * gap;
         let x = Math.random() * (canvas.width - platformWidth);
@@ -940,13 +1035,17 @@
       }
       return platforms;
     }
+
     function startPlatformerLevel() {
       let platforms = generatePlatforms();
       platforms.sort((a, b) => a.y - b.y);
+
       let highestPlatform = platforms[0];
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
+
       door = { x: doorX, y: doorY, width: 50, height: 70 };
+
       player = {
         x: canvas.width * 0.1,
         y: canvas.height - 150,
@@ -958,12 +1057,16 @@
         jumpForce: -12,
         onGround: false
       };
+
       platformerGameStarted = true;
       platformerLoop(platforms);
     }
+
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
+
       clearCanvas();
+
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -971,14 +1074,17 @@
       } else {
         player.vx = 0;
       }
+
       if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
       }
+
       player.vy += 0.5;
       player.x += player.vx;
       player.y += player.vy;
       player.onGround = false;
+
       platforms.forEach(plat => {
         if (
           player.x < plat.x + plat.width &&
@@ -993,7 +1099,10 @@
           }
         }
       });
+
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
+
+      // Проверяем пересечение с "дверью" (конец уровня)
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1004,17 +1113,20 @@
         localStorage.setItem("totalCoins", totalCoins);
         menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
+
         platformerGameStarted = false;
         ctx.fillStyle = "#fff";
         ctx.font = "20px 'Press Start 2P'";
         ctx.textAlign = "center";
         ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
+
         setTimeout(() => {
           platformerLevel++;
           startPlatformerLevel();
         }, 1500);
         return;
       }
+
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1022,19 +1134,26 @@
         pauseBtn.style.display = 'none';
         return;
       }
-      platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
+
+      platforms.forEach(plat => {
+        drawPlatform(plat.x, plat.y, plat.width, plat.height);
+      });
       drawDoor(door.x, door.y, door.width, door.height);
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
+
       requestAnimationFrame(() => platformerLoop(platforms));
     }
+
     window.addEventListener("keydown", (e) => {
       keysDown[e.code] = true;
     });
     window.addEventListener("keyup", (e) => {
       keysDown[e.code] = false;
     });
+
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+
     function handleTouchStart(e) {
       e.preventDefault();
       if(selectedMode === "FLYING" && gameStarted){
@@ -1043,6 +1162,7 @@
         let touch = e.touches[0];
         let x = touch.clientX;
         let y = touch.clientY;
+
         if (y < canvas.height * 0.3 && player && player.onGround) {
           keysDown["ArrowUp"] = true;
         } else {
@@ -1054,6 +1174,7 @@
         }
       }
     }
+
     function handleTouchEnd(e) {
       e.preventDefault();
       if(selectedMode === "PLATFORMER"){
@@ -1062,10 +1183,12 @@
         keysDown["ArrowUp"] = false;
       }
     }
+
     howToPlayOverlay.addEventListener('click', () => {
       howToPlayOverlay.style.display = 'none';
       startPlatformerMode();
     });
+
     function drawPlatform(x, y, width, height) {
       ctx.fillStyle = "#a0e9ff";
       ctx.fillRect(x, y, width, height);
@@ -1073,6 +1196,7 @@
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, width, height);
     }
+
     function drawDoor(x, y, width, height) {
       ctx.fillStyle = "#663300";
       ctx.fillRect(x, y, width, height);
