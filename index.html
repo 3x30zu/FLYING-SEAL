@@ -526,6 +526,7 @@
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
 
     let particles = [];
+    // coins: каждый объект хранит {x, y, radius, collected, el: DOMElement}
     let coins = [];
     let reactionMessages = [];
 
@@ -540,10 +541,6 @@
     nerpaNormal.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
     const nerpaFalling = new Image();
     nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
-
-    // В данной версии монеты больше не отрисовываются через canvas,
-    // а создаются как DOM-элементы для сохранения анимации GIF.
-    // Старый код отрисовки монет через canvas удалён.
 
     let nerpaImg = new Image();
     nerpaImg.src = nerpaNormal.src;
@@ -719,9 +716,13 @@
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
+
+      // Спавн труб
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
+
+      // Движение труб + проверка коллизии
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
@@ -732,8 +733,13 @@
           }
         }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+          // ИГРОК УМЕР
           clearCanvas();
           gameStarted = false;
+
+          // Удаляем все монеты, чтобы они пропадали с экрана
+          removeAllCoins();
+
           setTimeout(() => {
             saveScore(username, score);
             gameOverOverlay.style.display = 'flex';
@@ -741,6 +747,8 @@
           return;
         }
       }
+
+      // Движение монет + проверка сбора
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -752,8 +760,8 @@
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
-      // Обновляем позиции DOM-элементов монет
-      updateCoins();
+      updateCoins(); // Обновляем позиции DOM-элементов монет
+
       drawParticles();
       updateShadowImage();
       ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
@@ -762,6 +770,16 @@
       coinCountElement.textContent = `Coins: ${coinCount}`;
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
+    }
+
+    // Удаляем все монеты с экрана и очищаем массив coins
+    function removeAllCoins() {
+      coins.forEach(coin => {
+        if (coin.el) {
+          coin.el.remove();
+        }
+      });
+      coins = [];
     }
 
     function checkCollision(pipe) {
@@ -805,7 +823,7 @@
       }
     }
 
-    // Создаем монету как объект с привязанным DOM-элементом (img), чтобы GIF оставался анимированным
+    // Создаем монету как DOM-элемент (img)
     function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
@@ -813,7 +831,6 @@
         radius: canvas.width * 0.03,
         collected: false
       };
-      // Создаем DOM-элемент для монеты
       let coinEl = document.createElement('img');
       coinEl.src = 'BACKGROUND/goldcoin.gif';
       coinEl.style.position = 'absolute';
@@ -827,7 +844,7 @@
       coins.push(coin);
     }
 
-    // Обновляем позицию DOM-элементов монет и удаляем их, если они собраны
+    // Обновляем позицию DOM-элементов монет и удаляем, если собраны
     function updateCoins() {
       coins.forEach((coin, index) => {
         if (!coin.collected) {
@@ -836,6 +853,7 @@
           coin.el.style.width = (coin.radius * 2) + "px";
           coin.el.style.height = (coin.radius * 2) + "px";
         } else {
+          // монета собрана — убираем из DOM и массива
           coin.el.remove();
           coins.splice(index, 1);
         }
@@ -888,6 +906,7 @@
 
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
+      // Если есть конфигурация трейлов (в коде не показана), она будет обрабатываться здесь
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
@@ -932,6 +951,8 @@
         }
         shopItemsDiv.appendChild(trailsGrid);
       }
+
+      // Трубы
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
@@ -1028,6 +1049,8 @@
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       clearCanvas();
+
+      // Движение влево-вправо
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -1035,14 +1058,19 @@
       } else {
         player.vx = 0;
       }
+
+      // Прыжок
       if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
       }
+
       player.vy += 0.5;
       player.x += player.vx;
       player.y += player.vy;
       player.onGround = false;
+
+      // Столкновение с платформами
       platforms.forEach(plat => {
         if (
           player.x < plat.x + plat.width &&
@@ -1050,6 +1078,7 @@
           player.y < plat.y + plat.height &&
           player.y + player.height > plat.y
         ) {
+          // проверяем, сверху ли мы упали на платформу
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             player.y = plat.y - player.height;
             player.vy = 0;
@@ -1057,7 +1086,10 @@
           }
         }
       });
+
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
+
+      // Проверка на вход в дверь
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1079,13 +1111,21 @@
         }, 1500);
         return;
       }
+
+      // Если игрок упал вниз
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
+
+        // Точно так же чистим все монеты, если они есть
+        removeAllCoins();
+
         menu.style.display = 'flex';
         pauseBtn.style.display = 'none';
         return;
       }
+
+      // Рисуем платформы и дверь
       platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
       drawDoor(door.x, door.y, door.width, door.height);
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
@@ -1143,6 +1183,17 @@
       ctx.strokeStyle = "#fff";
       ctx.lineWidth = 3;
       ctx.strokeRect(x, y, width, height);
+    }
+
+    // Эта функция уже есть выше, но повторим, чтобы было наглядно.
+    // Она удаляет все DOM-элементы монет и очищает массив coins.
+    function removeAllCoins() {
+      coins.forEach(coin => {
+        if (coin.el) {
+          coin.el.remove();
+        }
+      });
+      coins = [];
     }
   </script>
 </body>
