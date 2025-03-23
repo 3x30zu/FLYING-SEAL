@@ -33,6 +33,15 @@
       /* Анимированный фон для canvas */
       background: url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
     }
+    /* Контейнер для монет, которые будут отображаться как DOM-элементы */
+    #coinContainer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
     /* Главное меню */
     #menu {
       position: absolute;
@@ -352,6 +361,8 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
+  <!-- Контейнер для монет (DOM-элементы, чтобы GIF анимировался) -->
+  <div id="coinContainer"></div>
   <!-- Кнопка паузы для платформера -->
   <button id="pauseBtn">||</button>
   <!-- Оверлей с инструкцией HOW TO PLAY? для PLATFORMER -->
@@ -530,9 +541,9 @@
     const nerpaFalling = new Image();
     nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
 
-    // Загружаем GIF с монетой, который теперь должен иметь прозрачный фон
-    const coinImg = new Image();
-    coinImg.src = 'BACKGROUND/goldcoin.gif';
+    // В данной версии монеты больше не отрисовываются через canvas,
+    // а создаются как DOM-элементы для сохранения анимации GIF.
+    // Старый код отрисовки монет через canvas удалён.
 
     let nerpaImg = new Image();
     nerpaImg.src = nerpaNormal.src;
@@ -741,7 +752,8 @@
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
-      drawCoins();
+      // Обновляем позиции DOM-элементов монет
+      updateCoins();
       drawParticles();
       updateShadowImage();
       ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
@@ -793,22 +805,7 @@
       }
     }
 
-    // Рисуем монету с использованием GIF с прозрачным фоном и увеличенным размером
-    function drawCoins() {
-      coins.forEach(coin => {
-        if (!coin.collected) {
-          ctx.drawImage(
-            coinImg,
-            coin.x - coin.radius,
-            coin.y - coin.radius,
-            coin.radius * 2,
-            coin.radius * 2
-          );
-        }
-      });
-    }
-
-    // Создаем монету с увеличенным радиусом
+    // Создаем монету как объект с привязанным DOM-элементом (img), чтобы GIF оставался анимированным
     function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
@@ -816,7 +813,33 @@
         radius: canvas.width * 0.03,
         collected: false
       };
+      // Создаем DOM-элемент для монеты
+      let coinEl = document.createElement('img');
+      coinEl.src = 'BACKGROUND/goldcoin.gif';
+      coinEl.style.position = 'absolute';
+      coinEl.style.pointerEvents = 'none';
+      coinEl.style.left = (coin.x - coin.radius) + "px";
+      coinEl.style.top = (coin.y - coin.radius) + "px";
+      coinEl.style.width = (coin.radius * 2) + "px";
+      coinEl.style.height = (coin.radius * 2) + "px";
+      document.getElementById('coinContainer').appendChild(coinEl);
+      coin.el = coinEl;
       coins.push(coin);
+    }
+
+    // Обновляем позицию DOM-элементов монет и удаляем их, если они собраны
+    function updateCoins() {
+      coins.forEach((coin, index) => {
+        if (!coin.collected) {
+          coin.el.style.left = (coin.x - coin.radius) + "px";
+          coin.el.style.top = (coin.y - coin.radius) + "px";
+          coin.el.style.width = (coin.radius * 2) + "px";
+          coin.el.style.height = (coin.radius * 2) + "px";
+        } else {
+          coin.el.remove();
+          coins.splice(index, 1);
+        }
+      });
     }
 
     function checkCoinCollision(coin) {
