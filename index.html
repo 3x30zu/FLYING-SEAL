@@ -441,18 +441,18 @@
     // --- Глобальные переменные ---
     let pipes = [];
     let pipeSpeed = 2;
-    // Ширина трубы на экране
-    let pipeWidth = 150;
+    // Делаем трубы вдвое меньше (75 px)
+    let pipeWidth = 75;
 
     // Загружаем изображение трубы из папки BACKGROUND
     const pipeImage = new Image();
     pipeImage.src = 'BACKGROUND/PIPE.png';
 
-    // Отступы хитбокса (горизонтальные и вертикальные)
-    let collisionOffsetLeft = 20;
-    let collisionOffsetRight = 20;
-    let collisionOffsetTop = 40;
-    let collisionOffsetBottom = 40;
+    // Отступы хитбокса (уменьшаем пропорционально)
+    let collisionOffsetLeft = 10;
+    let collisionOffsetRight = 10;
+    let collisionOffsetTop = 20;
+    let collisionOffsetBottom = 20;
 
     function drawPipes() {
       pipes.forEach(pipe => {
@@ -759,6 +759,7 @@
         }
       }
 
+      // Движение монет + проверка сбора
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -791,7 +792,7 @@
       coins = [];
     }
 
-    // Функция проверки коллизии с учётом горизонтальных отступов
+    // Функция проверки коллизии с учётом отступов
     function checkCollision(pipe) {
       let topPipeLeft = pipe.x + collisionOffsetLeft;
       let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
@@ -934,6 +935,7 @@
 
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
+      // Если есть конфигурация трейлов (в коде не показана), она будет обрабатываться здесь
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
@@ -979,6 +981,7 @@
         shopItemsDiv.appendChild(trailsGrid);
       }
 
+      // Трубы
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
@@ -1076,6 +1079,7 @@
       if (!platformerGameStarted || paused) return;
       clearCanvas();
 
+      // Движение влево-вправо
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -1084,6 +1088,7 @@
         player.vx = 0;
       }
 
+      // Прыжок
       if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
@@ -1094,6 +1099,7 @@
       player.y += player.vy;
       player.onGround = false;
 
+      // Столкновение с платформами
       platforms.forEach(plat => {
         if (
           player.x < plat.x + plat.width &&
@@ -1111,6 +1117,7 @@
 
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
 
+      // Проверка на вход в дверь
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1133,6 +1140,7 @@
         return;
       }
 
+      // Если игрок упал вниз
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1142,6 +1150,7 @@
         return;
       }
 
+      // Рисуем платформы и дверь
       platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
       drawDoor(door.x, door.y, door.width, door.height);
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
