@@ -442,13 +442,23 @@
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 60;
-    let pipeColors = ["#00FF00", "#FF0000", "#0000FF"];
+    // Убираем выбор цвета трубы – теперь используется изображение
+    // Загружаем изображение трубы из папки BACKGROUNDS
+    const pipeImage = new Image();
+    pipeImage.src = 'BACKGROUNDS/PIPE.png';
 
     function drawPipes() {
       pipes.forEach(pipe => {
-        ctx.fillStyle = pipe.color;
-        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.topHeight);
-        ctx.fillRect(pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+        // Рисуем верхнюю трубу с вертикальным отражением
+        ctx.save();
+        // Перемещаем точку отсчёта к центру верхней трубы
+        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
+        ctx.scale(1, -1);
+        // Отрисовываем изображение трубы, растянутое на высоту pipe.topHeight
+        ctx.drawImage(pipeImage, -pipeWidth / 2, 0, pipeWidth, pipe.topHeight);
+        ctx.restore();
+        // Рисуем нижнюю трубу
+        ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
 
@@ -736,10 +746,7 @@
           // ИГРОК УМЕР
           clearCanvas();
           gameStarted = false;
-
-          // Удаляем все монеты, чтобы они пропадали с экрана
           removeAllCoins();
-
           setTimeout(() => {
             saveScore(username, score);
             gameOverOverlay.style.display = 'flex';
@@ -760,8 +767,7 @@
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
-      updateCoins(); // Обновляем позиции DOM-элементов монет
-
+      updateCoins();
       drawParticles();
       updateShadowImage();
       ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
@@ -794,7 +800,7 @@
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
       let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
-      let color = design ? design.colors[0] : pipeColors[Math.floor(Math.random() * pipeColors.length)];
+      let color = design ? design.colors[0] : "#fff";
       pipes.push({
         x: canvas.width,
         topHeight: gapPosition,
@@ -853,7 +859,6 @@
           coin.el.style.width = (coin.radius * 2) + "px";
           coin.el.style.height = (coin.radius * 2) + "px";
         } else {
-          // монета собрана — убираем из DOM и массива
           coin.el.remove();
           coins.splice(index, 1);
         }
@@ -906,7 +911,6 @@
 
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
-      // Если есть конфигурация трейлов (в коде не показана), она будет обрабатываться здесь
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
@@ -1050,7 +1054,6 @@
       if (!platformerGameStarted || paused) return;
       clearCanvas();
 
-      // Движение влево-вправо
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -1059,7 +1062,6 @@
         player.vx = 0;
       }
 
-      // Прыжок
       if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
@@ -1070,7 +1072,6 @@
       player.y += player.vy;
       player.onGround = false;
 
-      // Столкновение с платформами
       platforms.forEach(plat => {
         if (
           player.x < plat.x + plat.width &&
@@ -1078,7 +1079,6 @@
           player.y < plat.y + plat.height &&
           player.y + player.height > plat.y
         ) {
-          // проверяем, сверху ли мы упали на платформу
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             player.y = plat.y - player.height;
             player.vy = 0;
@@ -1089,7 +1089,6 @@
 
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
 
-      // Проверка на вход в дверь
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1112,20 +1111,15 @@
         return;
       }
 
-      // Если игрок упал вниз
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
-
-        // Точно так же чистим все монеты, если они есть
         removeAllCoins();
-
         menu.style.display = 'flex';
         pauseBtn.style.display = 'none';
         return;
       }
 
-      // Рисуем платформы и дверь
       platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
       drawDoor(door.x, door.y, door.width, door.height);
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
@@ -1185,8 +1179,6 @@
       ctx.strokeRect(x, y, width, height);
     }
 
-    // Эта функция уже есть выше, но повторим, чтобы было наглядно.
-    // Она удаляет все DOM-элементы монет и очищает массив coins.
     function removeAllCoins() {
       coins.forEach(coin => {
         if (coin.el) {
