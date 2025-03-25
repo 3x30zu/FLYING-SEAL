@@ -243,7 +243,7 @@
       cursor: pointer;
       display: none;
     }
-    /* Оверлей с инструкцией HOW TO PLAY? для PLATFORMER (убираем, чтобы не мешал) */
+    /* Оверлей с инструкцией (не используется) */
     #howToPlayOverlay {
       display: none;
     }
@@ -349,7 +349,7 @@
   <div id="coinContainer"></div>
   <!-- Кнопка паузы для платформера -->
   <button id="pauseBtn">||</button>
-  <!-- Оверлей с инструкцией (скрыт) -->
+  <!-- Оверлей с инструкцией (не используется) -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
     <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
@@ -432,9 +432,9 @@
     const pipeImage = new Image();
     pipeImage.src = 'BACKGROUND/PIPE.png';
 
-    // Загружаем изображение платформы для режима PLATFORMER
+    // Загружаем изображение платформы (теперь platform.png)
     const platformImage = new Image();
-    platformImage.src = 'BACKGROUND/platform.jpg';
+    platformImage.src = 'BACKGROUND/platform.png';
 
     // Отступы хитбокса (уменьшаем пропорционально)
     let collisionOffsetLeft = 10;
@@ -496,7 +496,7 @@
     const coinCountElement = document.getElementById('coinCount');
     const pauseBtn = document.getElementById('pauseBtn');
     const pauseMenu = document.getElementById('pauseMenu');
-    // Оверлей с инструкцией для платформера (убран из использования)
+    // Оверлей с инструкцией для платформера (не используется)
     const howToPlayOverlay = document.getElementById('howToPlayOverlay');
 
     let gameStarted = false;
@@ -617,7 +617,6 @@
       } else if (selectedMode === "PLATFORMER") {
         pauseBtn.style.display = 'block';
         coinCountElement.style.display = 'none';
-        // Сразу запускаем платформер без оверлея
         startPlatformerMode();
       }
     });
@@ -678,7 +677,6 @@
       if (selectedMode === "FLYING") {
         flyingGameLoop();
       } else if (selectedMode === "PLATFORMER") {
-        // Продолжаем анимацию платформера
         platformerLoop(currentPlatforms);
       }
     });
@@ -1201,15 +1199,9 @@
       }
     }
 
-    // Функция рисования платформ (с fallback, если картинка не загружена)
+    // Функция рисования платформ (без fallback)
     function drawPlatform(x, y, width, height) {
-      if (platformImage.complete && platformImage.naturalWidth !== 0) {
-        ctx.drawImage(platformImage, x, y, width, height);
-      } else {
-        // Если платформа не успела загрузиться, рисуем серый прямоугольник
-        ctx.fillStyle = "#555";
-        ctx.fillRect(x, y, width, height);
-      }
+      ctx.drawImage(platformImage, x, y, width, height);
     }
 
     function drawDoor(x, y, width, height) {
