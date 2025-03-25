@@ -432,7 +432,7 @@
     const pipeImage = new Image();
     pipeImage.src = 'BACKGROUND/PIPE.png';
 
-    // Загружаем изображение платформы (теперь platform.png)
+    // Загружаем изображение платформы (platform.png)
     const platformImage = new Image();
     platformImage.src = 'BACKGROUND/platform.png';
 
@@ -1042,14 +1042,29 @@
     function generatePlatforms() {
       let platforms = [];
       const platformCount = 10;
-      // «земля» внизу
-      platforms.push({ x: 0, y: canvas.height - groundHeight, width: canvas.width, height: groundHeight });
+
+      // Создаём "землю" внизу (не пропадает)
+      platforms.push({
+        x: 0,
+        y: canvas.height - groundHeight,
+        width: canvas.width,
+        height: groundHeight,
+        isGround: true
+      });
+
       // Расстояние по вертикали между платформами
       const gap = (canvas.height - 150) / (platformCount - 1);
       for (let i = 1; i < platformCount; i++) {
         let y = canvas.height - groundHeight - i * gap;
         let x = Math.random() * (canvas.width - platformW);
-        platforms.push({ x: x, y: y, width: platformW, height: platformH });
+        platforms.push({
+          x: x,
+          y: y,
+          width: platformW,
+          height: platformH,
+          isGround: false,
+          disappearStartTime: null
+        });
       }
       return platforms;
     }
@@ -1103,7 +1118,8 @@
       player.onGround = false;
 
       // Столкновение с платформами (с учётом небольшого отступа)
-      platforms.forEach(plat => {
+      for (let i = 0; i < platforms.length; i++) {
+        let plat = platforms[i];
         let left = plat.x + platformHitboxOffset;
         let right = plat.x + plat.width - platformHitboxOffset;
         let top = plat.y;
@@ -1121,11 +1137,28 @@
             player.y = plat.y - player.height;
             player.vy = 0;
             player.onGround = true;
+
+            // Если это не земля, запускаем таймер исчезновения (если не запущен)
+            if (!plat.isGround && plat.disappearStartTime === null) {
+              plat.disappearStartTime = performance.now();
+            }
           }
         }
-      });
+      }
 
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
+
+      // Удаляем платформы, если прошло > 1 сек после приземления
+      for (let i = platforms.length - 1; i >= 0; i--) {
+        let plat = platforms[i];
+        if (
+          !plat.isGround &&
+          plat.disappearStartTime !== null &&
+          performance.now() - plat.disappearStartTime > 1000
+        ) {
+          platforms.splice(i, 1);
+        }
+      }
 
       // Проверка на вход в дверь
       if (
@@ -1161,9 +1194,13 @@
       }
 
       // Рисуем платформы и дверь
-      platforms.forEach(plat => { drawPlatform(plat.x, plat.y, plat.width, plat.height); });
+      platforms.forEach(plat => { drawPlatform(plat); });
       drawDoor(door.x, door.y, door.width, door.height);
+
+      // Рисуем нерпу
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
+
+      // Следим за кадрами
       requestAnimationFrame(() => platformerLoop(platforms));
     }
 
@@ -1199,9 +1236,16 @@
       }
     }
 
-    // Функция рисования платформ (без fallback)
-    function drawPlatform(x, y, width, height) {
-      ctx.drawImage(platformImage, x, y, width, height);
+    // Функция рисования платформ
+    function drawPlatform(plat) {
+      // Если это земля, заливаем голубым цветом
+      if (plat.isGround) {
+        ctx.fillStyle = "#87CEFA"; // Небесно-голубой
+        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+      } else {
+        // Остальные платформы — platform.png
+        ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
+      }
     }
 
     function drawDoor(x, y, width, height) {
