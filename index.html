@@ -215,18 +215,20 @@
       text-align: center;
       z-index: 20;
     }
-    /* Оверлей паузы */
+    /* Оверлей паузы (центрируем на экране) */
     #pauseMenu {
       display: none;
       position: absolute;
-      top: 40%;
-      left: 20%;
-      width: 60%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: rgba(0,0,0,0.8);
       color: white;
       text-align: center;
       padding: 20px;
       z-index: 30;
+      width: 80%;
+      max-width: 400px;
     }
     /* Кнопка паузы */
     #pauseBtn {
@@ -241,31 +243,9 @@
       cursor: pointer;
       display: none;
     }
-    /* Оверлей с инструкцией HOW TO PLAY? для PLATFORMER */
+    /* Оверлей с инструкцией HOW TO PLAY? для PLATFORMER (убираем, чтобы не мешал) */
     #howToPlayOverlay {
       display: none;
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover;
-      background-color: rgba(0, 0, 0, 0.6);
-      color: white;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      z-index: 60;
-      font-size: 3vw;
-      cursor: pointer;
-      text-align: center;
-    }
-    #howToPlayOverlay h2,
-    #howToPlayOverlay p {
-      max-width: 90%;
-      margin: 10px auto;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
     }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
@@ -369,7 +349,7 @@
   <div id="coinContainer"></div>
   <!-- Кнопка паузы для платформера -->
   <button id="pauseBtn">||</button>
-  <!-- Оверлей с инструкцией HOW TO PLAY? для PLATFORMER -->
+  <!-- Оверлей с инструкцией (скрыт) -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
     <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
@@ -428,7 +408,7 @@
     <button id="continueBtn">Continue game!</button>
     <button id="mainMenuBtn">MAIN MENU</button>
   </div>
-  <!-- Оверлей для паузы -->
+  <!-- Оверлей для паузы (теперь по центру) -->
   <div id="pauseMenu">
     <h2>Paused</h2>
     <button id="resumeBtn" style="margin:10px;">Resume</button>
@@ -516,7 +496,7 @@
     const coinCountElement = document.getElementById('coinCount');
     const pauseBtn = document.getElementById('pauseBtn');
     const pauseMenu = document.getElementById('pauseMenu');
-    // Оверлей с инструкцией для платформера
+    // Оверлей с инструкцией для платформера (убран из использования)
     const howToPlayOverlay = document.getElementById('howToPlayOverlay');
 
     let gameStarted = false;
@@ -629,14 +609,16 @@
       nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
+
+      // Запуск выбранного режима
       if (selectedMode === "FLYING") {
-        howToPlayOverlay.style.display = 'none';
         pauseBtn.style.display = 'none';
         startFlyingMode();
       } else if (selectedMode === "PLATFORMER") {
         pauseBtn.style.display = 'block';
         coinCountElement.style.display = 'none';
-        howToPlayOverlay.style.display = 'block';
+        // Сразу запускаем платформер без оверлея
+        startPlatformerMode();
       }
     });
 
@@ -680,7 +662,6 @@
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
-      howToPlayOverlay.style.display = 'none';
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
@@ -696,6 +677,9 @@
       pauseMenu.style.display = 'none';
       if (selectedMode === "FLYING") {
         flyingGameLoop();
+      } else if (selectedMode === "PLATFORMER") {
+        // Продолжаем анимацию платформера
+        platformerLoop(currentPlatforms);
       }
     });
 
@@ -703,13 +687,13 @@
       paused = false;
       pauseMenu.style.display = 'none';
       menu.style.display = 'flex';
-      howToPlayOverlay.style.display = 'none';
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
 
     let shadow = null;
 
+    // --- Режим FLYING ---
     function startFlyingMode() {
       gameStarted = true;
       score = 0;
@@ -1041,10 +1025,12 @@
     let platformerGameStarted = false;
     let door, player;
     let keysDown = {};
+    // Запомним платформы в глобальной переменной, чтобы при паузе можно было продолжить
+    let currentPlatforms = [];
 
     // Увеличенные размеры платформ
-    const platformWidth = 150;
-    const platformHeight = 40;
+    const platformW = 150;
+    const platformH = 40;
     // Увеличенная «земля»
     const groundHeight = 80;
     // Небольшой отступ для хитбоксов по бокам платформ
@@ -1064,17 +1050,17 @@
       const gap = (canvas.height - 150) / (platformCount - 1);
       for (let i = 1; i < platformCount; i++) {
         let y = canvas.height - groundHeight - i * gap;
-        let x = Math.random() * (canvas.width - platformWidth);
-        platforms.push({ x: x, y: y, width: platformWidth, height: platformHeight });
+        let x = Math.random() * (canvas.width - platformW);
+        platforms.push({ x: x, y: y, width: platformW, height: platformH });
       }
       return platforms;
     }
 
     function startPlatformerLevel() {
-      let platforms = generatePlatforms();
+      currentPlatforms = generatePlatforms();
       // Сортируем, чтобы самая верхняя платформа шла первой
-      platforms.sort((a, b) => a.y - b.y);
-      let highestPlatform = platforms[0];
+      currentPlatforms.sort((a, b) => a.y - b.y);
+      let highestPlatform = currentPlatforms[0];
       // Координаты двери (над самой верхней платформой)
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
@@ -1091,7 +1077,7 @@
         onGround: false
       };
       platformerGameStarted = true;
-      platformerLoop(platforms);
+      platformerLoop(currentPlatforms);
     }
 
     function platformerLoop(platforms) {
@@ -1215,14 +1201,15 @@
       }
     }
 
-    howToPlayOverlay.addEventListener('click', () => {
-      howToPlayOverlay.style.display = 'none';
-      startPlatformerMode();
-    });
-
-    // Функция рисования платформ
+    // Функция рисования платформ (с fallback, если картинка не загружена)
     function drawPlatform(x, y, width, height) {
-      ctx.drawImage(platformImage, x, y, width, height);
+      if (platformImage.complete && platformImage.naturalWidth !== 0) {
+        ctx.drawImage(platformImage, x, y, width, height);
+      } else {
+        // Если платформа не успела загрузиться, рисуем серый прямоугольник
+        ctx.fillStyle = "#555";
+        ctx.fillRect(x, y, width, height);
+      }
     }
 
     function drawDoor(x, y, width, height) {
