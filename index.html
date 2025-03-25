@@ -30,9 +30,10 @@
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       display: block;
+      /* Анимированный фон для canvas */
       background: url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
     }
-    /* Контейнер для монет */
+    /* Контейнер для монет, которые будут отображаться как DOM-элементы */
     #coinContainer {
       position: absolute;
       top: 0;
@@ -53,9 +54,11 @@
       align-items: center;
       z-index: 10;
     }
+    /* Тень для всех элементов в главном меню */
     #menu * {
       text-shadow: 2px 2px 4px #000;
     }
+    /* Фон главного меню */
     #menu img {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -84,29 +87,35 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
     }
-    /* Кнопки главного меню */
-    #menu input, #menu button {
-      font-size: 3vw;
-      padding: 10px;
-      text-align: center;
-      margin-bottom: 15px;
-      font-family: 'Press Start 2P', cursive;
-      letter-spacing: 2px;
-    }
-    #menu button {
-      color: #fff;
+    #hardModeDescription {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
       background: #3498db;
       border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
+      padding: 20px;
+      z-index: 50;
+      font-size: 3vw;
+      display: none;
+      text-align: center;
+      width: 80%;
+    }
+    #hardModeDescription button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: transparent;
+      border: none;
+      font-size: 3vw;
+      color: #fff;
       cursor: pointer;
-      transition: all 0.1s;
-      text-transform: uppercase;
     }
-    #menu button:active {
-      box-shadow: 2px 2px 0 #00ffff;
-      transform: translate(2px, 2px);
+    /* Укороченное описание Hard Mode */
+    #hardModeDescription p {
+      margin: 0;
     }
-    /* Лидерборд и др. */
+    /* Остальные стили */
     #leaderboard {
       margin-top: 40px;
       text-align: center;
@@ -115,6 +124,111 @@
       border: 4px solid #fff;
       box-shadow: 4px 4px 0 #00ffff;
       padding: 10px;
+      border-radius: 0;
+      image-rendering: pixelated;
+    }
+    /* Панель выбора режима */
+    #modeSelection {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .modeBtn {
+      padding: 10px 20px;
+      font-size: 3vw;
+      font-family: 'Press Start 2P', cursive;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      background: #555;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .modeBtn.selected {
+      background: #3498db;
+    }
+    /* Фон магазина */
+    #shop {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
+                  url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
+      color: white;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      padding: 10px;
+      z-index: 30;
+    }
+    #shop h2 {
+      font-size: 5vw;
+      margin-bottom: 20px;
+    }
+    #shopBalance {
+      font-size: 3vw;
+      margin-bottom: 20px;
+    }
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+    }
+    .shop-item {
+      background: #3498db;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+      padding: 5px;
+      text-align: center;
+      image-rendering: pixelated;
+    }
+    .shop-item img {
+      width: 100%;
+      image-rendering: pixelated;
+      margin-bottom: 5px;
+    }
+    .shop-item button {
+      margin-top: 5px;
+    }
+    #shop .back-btn {
+      margin-top: 20px;
+      background: #FF5722;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+      font-size: 3vw;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    /* Оверлей Game Over */
+    #gameOverOverlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      z-index: 20;
+    }
+    /* Оверлей паузы (центрируем на экране) */
+    #pauseMenu {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      text-align: center;
+      padding: 20px;
+      z-index: 30;
+      width: 80%;
+      max-width: 400px;
     }
     /* Кнопка паузы */
     #pauseBtn {
@@ -129,11 +243,10 @@
       cursor: pointer;
       display: none;
     }
-    /* Прочие оверлеи (Shop, Game Over, Pause) оставляем без изменений */
-    #shop, #gameOverOverlay, #pauseMenu, #howToPlayOverlay, #modesTab {
-      /* стили как и в оригинале */
+    /* Оверлей с инструкцией (не используется) */
+    #howToPlayOverlay {
+      display: none;
     }
-    /* Анимации */
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-20px); }
@@ -144,71 +257,117 @@
       50%  { transform: translateX(5px); }
       100% { transform: translateX(0); }
     }
-    /* Новый экран выбора режима с превью */
-    #modeSelectionScreen {
+    #menu input {
+      font-size: 3vw;
+      padding: 10px;
+      text-align: center;
+      margin-bottom: 15px;
+      font-family: 'Press Start 2P', cursive;
+      letter-spacing: 2px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 3vw;
+      font-family: 'Press Start 2P', cursive;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      background: #3498db;
+      border: 4px solid #fff;
+      border-radius: 0;
+      box-shadow: 4px 4px 0 #00ffff;
+      image-rendering: pixelated;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: all 0.1s;
+      animation: float 3s ease-in-out infinite;
+    }
+    button:active {
+      box-shadow: 2px 2px 0 #00ffff;
+      transform: translate(2px, 2px);
+    }
+    #score, #coinCount {
+      position: absolute;
+      color: white;
+      font-size: 4vw;
+      z-index: 5;
+    }
+    #score {
+      top: 5%;
+      left: 5%;
+    }
+    #coinCount {
+      top: 5%;
+      right: 5%;
+    }
+    /* Фон вкладки MODES */
+    #modesTab {
       display: none;
       position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      background-image: url('BACKGROUND/photo_2025-03-12_12-26-18.gif');
+      background-size: cover;
+      background-position: center;
       z-index: 15;
-      overflow-y: auto;
-    }
-    #modeSelectionScreen h2 {
-      text-align: center;
-      color: white;
-      font-size: 5vw;
-      margin-top: 20px;
-    }
-    .modeOption {
-      margin: 20px auto;
-      width: 80%;
-      text-align: center;
-      cursor: pointer;
-      color: white;
-    }
-    .modeOption .previewWindow {
-      background: #000;
-      margin-bottom: 10px;
-      position: relative;
-      overflow: hidden;
-    }
-    /* Для FLYING – превью сверху */
-    #flyingPreview {
-      width: 100%;
-      height: 200px;
-    }
-    /* Для PLATFORMER – превью справа */
-    #platformerPreview {
-      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
     }
-    #platformerPreview .previewWindow {
-      width: 200px;
-      height: 150px;
-      margin-left: 10px;
+    #hardModeButton {
+      padding: 10px 20px;
+      font-size: 3vw;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #hardModeButton.hard-on {
+      background: red;
+    }
+    #hardModeCoin {
+      margin-top: 10px;
+      display: inline-block;
+      color: #fff;
+      font-size: 3vw;
+    }
+    @media (max-width: 480px) {
+      #shop {
+        padding: 5px;
+      }
+      .shop-grid {
+        gap: 5px;
+      }
+      .shop-item {
+        padding: 3px;
+        font-size: 3vw;
+      }
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
+  <!-- Контейнер для монет (DOM-элементы, чтобы GIF анимировался) -->
   <div id="coinContainer"></div>
+  <!-- Кнопка паузы для платформера -->
   <button id="pauseBtn">||</button>
+  <!-- Оверлей с инструкцией (не используется) -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
     <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
     <p>(Tap or click anywhere to start)</p>
   </div>
-  <!-- Главное меню (ввод никнейма и кнопки) -->
+  <!-- Главное меню -->
   <div id="menu">
+    <!-- Фон главного меню -->
     <img src="BACKGROUND/photo_2025-03-12_12-26-18.gif" alt="Menu Background">
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
     <p id="nicknameWarning">Введите никнейм!</p>
     <input type="text" id="nickname" placeholder="Введите никнейм">
-    <!-- Кнопка, которая открывает экран выбора режима -->
+    <!-- Панель выбора режима -->
+    <div id="modeSelection">
+      <button class="modeBtn selected" data-mode="FLYING">FLYING</button>
+      <button class="modeBtn" data-mode="PLATFORMER">PLATFORMER</button>
+    </div>
     <button id="startBtn">GO!</button>
     <button id="telegramBtn">TELEGRAM</button>
     <button id="shopBtn">SHOP</button>
@@ -218,27 +377,7 @@
       <ul id="topScores"></ul>
     </div>
   </div>
-  <!-- Экран выбора режима с превью -->
-  <div id="modeSelectionScreen">
-    <h2>Выберите режим</h2>
-    <!-- Опция для режима FLYING: превью-окно сверху, подпись снизу -->
-    <div id="flyingOption" class="modeOption">
-      <div class="previewWindow" id="flyingPreview">
-        <canvas id="flyingPreviewCanvas" width="400" height="200"></canvas>
-      </div>
-      <div style="font-size: 3vw;">FLYING</div>
-    </div>
-    <!-- Опция для режима PLATFORMER: подпись слева, превью справа -->
-    <div id="platformerOption" class="modeOption">
-      <div style="display: flex; align-items: center; justify-content: center;">
-        <div style="font-size: 3vw;">PLATFORMER</div>
-        <div class="previewWindow" id="platformerPreview">
-          <canvas id="platformerPreviewCanvas" width="200" height="150"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Остальные элементы: MODES, Shop, Game Over, Pause – без изменений -->
+  <!-- Вкладка MODES -->
   <div id="modesTab">
     <h2 style="color:white; font-size:5vw;">MODES</h2>
     <div id="hardModeSection" style="margin-top:20px; text-align:center;">
@@ -250,47 +389,72 @@
     </div>
     <button id="modesBackBtn" style="margin-top:20px; padding:10px 20px; font-size:3vw;">Back</button>
   </div>
+  <!-- Окно описания Hard Mode -->
   <div id="hardModeDescription">
     <button id="closeHardModeDesc">X</button>
     <p>HARD MODE: Узкие зазоры и двойные монеты!</p>
   </div>
+  <!-- Магазин -->
   <div id="shop">
     <h2>Shop</h2>
     <p id="shopBalance">Total Coins: 0</p>
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
+  <!-- Оверлей для Game Over -->
   <div id="gameOverOverlay">
     <h2>Share the result with your friends!</h2>
     <button id="shareBtn">Share the result!</button>
     <button id="continueBtn">Continue game!</button>
     <button id="mainMenuBtn">MAIN MENU</button>
   </div>
+  <!-- Оверлей для паузы (теперь по центру) -->
+  <div id="pauseMenu">
+    <h2>Paused</h2>
+    <button id="resumeBtn" style="margin:10px;">Resume</button>
+    <button id="exitBtn" style="margin:10px;">Main Menu</button>
+  </div>
   <div id="score"></div>
+  <!-- В режиме PLATFORMER COINS не отображаются -->
   <div id="coinCount">Coins: 0</div>
   <script>
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
     }
-    // ----------------- Глобальные переменные и базовая логика игры -----------------
+
+    // --- Глобальные переменные ---
     let pipes = [];
     let pipeSpeed = 2;
+    // Делаем трубы вдвое меньше (75 px)
     let pipeWidth = 75;
+
+    // Загружаем изображение трубы из папки BACKGROUND
     const pipeImage = new Image();
     pipeImage.src = 'BACKGROUND/PIPE.png';
+
+    // Загружаем изображение платформы (platform.png)
     const platformImage = new Image();
     platformImage.src = 'BACKGROUND/platform.png';
-    let collisionOffsetLeft = 10, collisionOffsetRight = 10, collisionOffsetTop = 20, collisionOffsetBottom = 20;
+
+    // Отступы хитбокса (уменьшаем пропорционально)
+    let collisionOffsetLeft = 10;
+    let collisionOffsetRight = 10;
+    let collisionOffsetTop = 20;
+    let collisionOffsetBottom = 20;
+
     function drawPipes() {
       pipes.forEach(pipe => {
+        // Рисуем верхнюю трубу с вертикальным отражением
         ctx.save();
         ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
         ctx.scale(1, -1);
         ctx.drawImage(pipeImage, -pipeWidth / 2, 0, pipeWidth, pipe.topHeight);
         ctx.restore();
+        // Рисуем нижнюю трубу
         ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
+
     function drawParticles() {
       particles.forEach(p => {
         ctx.save();
@@ -302,6 +466,7 @@
         ctx.restore();
       });
     }
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
@@ -331,70 +496,80 @@
     const coinCountElement = document.getElementById('coinCount');
     const pauseBtn = document.getElementById('pauseBtn');
     const pauseMenu = document.getElementById('pauseMenu');
+    // Оверлей с инструкцией для платформера (не используется)
     const howToPlayOverlay = document.getElementById('howToPlayOverlay');
-    // Новые элементы для экрана выбора режима
-    const modeSelectionScreen = document.getElementById('modeSelectionScreen');
-    const flyingOption = document.getElementById('flyingOption');
-    const platformerOption = document.getElementById('platformerOption');
-    // Переменные для превью-анимаций
-    let flyingPreviewAnim, platformerPreviewAnim;
-    // Остальные переменные игры
+
     let gameStarted = false;
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
     let hardModeEnabled = false;
+
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
+
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
     const retroArcadeSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ffff00'/></svg>";
+
     const pipeDesigns = {
       "0": { id: "0", name: "Standard", price: 0, preview: standardSVG, colors: ["#0000ff"], animation: "none" },
       "1": { id: "1", name: "Pixel Frost", price: 25, preview: pixelFrostSVG, colors: ["#a0e9ff"], animation: "blink" },
       "2": { id: "2", name: "Neon Pulse", price: 50, preview: neonPulseSVG, colors: ["#ff00ff"], animation: "pulse" },
       "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
+
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
     let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
+
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
+
     let particles = [];
+    // coins: каждый объект хранит {x, y, radius, collected, el: DOMElement}
     let coins = [];
     let reactionMessages = [];
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
     const nerpaNormal = new Image();
     nerpaNormal.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
     const nerpaFalling = new Image();
     nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
+
     let nerpaImg = new Image();
     nerpaImg.src = nerpaNormal.src;
+
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
       }
     });
+
     canvas.addEventListener('click', () => {
       if (gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
       }
     });
+
     nicknameInput.addEventListener('input', () => {
       if (nicknameInput.value.trim() !== '') {
         nicknameWarning.style.display = 'none';
       }
     });
+
     hardModeButton.addEventListener('click', () => {
       hardModeEnabled = !hardModeEnabled;
       if (hardModeEnabled) {
@@ -405,15 +580,26 @@
         hardModeText.textContent = "HARD MODE OFF";
       }
     });
+
     hardModeQuestion.addEventListener('click', (e) => {
       e.stopPropagation();
       hardModeDescription.style.display = 'block';
     });
+
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
+
     let selectedMode = "FLYING";
-    // ----------------- Изменения: запуск экрана выбора режима с превью -----------------
+    document.querySelectorAll('.modeBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        selectedMode = e.target.dataset.mode;
+        document.querySelectorAll('.modeBtn').forEach(b => b.classList.remove('selected'));
+        e.target.classList.add('selected');
+        document.getElementById('gameTitle').textContent = selectedMode;
+      });
+    });
+
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
       if (!username) {
@@ -421,74 +607,71 @@
         return;
       }
       nicknameWarning.style.display = 'none';
-      // Скрываем главное меню и запускаем экран выбора режима
       menu.style.display = 'none';
-      modeSelectionScreen.style.display = 'block';
-      // Запускаем превью-анимации
-      startFlyingPreview();
-      startPlatformerPreview();
+      gameOverOverlay.style.display = 'none';
+
+      // Запуск выбранного режима
+      if (selectedMode === "FLYING") {
+        pauseBtn.style.display = 'none';
+        startFlyingMode();
+      } else if (selectedMode === "PLATFORMER") {
+        pauseBtn.style.display = 'block';
+        coinCountElement.style.display = 'none';
+        startPlatformerMode();
+      }
     });
-    // При нажатии на превью FLYING выбираем этот режим и запускаем игру
-    flyingOption.addEventListener('click', () => {
-      selectedMode = "FLYING";
-      stopPreviews();
-      modeSelectionScreen.style.display = 'none';
-      pauseBtn.style.display = 'none';
-      startFlyingMode();
-    });
-    // При нажатии на превью PLATFORMER выбираем этот режим и запускаем игру
-    platformerOption.addEventListener('click', () => {
-      selectedMode = "PLATFORMER";
-      stopPreviews();
-      modeSelectionScreen.style.display = 'none';
-      pauseBtn.style.display = 'block';
-      coinCountElement.style.display = 'none';
-      startPlatformerMode();
-    });
+
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
+
     shopBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       shop.style.display = 'flex';
       renderShopItems();
     });
+
     modesBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       modesTab.style.display = 'flex';
     });
+
     modesBackBtn.addEventListener('click', () => {
       modesTab.style.display = 'none';
       menu.style.display = 'flex';
     });
+
     shopBackBtn.addEventListener('click', () => {
       shop.style.display = 'none';
       menu.style.display = 'flex';
     });
+
     shareBtn.addEventListener('click', () => {
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
       const shareUrl = "https://t.me/FlyingSealBot/FLYING";
       const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
       window.open(telegramShareLink, '_blank');
     });
+
     continueBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       startFlyingMode();
     });
+
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
+
     let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
       pauseMenu.style.display = 'block';
     });
-    const resumeBtn = document.getElementById('resumeBtn');
-    const exitBtn = document.getElementById('exitBtn');
-    resumeBtn && resumeBtn.addEventListener('click', () => {
+
+    resumeBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
       if (selectedMode === "FLYING") {
@@ -497,15 +680,18 @@
         platformerLoop(currentPlatforms);
       }
     });
-    exitBtn && exitBtn.addEventListener('click', () => {
+
+    exitBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
+
     let shadow = null;
-    // ----------------- Режим FLYING -----------------
+
+    // --- Режим FLYING ---
     function startFlyingMode() {
       gameStarted = true;
       score = 0;
@@ -527,6 +713,7 @@
       };
       flyingGameLoop();
     }
+
     function flyingGameLoop() {
       if (!gameStarted || paused) return;
       clearCanvas();
@@ -534,9 +721,13 @@
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
+
+      // Спавн труб
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
+
+      // Движение труб + проверка коллизии
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
@@ -557,6 +748,8 @@
           return;
         }
       }
+
+      // Движение монет + проверка сбора
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -578,6 +771,8 @@
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
     }
+
+    // Удаляем все монеты с экрана и очищаем массив coins
     function removeAllCoins() {
       coins.forEach(coin => {
         if (coin.el) {
@@ -586,27 +781,35 @@
       });
       coins = [];
     }
+
+    // Функция проверки коллизии с учётом отступов
     function checkCollision(pipe) {
       let topPipeLeft = pipe.x + collisionOffsetLeft;
       let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
       let topPipeBottom = pipe.topHeight - collisionOffsetTop;
+
       let bottomPipeLeft = pipe.x + collisionOffsetLeft;
       let bottomPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
       let bottomPipeTop = pipe.bottomY + collisionOffsetBottom;
+
       let playerLeft = shadow.x;
       let playerRight = shadow.x + shadow.width;
       let playerTop = shadow.y;
       let playerBottom = shadow.y + shadow.height;
+
       let collidesTop =
         playerRight > topPipeLeft &&
         playerLeft < topPipeRight &&
         playerTop < topPipeBottom;
+
       let collidesBottom =
         playerRight > bottomPipeLeft &&
         playerLeft < bottomPipeRight &&
         playerBottom > bottomPipeTop;
+
       return collidesTop || collidesBottom;
     }
+
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
@@ -622,12 +825,15 @@
       });
       createCoin(gapPosition, gap);
     }
+
     function updateShadowImage() {
       nerpaImg.src = shadow.velocity >= 0 ? nerpaFalling.src : nerpaNormal.src;
     }
+
     function spawnParticle(x, y) {
       particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
     }
+
     function updateParticles() {
       for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i];
@@ -636,6 +842,8 @@
         if (p.alpha <= 0) { particles.splice(i, 1); }
       }
     }
+
+    // Создаем монету как DOM-элемент (img)
     function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
@@ -655,6 +863,8 @@
       coin.el = coinEl;
       coins.push(coin);
     }
+
+    // Обновляем позицию DOM-элементов монет и удаляем, если собраны
     function updateCoins() {
       coins.forEach((coin, index) => {
         if (!coin.collected) {
@@ -668,6 +878,7 @@
         }
       });
     }
+
     function checkCoinCollision(coin) {
       let cx = coin.x, cy = coin.y;
       let rx = shadow.x, ry = shadow.y;
@@ -678,9 +889,11 @@
       let dy = cy - nearestY;
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
+
     function showReaction(message) {
       reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
     }
+
     function drawReactions() {
       reactionMessages.forEach((msg, index) => {
         ctx.save();
@@ -694,6 +907,7 @@
         if (msg.timer <= 0) { reactionMessages.splice(index, 1); }
       });
     }
+
     function saveScore(name, points) {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       scores.push({ name, points });
@@ -702,13 +916,16 @@
       localStorage.setItem("scores", JSON.stringify(scores));
       updateLeaderboard();
     }
+
     function updateLeaderboard() {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
     }
     updateLeaderboard();
+
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
+      // Если есть конфигурация трейлов (в коде не показана), она будет обрабатываться здесь
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
@@ -753,6 +970,8 @@
         }
         shopItemsDiv.appendChild(trailsGrid);
       }
+
+      // Трубы
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
@@ -798,23 +1017,33 @@
       }
       shopItemsDiv.appendChild(pipesGrid);
     }
-    // ----------------- Режим PLATFORMER -----------------
+
+    // --- Режим PLATFORMER ---
     let platformerLevel = 1;
     let platformerGameStarted = false;
     let door, player;
     let keysDown = {};
+    // Запомним платформы в глобальной переменной, чтобы при паузе можно было продолжить
     let currentPlatforms = [];
+
+    // Увеличенные размеры платформ
     const platformW = 150;
     const platformH = 40;
+    // Увеличенная «земля»
     const groundHeight = 80;
+    // Небольшой отступ для хитбоксов по бокам платформ
     const platformHitboxOffset = 10;
+
     function startPlatformerMode() {
       coinCountElement.style.display = 'none';
       startPlatformerLevel();
     }
+
     function generatePlatforms() {
       let platforms = [];
       const platformCount = 10;
+
+      // Создаём "землю" внизу (не пропадает)
       platforms.push({
         x: 0,
         y: canvas.height - groundHeight,
@@ -822,6 +1051,8 @@
         height: groundHeight,
         isGround: true
       });
+
+      // Расстояние по вертикали между платформами
       const gap = (canvas.height - 150) / (platformCount - 1);
       for (let i = 1; i < platformCount; i++) {
         let y = canvas.height - groundHeight - i * gap;
@@ -837,10 +1068,13 @@
       }
       return platforms;
     }
+
     function startPlatformerLevel() {
       currentPlatforms = generatePlatforms();
+      // Сортируем, чтобы самая верхняя платформа шла первой
       currentPlatforms.sort((a, b) => a.y - b.y);
       let highestPlatform = currentPlatforms[0];
+      // Координаты двери (над самой верхней платформой)
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
       door = { x: doorX, y: doorY, width: 50, height: 70 };
@@ -858,9 +1092,12 @@
       platformerGameStarted = true;
       platformerLoop(currentPlatforms);
     }
+
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       clearCanvas();
+
+      // Движение влево-вправо
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -868,37 +1105,50 @@
       } else {
         player.vx = 0;
       }
+
+      // Прыжок
       if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
       }
+
       player.vy += 0.5;
       player.x += player.vx;
       player.y += player.vy;
       player.onGround = false;
+
+      // Столкновение с платформами (с учётом небольшого отступа)
       for (let i = 0; i < platforms.length; i++) {
         let plat = platforms[i];
         let left = plat.x + platformHitboxOffset;
         let right = plat.x + plat.width - platformHitboxOffset;
         let top = plat.y;
         let bottom = plat.y + plat.height;
+
+        // Проверяем пересечение
         if (
           player.x < right &&
           player.x + player.width > left &&
           player.y < bottom &&
           player.y + player.height > top
         ) {
+          // Если игрок падает сверху
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             player.y = plat.y - player.height;
             player.vy = 0;
             player.onGround = true;
+
+            // Если это не земля, запускаем таймер исчезновения (если не запущен)
             if (!plat.isGround && plat.disappearStartTime === null) {
               plat.disappearStartTime = performance.now();
             }
           }
         }
       }
+
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
+
+      // Удаляем платформы, если прошло > 1 сек после приземления
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (
@@ -909,6 +1159,8 @@
           platforms.splice(i, 1);
         }
       }
+
+      // Проверка на вход в дверь
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -930,6 +1182,8 @@
         }, 1500);
         return;
       }
+
+      // Если игрок упал вниз
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -938,15 +1192,24 @@
         pauseBtn.style.display = 'none';
         return;
       }
+
+      // Рисуем платформы и дверь
       platforms.forEach(plat => { drawPlatform(plat); });
       drawDoor(door.x, door.y, door.width, door.height);
+
+      // Рисуем нерпу
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
+
+      // Следим за кадрами
       requestAnimationFrame(() => platformerLoop(platforms));
     }
+
     window.addEventListener("keydown", (e) => { keysDown[e.code] = true; });
     window.addEventListener("keyup", (e) => { keysDown[e.code] = false; });
+
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+
     function handleTouchStart(e) {
       e.preventDefault();
       if(selectedMode === "FLYING" && gameStarted){
@@ -963,6 +1226,7 @@
         }
       }
     }
+
     function handleTouchEnd(e) {
       e.preventDefault();
       if(selectedMode === "PLATFORMER"){
@@ -971,14 +1235,19 @@
         keysDown["ArrowUp"] = false;
       }
     }
+
+    // Функция рисования платформ
     function drawPlatform(plat) {
+      // Если это земля, заливаем голубым цветом
       if (plat.isGround) {
-        ctx.fillStyle = "#87CEFA";
+        ctx.fillStyle = "#87CEFA"; // Небесно-голубой
         ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
       } else {
+        // Остальные платформы — platform.png
         ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
       }
     }
+
     function drawDoor(x, y, width, height) {
       ctx.fillStyle = "#663300";
       ctx.fillRect(x, y, width, height);
@@ -986,6 +1255,7 @@
       ctx.lineWidth = 3;
       ctx.strokeRect(x, y, width, height);
     }
+
     function removeAllCoins() {
       coins.forEach(coin => {
         if (coin.el) {
@@ -993,64 +1263,6 @@
         }
       });
       coins = [];
-    }
-    // ----------------- Превью-анимации для выбора режима -----------------
-    function startFlyingPreview() {
-      const previewCanvas = document.getElementById('flyingPreviewCanvas');
-      const previewCtx = previewCanvas.getContext('2d');
-      let posY = previewCanvas.height / 2, velocity = -2, gravity = 0.1;
-      function animate() {
-        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-        // Рисуем фон-превью (можно использовать упрощённый фон)
-        previewCtx.fillStyle = "#222";
-        previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-        // Простой объект (например, прямоугольник) который падает и подпрыгивает
-        posY += velocity;
-        velocity += gravity;
-        if (posY > previewCanvas.height - 20) {
-          posY = previewCanvas.height - 20;
-          velocity = -velocity * 0.8;
-        }
-        previewCtx.fillStyle = "#ff0";
-        previewCtx.fillRect(previewCanvas.width/2 - 10, posY, 20, 20);
-        flyingPreviewAnim = requestAnimationFrame(animate);
-      }
-      animate();
-    }
-    function startPlatformerPreview() {
-      const previewCanvas = document.getElementById('platformerPreviewCanvas');
-      const previewCtx = previewCanvas.getContext('2d');
-      let playerX = 20, playerY = previewCanvas.height - 40, vy = -5, onGround = false;
-      function animate() {
-        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-        // Фон
-        previewCtx.fillStyle = "#222";
-        previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-        // Платформа
-        previewCtx.fillStyle = "#87CEFA";
-        previewCtx.fillRect(0, previewCanvas.height - 10, previewCanvas.width, 10);
-        // Игрок (простой квадрат)
-        previewCtx.fillStyle = "#0f0";
-        previewCtx.fillRect(playerX, playerY, 20, 20);
-        // Простая физика прыжка
-        if (!onGround) {
-          playerY += vy;
-          vy += 0.3;
-          if (playerY >= previewCanvas.height - 30) {
-            playerY = previewCanvas.height - 30;
-            vy = -5;
-            onGround = true;
-          }
-        } else {
-          onGround = false;
-        }
-        platformerPreviewAnim = requestAnimationFrame(animate);
-      }
-      animate();
-    }
-    function stopPreviews() {
-      cancelAnimationFrame(flyingPreviewAnim);
-      cancelAnimationFrame(platformerPreviewAnim);
     }
   </script>
 </body>
