@@ -448,6 +448,10 @@
     const pipeImage = new Image();
     pipeImage.src = 'BACKGROUND/PIPE.png';
 
+    // Загружаем изображение платформы для режима PLATFORMER
+    const platformImage = new Image();
+    platformImage.src = 'BACKGROUND/platform.jpg';
+
     // Отступы хитбокса (уменьшаем пропорционально)
     let collisionOffsetLeft = 10;
     let collisionOffsetRight = 10;
@@ -1194,12 +1198,9 @@
       startPlatformerMode();
     });
 
+    // Изменённая функция для рисования платформ с использованием platform.jpg
     function drawPlatform(x, y, width, height) {
-      ctx.fillStyle = "#a0e9ff";
-      ctx.fillRect(x, y, width, height);
-      ctx.strokeStyle = "#6ec6e6";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, width, height);
+      ctx.drawImage(platformImage, x, y, width, height);
     }
 
     function drawDoor(x, y, width, height) {
