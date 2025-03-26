@@ -2,14 +2,16 @@
 <html>
 <head>
   <title>Flying Seal</title>
-  <!-- Добавляем viewport-fit=cover -->
+  <!-- Set viewport -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <!-- Пиксельный шрифт -->
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Remove Google font and add custom font -->
   <style>
-    /* Основные стили */
+    @font-face {
+      font-family: 'bloq';
+      src: url('BACKGROUND/bloq.ttf') format('truetype');
+    }
+    /* Main styles */
     html, body {
       margin: 0;
       padding: 0;
@@ -18,7 +20,7 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'bloq', sans-serif;
     }
     body {
       padding-top: env(safe-area-inset-top);
@@ -30,10 +32,10 @@
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       display: block;
-      /* Анимированный фон для canvas */
+      /* Animated background for canvas */
       background: url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
     }
-    /* Контейнер для монет, которые будут отображаться как DOM-элементы */
+    /* Container for coins displayed as DOM elements */
     #coinContainer {
       position: absolute;
       top: 0;
@@ -42,7 +44,7 @@
       height: 100%;
       pointer-events: none;
     }
-    /* Главное меню */
+    /* Main menu */
     #menu {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -54,11 +56,11 @@
       align-items: center;
       z-index: 10;
     }
-    /* Тень для всех элементов в главном меню */
+    /* Text shadow for all elements in main menu */
     #menu * {
       text-shadow: 2px 2px 4px #000;
     }
-    /* Фон главного меню */
+    /* Main menu background */
     #menu img {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -111,11 +113,11 @@
       color: #fff;
       cursor: pointer;
     }
-    /* Укороченное описание Hard Mode */
+    /* Short description for Hard Mode */
     #hardModeDescription p {
       margin: 0;
     }
-    /* Остальные стили */
+    /* Other styles */
     #leaderboard {
       margin-top: 40px;
       text-align: center;
@@ -127,7 +129,7 @@
       border-radius: 0;
       image-rendering: pixelated;
     }
-    /* Панель выбора режима */
+    /* Mode selection panel */
     #modeSelection {
       display: flex;
       gap: 10px;
@@ -136,7 +138,7 @@
     .modeBtn {
       padding: 10px 20px;
       font-size: 3vw;
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'bloq', sans-serif;
       letter-spacing: 2px;
       text-transform: uppercase;
       color: #fff;
@@ -149,7 +151,7 @@
     .modeBtn.selected {
       background: #3498db;
     }
-    /* Фон магазина */
+    /* Shop background */
     #shop {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -202,7 +204,7 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    /* Оверлей Game Over */
+    /* Game Over overlay */
     #gameOverOverlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -215,7 +217,7 @@
       text-align: center;
       z-index: 20;
     }
-    /* Оверлей паузы (центрируем на экране) */
+    /* Pause overlay (centered) */
     #pauseMenu {
       display: none;
       position: absolute;
@@ -230,7 +232,7 @@
       width: 80%;
       max-width: 400px;
     }
-    /* Кнопка паузы */
+    /* Pause button */
     #pauseBtn {
       position: absolute;
       top: 5%;
@@ -243,7 +245,7 @@
       cursor: pointer;
       display: none;
     }
-    /* Оверлей с инструкцией (не используется) */
+    /* How to play overlay (not used) */
     #howToPlayOverlay {
       display: none;
     }
@@ -262,13 +264,13 @@
       padding: 10px;
       text-align: center;
       margin-bottom: 15px;
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'bloq', sans-serif;
       letter-spacing: 2px;
     }
     button {
       padding: 10px 20px;
       font-size: 3vw;
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'bloq', sans-serif;
       letter-spacing: 2px;
       text-transform: uppercase;
       color: #fff;
@@ -300,7 +302,7 @@
       top: 5%;
       right: 5%;
     }
-    /* Фон вкладки MODES */
+    /* Modes tab background */
     #modesTab {
       display: none;
       position: absolute;
@@ -345,25 +347,25 @@
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <!-- Контейнер для монет (DOM-элементы, чтобы GIF анимировался) -->
+  <!-- Container for coins (DOM elements for animated GIFs) -->
   <div id="coinContainer"></div>
-  <!-- Кнопка паузы для платформера -->
+  <!-- Pause button for platformer mode -->
   <button id="pauseBtn">||</button>
-  <!-- Оверлей с инструкцией (не используется) -->
+  <!-- How to play overlay (not used) -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
     <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
     <p>(Tap or click anywhere to start)</p>
   </div>
-  <!-- Главное меню -->
+  <!-- Main menu -->
   <div id="menu">
-    <!-- Фон главного меню -->
+    <!-- Main menu background -->
     <img src="BACKGROUND/photo_2025-03-12_12-26-18.gif" alt="Menu Background">
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
-    <p id="nicknameWarning">Введите никнейм!</p>
-    <input type="text" id="nickname" placeholder="Введите никнейм">
-    <!-- Панель выбора режима -->
+    <p id="nicknameWarning">Enter your nickname!</p>
+    <input type="text" id="nickname" placeholder="Enter your nickname">
+    <!-- Mode selection panel -->
     <div id="modeSelection">
       <button class="modeBtn selected" data-mode="FLYING">FLYING</button>
       <button class="modeBtn" data-mode="PLATFORMER">PLATFORMER</button>
@@ -373,11 +375,11 @@
     <button id="shopBtn">SHOP</button>
     <button id="modesBtn">MODES</button>
     <div id="leaderboard">
-      <h3>Топ результатов</h3>
+      <h3>High Scores</h3>
       <ul id="topScores"></ul>
     </div>
   </div>
-  <!-- Вкладка MODES -->
+  <!-- Modes tab -->
   <div id="modesTab">
     <h2 style="color:white; font-size:5vw;">MODES</h2>
     <div id="hardModeSection" style="margin-top:20px; text-align:center;">
@@ -389,54 +391,54 @@
     </div>
     <button id="modesBackBtn" style="margin-top:20px; padding:10px 20px; font-size:3vw;">Back</button>
   </div>
-  <!-- Окно описания Hard Mode -->
+  <!-- Hard Mode description window -->
   <div id="hardModeDescription">
     <button id="closeHardModeDesc">X</button>
-    <p>HARD MODE: Узкие зазоры и двойные монеты!</p>
+    <p>HARD MODE: Narrow gaps and double coins!</p>
   </div>
-  <!-- Магазин -->
+  <!-- Shop -->
   <div id="shop">
     <h2>Shop</h2>
     <p id="shopBalance">Total Coins: 0</p>
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
-  <!-- Оверлей для Game Over -->
+  <!-- Game Over overlay -->
   <div id="gameOverOverlay">
     <h2>Share the result with your friends!</h2>
     <button id="shareBtn">Share the result!</button>
     <button id="continueBtn">Continue game!</button>
     <button id="mainMenuBtn">MAIN MENU</button>
   </div>
-  <!-- Оверлей для паузы (теперь по центру) -->
+  <!-- Pause overlay (centered) -->
   <div id="pauseMenu">
     <h2>Paused</h2>
     <button id="resumeBtn" style="margin:10px;">Resume</button>
     <button id="exitBtn" style="margin:10px;">Main Menu</button>
   </div>
   <div id="score"></div>
-  <!-- В режиме PLATFORMER COINS не отображаются -->
+  <!-- In PLATFORMER mode coins are not displayed -->
   <div id="coinCount">Coins: 0</div>
   <script>
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
     }
 
-    // --- Глобальные переменные ---
+    // --- Global Variables ---
     let pipes = [];
     let pipeSpeed = 2;
-    // Делаем трубы вдвое меньше (75 px)
+    // Pipe width (75px)
     let pipeWidth = 75;
 
-    // Загружаем изображение трубы из папки BACKGROUND
+    // Load pipe image from BACKGROUND folder
     const pipeImage = new Image();
     pipeImage.src = 'BACKGROUND/PIPE.png';
 
-    // Загружаем изображение платформы (platform.png)
+    // Load platform image (platform.png)
     const platformImage = new Image();
     platformImage.src = 'BACKGROUND/platform.png';
 
-    // Отступы хитбокса (уменьшаем пропорционально)
+    // Collision box offsets
     let collisionOffsetLeft = 10;
     let collisionOffsetRight = 10;
     let collisionOffsetTop = 20;
@@ -444,13 +446,13 @@
 
     function drawPipes() {
       pipes.forEach(pipe => {
-        // Рисуем верхнюю трубу с вертикальным отражением
+        // Draw top pipe (flipped vertically)
         ctx.save();
         ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
         ctx.scale(1, -1);
         ctx.drawImage(pipeImage, -pipeWidth / 2, 0, pipeWidth, pipe.topHeight);
         ctx.restore();
-        // Рисуем нижнюю трубу
+        // Draw bottom pipe
         ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
@@ -496,7 +498,7 @@
     const coinCountElement = document.getElementById('coinCount');
     const pauseBtn = document.getElementById('pauseBtn');
     const pauseMenu = document.getElementById('pauseMenu');
-    // Оверлей с инструкцией для платформера (не используется)
+    // How to play overlay (not used)
     const howToPlayOverlay = document.getElementById('howToPlayOverlay');
 
     let gameStarted = false;
@@ -529,7 +531,7 @@
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
 
     let particles = [];
-    // coins: каждый объект хранит {x, y, radius, collected, el: DOMElement}
+    // coins: each object stores {x, y, radius, collected, el: DOMElement}
     let coins = [];
     let reactionMessages = [];
 
@@ -610,7 +612,7 @@
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
 
-      // Запуск выбранного режима
+      // Start selected mode
       if (selectedMode === "FLYING") {
         pauseBtn.style.display = 'none';
         startFlyingMode();
@@ -691,7 +693,7 @@
 
     let shadow = null;
 
-    // --- Режим FLYING ---
+    // --- FLYING Mode ---
     function startFlyingMode() {
       gameStarted = true;
       score = 0;
@@ -722,12 +724,12 @@
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
 
-      // Спавн труб
+      // Spawn pipes
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
 
-      // Движение труб + проверка коллизии
+      // Move pipes and check collisions
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
@@ -749,7 +751,7 @@
         }
       }
 
-      // Движение монет + проверка сбора
+      // Move coins and check collection
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -772,7 +774,7 @@
       requestAnimationFrame(flyingGameLoop);
     }
 
-    // Удаляем все монеты с экрана и очищаем массив coins
+    // Remove all coins from screen and clear coins array
     function removeAllCoins() {
       coins.forEach(coin => {
         if (coin.el) {
@@ -782,7 +784,7 @@
       coins = [];
     }
 
-    // Функция проверки коллизии с учётом отступов
+    // Collision check with offsets
     function checkCollision(pipe) {
       let topPipeLeft = pipe.x + collisionOffsetLeft;
       let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
@@ -843,7 +845,7 @@
       }
     }
 
-    // Создаем монету как DOM-элемент (img)
+    // Create coin as DOM element (img)
     function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
@@ -864,7 +866,7 @@
       coins.push(coin);
     }
 
-    // Обновляем позицию DOM-элементов монет и удаляем, если собраны
+    // Update coin DOM positions and remove if collected
     function updateCoins() {
       coins.forEach((coin, index) => {
         if (!coin.collected) {
@@ -897,7 +899,7 @@
     function drawReactions() {
       reactionMessages.forEach((msg, index) => {
         ctx.save();
-        ctx.font = "20px 'Press Start 2P'";
+        ctx.font = "20px 'bloq'";
         ctx.globalAlpha = msg.timer / 120;
         ctx.fillStyle = "#fff";
         ctx.textAlign = "center";
@@ -925,7 +927,7 @@
 
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
-      // Если есть конфигурация трейлов (в коде не показана), она будет обрабатываться здесь
+      // If trails configuration exists, handle it here
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
@@ -971,7 +973,7 @@
         shopItemsDiv.appendChild(trailsGrid);
       }
 
-      // Трубы
+      // Pipe designs
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
@@ -1018,20 +1020,20 @@
       shopItemsDiv.appendChild(pipesGrid);
     }
 
-    // --- Режим PLATFORMER ---
+    // --- PLATFORMER Mode ---
     let platformerLevel = 1;
     let platformerGameStarted = false;
     let door, player;
     let keysDown = {};
-    // Запомним платформы в глобальной переменной, чтобы при паузе можно было продолжить
+    // Save platforms globally to resume after pause
     let currentPlatforms = [];
 
-    // Увеличенные размеры платформ
+    // Increased platform sizes
     const platformW = 150;
     const platformH = 40;
-    // Увеличенная «земля»
+    // Increased ground height
     const groundHeight = 80;
-    // Небольшой отступ для хитбоксов по бокам платформ
+    // Small offset for platform hitboxes
     const platformHitboxOffset = 10;
 
     function startPlatformerMode() {
@@ -1043,7 +1045,7 @@
       let platforms = [];
       const platformCount = 10;
 
-      // Создаём "землю" внизу (не пропадает)
+      // Create "ground" at bottom (permanent)
       platforms.push({
         x: 0,
         y: canvas.height - groundHeight,
@@ -1052,7 +1054,7 @@
         isGround: true
       });
 
-      // Расстояние по вертикали между платформами
+      // Vertical gap between platforms
       const gap = (canvas.height - 150) / (platformCount - 1);
       for (let i = 1; i < platformCount; i++) {
         let y = canvas.height - groundHeight - i * gap;
@@ -1071,10 +1073,10 @@
 
     function startPlatformerLevel() {
       currentPlatforms = generatePlatforms();
-      // Сортируем, чтобы самая верхняя платформа шла первой
+      // Sort so that highest platform is first
       currentPlatforms.sort((a, b) => a.y - b.y);
       let highestPlatform = currentPlatforms[0];
-      // Координаты двери (над самой верхней платформой)
+      // Door coordinates (above highest platform)
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
       door = { x: doorX, y: doorY, width: 50, height: 70 };
@@ -1097,7 +1099,7 @@
       if (!platformerGameStarted || paused) return;
       clearCanvas();
 
-      // Движение влево-вправо
+      // Left/right movement
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -1106,7 +1108,7 @@
         player.vx = 0;
       }
 
-      // Прыжок
+      // Jump
       if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
@@ -1117,7 +1119,7 @@
       player.y += player.vy;
       player.onGround = false;
 
-      // Столкновение с платформами (с учётом небольшого отступа)
+      // Collision with platforms (with slight offset)
       for (let i = 0; i < platforms.length; i++) {
         let plat = platforms[i];
         let left = plat.x + platformHitboxOffset;
@@ -1125,20 +1127,20 @@
         let top = plat.y;
         let bottom = plat.y + plat.height;
 
-        // Проверяем пересечение
+        // Check intersection
         if (
           player.x < right &&
           player.x + player.width > left &&
           player.y < bottom &&
           player.y + player.height > top
         ) {
-          // Если игрок падает сверху
+          // If falling from above
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             player.y = plat.y - player.height;
             player.vy = 0;
             player.onGround = true;
 
-            // Если это не земля, запускаем таймер исчезновения (если не запущен)
+            // For non-ground platforms, start disappear timer
             if (!plat.isGround && plat.disappearStartTime === null) {
               plat.disappearStartTime = performance.now();
             }
@@ -1148,7 +1150,7 @@
 
       nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
 
-      // Удаляем платформы, если прошло > 1 сек после приземления
+      // Remove platforms if > 1 sec after landing (non-ground)
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (
@@ -1160,7 +1162,7 @@
         }
       }
 
-      // Проверка на вход в дверь
+      // Check door collision
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1173,7 +1175,7 @@
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
         platformerGameStarted = false;
         ctx.fillStyle = "#fff";
-        ctx.font = "20px 'Press Start 2P'";
+        ctx.font = "20px 'bloq'";
         ctx.textAlign = "center";
         ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
         setTimeout(() => {
@@ -1183,7 +1185,7 @@
         return;
       }
 
-      // Если игрок упал вниз
+      // If player falls
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1193,14 +1195,14 @@
         return;
       }
 
-      // Рисуем платформы и дверь
+      // Draw platforms and door
       platforms.forEach(plat => { drawPlatform(plat); });
       drawDoor(door.x, door.y, door.width, door.height);
 
-      // Рисуем нерпу
+      // Draw player
       ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
 
-      // Следим за кадрами
+      // Next frame
       requestAnimationFrame(() => platformerLoop(platforms));
     }
 
@@ -1236,14 +1238,12 @@
       }
     }
 
-    // Функция рисования платформ
+    // Function to draw platforms
     function drawPlatform(plat) {
-      // Если это земля, заливаем голубым цветом
       if (plat.isGround) {
-        ctx.fillStyle = "#87CEFA"; // Небесно-голубой
+        ctx.fillStyle = "#87CEFA";
         ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
       } else {
-        // Остальные платформы — platform.png
         ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
       }
     }
