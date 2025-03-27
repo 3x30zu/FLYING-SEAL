@@ -7,7 +7,7 @@
   <!-- Подключаем шрифт Press Start 2P -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Используем шрифт Press Start 2P по умолчанию */
+    /* Устанавливаем шрифт Press Start 2P для всего документа */
     html, body {
       margin: 0;
       padding: 0;
@@ -24,7 +24,7 @@
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
     }
-    /* Если требуется использовать локальный шрифт, оставляем правило, но теперь с Press Start 2P */
+    /* Если требуется использовать локальный шрифт, можно оставить это правило */
     @font-face {
       font-family: 'Press Start 2P';
       src: url('BACKGROUND/bloq.ttf') format('truetype');
@@ -108,6 +108,7 @@
       font-size: 3vw;
       color: #fff;
       cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
     }
     #hardModeDescription p {
       margin: 0;
@@ -139,6 +140,7 @@
       box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer;
       transition: all 0.1s;
+      font-family: 'Press Start 2P', cursive;
     }
     .modeBtn.selected {
       background: #3498db;
@@ -185,6 +187,7 @@
     }
     .shop-item button {
       margin-top: 5px;
+      font-family: 'Press Start 2P', cursive;
     }
     #shop .back-btn {
       margin-top: 20px;
@@ -194,6 +197,7 @@
       font-size: 3vw;
       padding: 10px 20px;
       cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
     }
     #gameOverOverlay {
       position: absolute;
@@ -220,6 +224,7 @@
       z-index: 30;
       width: 80%;
       max-width: 400px;
+      font-family: 'Press Start 2P', cursive;
     }
     #pauseBtn {
       position: absolute;
@@ -232,6 +237,7 @@
       color: white;
       cursor: pointer;
       display: none;
+      font-family: 'Press Start 2P', cursive;
     }
     #howToPlayOverlay {
       display: none;
@@ -251,6 +257,7 @@
       padding: 10px;
       text-align: center;
       margin-bottom: 15px;
+      font-family: 'Press Start 2P', cursive;
     }
     button {
       padding: 10px 20px;
@@ -267,6 +274,7 @@
       margin-bottom: 15px;
       transition: all 0.1s;
       animation: float 3s ease-in-out infinite;
+      font-family: 'Press Start 2P', cursive;
     }
     button:active {
       box-shadow: 2px 2px 0 #00ffff;
@@ -277,6 +285,7 @@
       color: white;
       font-size: 4vw;
       z-index: 5;
+      font-family: 'Press Start 2P', cursive;
     }
     #score {
       top: 5%;
@@ -298,12 +307,14 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      font-family: 'Press Start 2P', cursive;
     }
     #hardModeButton {
       padding: 10px 20px;
       font-size: 3vw;
       cursor: pointer;
       transition: background 0.2s;
+      font-family: 'Press Start 2P', cursive;
     }
     #hardModeButton.hard-on {
       background: red;
@@ -313,6 +324,7 @@
       display: inline-block;
       color: #fff;
       font-size: 3vw;
+      font-family: 'Press Start 2P', cursive;
     }
     @media (max-width: 480px) {
       #shop {
@@ -394,7 +406,6 @@
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
     }
-
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
@@ -406,7 +417,6 @@
     let collisionOffsetRight = 10;
     let collisionOffsetTop = 20;
     let collisionOffsetBottom = 20;
-
     function drawPipes() {
       pipes.forEach(pipe => {
         ctx.save();
@@ -417,7 +427,6 @@
         ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
-
     function drawParticles() {
       particles.forEach(p => {
         ctx.save();
@@ -429,7 +438,6 @@
         ctx.restore();
       });
     }
-
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
@@ -460,79 +468,64 @@
     const pauseBtn = document.getElementById('pauseBtn');
     const pauseMenu = document.getElementById('pauseMenu');
     const howToPlayOverlay = document.getElementById('howToPlayOverlay');
-
     let gameStarted = false;
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
     let hardModeEnabled = false;
-
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
-
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
     const retroArcadeSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ffff00'/></svg>";
-
     const pipeDesigns = {
       "0": { id: "0", name: "Standard", price: 0, preview: standardSVG, colors: ["#0000ff"], animation: "none" },
       "1": { id: "1", name: "Pixel Frost", price: 25, preview: pixelFrostSVG, colors: ["#a0e9ff"], animation: "blink" },
       "2": { id: "2", name: "Neon Pulse", price: 50, preview: neonPulseSVG, colors: ["#ff00ff"], animation: "pulse" },
       "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
-
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
     let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
-
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
-
     let particles = [];
     let coins = [];
     let reactionMessages = [];
-
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
     const sealJump = new Image();
     sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image();
     sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
-
     function updateShadowImage() {
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
-
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
       }
     });
-
     canvas.addEventListener('click', () => {
       if (gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
       }
     });
-
     nicknameInput.addEventListener('input', () => {
       if (nicknameInput.value.trim() !== '') {
         nicknameWarning.style.display = 'none';
       }
     });
-
     hardModeButton.addEventListener('click', () => {
       hardModeEnabled = !hardModeEnabled;
       if (hardModeEnabled) {
@@ -543,16 +536,13 @@
         hardModeText.textContent = "HARD MODE OFF";
       }
     });
-
     hardModeQuestion.addEventListener('click', (e) => {
       e.stopPropagation();
       hardModeDescription.style.display = 'block';
     });
-
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
-
     let selectedMode = "FLYING";
     document.querySelectorAll('.modeBtn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -562,7 +552,6 @@
         document.getElementById('gameTitle').textContent = selectedMode;
       });
     });
-
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
       if (!username) {
@@ -572,7 +561,6 @@
       nicknameWarning.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-
       if (selectedMode === "FLYING") {
         pauseBtn.style.display = 'none';
         startFlyingMode();
@@ -582,57 +570,47 @@
         startPlatformerMode();
       }
     });
-
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
-
     shopBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       shop.style.display = 'flex';
       renderShopItems();
     });
-
     modesBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       modesTab.style.display = 'flex';
     });
-
     modesBackBtn.addEventListener('click', () => {
       modesTab.style.display = 'none';
       menu.style.display = 'flex';
     });
-
     shopBackBtn.addEventListener('click', () => {
       shop.style.display = 'none';
       menu.style.display = 'flex';
     });
-
     shareBtn.addEventListener('click', () => {
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
       const shareUrl = "https://t.me/FlyingSealBot/FLYING";
       const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
       window.open(telegramShareLink, '_blank');
     });
-
     continueBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       startFlyingMode();
     });
-
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
-
     let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
       pauseMenu.style.display = 'block';
     });
-
     resumeBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
@@ -642,7 +620,6 @@
         platformerLoop(currentPlatforms);
       }
     });
-
     exitBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
@@ -650,9 +627,7 @@
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
-
     let shadow = null;
-
     function startFlyingMode() {
       gameStarted = true;
       score = 0;
@@ -674,7 +649,6 @@
       };
       flyingGameLoop();
     }
-
     function flyingGameLoop() {
       if (!gameStarted || paused) return;
       clearCanvas();
@@ -682,11 +656,9 @@
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
-
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
-
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
@@ -707,7 +679,6 @@
           return;
         }
       }
-
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -722,21 +693,18 @@
       updateCoins();
       drawParticles();
       updateShadowImage();
-      
       ctx.save();
       ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
       ctx.rotate(angle);
       ctx.drawImage(nerpaImg, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
       ctx.restore();
-      
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
     }
-
     function removeAllCoins() {
       coins.forEach(coin => {
         if (coin.el) {
@@ -745,7 +713,6 @@
       });
       coins = [];
     }
-
     function checkCollision(pipe) {
       let topPipeLeft = pipe.x + collisionOffsetLeft;
       let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
@@ -767,7 +734,6 @@
         playerBottom > bottomPipeTop;
       return collidesTop || collidesBottom;
     }
-
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
@@ -783,11 +749,9 @@
       });
       createCoin(gapPosition, gap);
     }
-
     function spawnParticle(x, y) {
       particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
     }
-
     function updateParticles() {
       for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i];
@@ -796,7 +760,6 @@
         if (p.alpha <= 0) { particles.splice(i, 1); }
       }
     }
-
     function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
@@ -816,7 +779,6 @@
       coin.el = coinEl;
       coins.push(coin);
     }
-
     function updateCoins() {
       coins.forEach((coin, index) => {
         if (!coin.collected) {
@@ -830,7 +792,6 @@
         }
       });
     }
-
     function checkCoinCollision(coin) {
       let cx = coin.x, cy = coin.y;
       let rx = shadow.x, ry = shadow.y;
@@ -841,11 +802,9 @@
       let dy = cy - nearestY;
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
-
     function showReaction(message) {
       reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
     }
-
     function drawReactions() {
       reactionMessages.forEach((msg, index) => {
         ctx.save();
@@ -859,7 +818,6 @@
         if (msg.timer <= 0) { reactionMessages.splice(index, 1); }
       });
     }
-
     function saveScore(name, points) {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       scores.push({ name, points });
@@ -868,13 +826,11 @@
       localStorage.setItem("scores", JSON.stringify(scores));
       updateLeaderboard();
     }
-
     function updateLeaderboard() {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
     }
     updateLeaderboard();
-
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
       if (typeof trailsConfig !== 'undefined') {
@@ -966,7 +922,6 @@
       }
       shopItemsDiv.appendChild(pipesGrid);
     }
-
     let platformerLevel = 1;
     let platformerGameStarted = false;
     let door, player;
@@ -976,12 +931,10 @@
     const platformH = 40;
     const groundHeight = 80;
     const platformHitboxOffset = 10;
-
     function startPlatformerMode() {
       coinCountElement.style.display = 'none';
       startPlatformerLevel();
     }
-
     function generatePlatforms() {
       let platforms = [];
       const platformCount = 10;
@@ -1007,7 +960,6 @@
       }
       return platforms;
     }
-
     function startPlatformerLevel() {
       currentPlatforms = generatePlatforms();
       currentPlatforms.sort((a, b) => a.y - b.y);
@@ -1029,7 +981,6 @@
       platformerGameStarted = true;
       platformerLoop(currentPlatforms);
     }
-
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       clearCanvas();
@@ -1120,7 +1071,6 @@
       drawDoor(door.x, door.y, door.width, door.height);
       requestAnimationFrame(() => platformerLoop(platforms));
     }
-
     window.addEventListener("keydown", (e) => { keysDown[e.code] = true; });
     window.addEventListener("keyup", (e) => { keysDown[e.code] = false; });
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
