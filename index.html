@@ -69,20 +69,40 @@
       margin-bottom: 20px;
       animation: bounce 2s infinite;
     }
-    #menu p {
-      font-size: 3vw;
-      margin: 10px 0;
+    /* Приветствие для пользователя */
+    #userGreeting {
+      font-size: 4vw;
+      margin-bottom: 15px;
     }
-    #nicknameWarning {
-      display: none;
-      color: red;
-      font-size: 3vw;
-      margin-bottom: 10px;
-      animation: blink 1s infinite;
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-20px); }
+      60% { transform: translateY(-10px); }
     }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
+    @keyframes float {
+      0%   { transform: translateX(0); }
+      50%  { transform: translateX(5px); }
+      100% { transform: translateX(0); }
+    }
+    /* Стили для кнопок */
+    button {
+      padding: 10px 20px;
+      font-size: 3vw;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      background: #3498db;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: all 0.1s;
+      animation: float 3s ease-in-out infinite;
+      font-family: 'Press Start 2P', cursive;
+    }
+    button:active {
+      box-shadow: 2px 2px 0 #00ffff;
+      transform: translate(2px, 2px);
     }
     #hardModeDescription {
       position: absolute;
@@ -112,7 +132,9 @@
     #hardModeDescription p {
       margin: 0;
     }
+    /* Скрываем панель High Scores (но код остаётся) */
     #leaderboard {
+      display: none; /* временно скрыто */
       margin-top: 40px;
       text-align: center;
       font-size: 12px;
@@ -122,30 +144,6 @@
       padding: 10px;
       border-radius: 0;
       image-rendering: pixelated;
-    }
-    /* Стили для кнопок главного меню и оверлея */
-    button {
-      padding: 10px 20px;
-      font-size: 3vw;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #fff;
-      background: #3498db;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
-      cursor: pointer;
-      margin-bottom: 15px;
-      transition: all 0.1s;
-      animation: float 3s ease-in-out infinite;
-      font-family: 'Press Start 2P', cursive;
-    }
-    button:active {
-      box-shadow: 2px 2px 0 #00ffff;
-      transform: translate(2px, 2px);
-    }
-    /* Стили для кнопки PLAY */
-    #startBtn {
-      /* стиль уже задан выше */
     }
     #shop {
       position: absolute;
@@ -213,7 +211,6 @@
       text-align: center;
       z-index: 20;
     }
-    /* Оформление кнопок оверлея аналогично главному меню */
     #gameOverOverlay button {
       padding: 10px 20px;
       font-size: 3vw;
@@ -303,28 +300,12 @@
       transition: all 0.1s;
       font-family: 'Press Start 2P', cursive;
     }
-    @keyframes bounce {
-      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-20px); }
-      60% { transform: translateY(-10px); }
-    }
-    @keyframes float {
-      0%   { transform: translateX(0); }
-      50%  { transform: translateX(5px); }
-      100% { transform: translateX(0); }
-    }
-    #menu input {
-      font-size: 3vw;
-      padding: 10px;
-      text-align: center;
-      margin-bottom: 15px;
-      font-family: 'Press Start 2P', cursive;
-    }
-    /* Стили для изображения Telegram в меню */
+    /* Иконка Telegram (уменьшенная) */
     #telegramImg {
-      width: 10vw;
+      width: 7vw;  /* уменьшаем ширину */
       cursor: pointer;
       margin-bottom: 15px;
+      z-index: 11;
     }
   </style>
 </head>
@@ -340,14 +321,18 @@
   <div id="menu">
     <img src="BACKGROUND/photo_2025-03-12_12-26-18.gif" alt="Menu Background">
     <h1 id="gameTitle">FLYING SEAL</h1>
+    <!-- Приветствие -->
+    <p id="userGreeting"></p>
     <p id="menuTotalCoins">Total Coins: 0</p>
-    <p id="nicknameWarning">Enter your nickname!</p>
-    <input type="text" id="nickname" placeholder="Enter your nickname">
-    <!-- Кнопка PLAY вместо GO! -->
+
+    <!-- Кнопка PLAY -->
     <button id="startBtn">PLAY</button>
+    <!-- Кнопка SHOP -->
     <button id="shopBtn">SHOP</button>
-    <!-- Изображение Telegram под кнопкой SHOP -->
+    <!-- Иконка Telegram под SHOP -->
     <img id="telegramImg" src="BACKGROUND/telegrammm.png" alt="Telegram">
+
+    <!-- Скрытая панель High Scores (код оставлен, но display:none) -->
     <div id="leaderboard">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
@@ -383,9 +368,20 @@
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
   <script>
+    // Если игра запущена в Telegram WebApp, пытаемся получить username
+    let userNameFromTelegram = "Guest";
     if (window.Telegram && window.Telegram.WebApp) {
+      // Попытка получить имя пользователя из initDataUnsafe
+      const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+      if (tgUser && tgUser.username) {
+        userNameFromTelegram = tgUser.username;
+      }
       window.Telegram.WebApp.ready();
     }
+    // Устанавливаем приветствие
+    const userGreeting = document.getElementById('userGreeting');
+    userGreeting.textContent = `Hi *@${userNameFromTelegram}*!`;
+
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
@@ -397,6 +393,7 @@
     let collisionOffsetRight = 10;
     let collisionOffsetTop = 20;
     let collisionOffsetBottom = 20;
+
     function drawPipes() {
       pipes.forEach(pipe => {
         ctx.save();
@@ -431,9 +428,8 @@
     const shareBtn = document.getElementById('shareBtn');
     const continueBtn = document.getElementById('continueBtn');
     const mainMenuBtn = document.getElementById('mainMenuBtn');
-    const nicknameInput = document.getElementById('nickname');
-    const nicknameWarning = document.getElementById('nicknameWarning');
     const menuTotalCoinsElement = document.getElementById('menuTotalCoins');
+    const leaderboardDiv = document.getElementById('leaderboard');
     const topScoresList = document.getElementById('topScores');
     const hardModeDescription = document.getElementById('hardModeDescription');
     const closeHardModeDesc = document.getElementById('closeHardModeDesc');
@@ -444,11 +440,11 @@
     const modeSelectModal = document.getElementById('modeSelectModal');
     const flyingModeBtn = document.getElementById('flyingModeBtn');
     const platformerModeBtn = document.getElementById('platformerModeBtn');
+
     let gameStarted = false;
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
-    let username = "";
     let hardModeEnabled = false;
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
@@ -467,26 +463,31 @@
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
+
     let particles = [];
     let coins = [];
     let reactionMessages = [];
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
     const sealJump = new Image();
     sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image();
     sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
+
     function updateShadowImage() {
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space' && gameStarted && selectedMode === "FLYING") {
         shadow.velocity = shadow.jump;
@@ -497,24 +498,17 @@
         shadow.velocity = shadow.jump;
       }
     });
-    nicknameInput.addEventListener('input', () => {
-      if (nicknameInput.value.trim() !== '') {
-        nicknameWarning.style.display = 'none';
-      }
-    });
+
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
+
     // Обработчик нажатия на кнопку PLAY – показываем модальное окно выбора режима
     startBtn.addEventListener('click', () => {
-      username = nicknameInput.value.trim();
-      if (!username) {
-        nicknameWarning.style.display = 'block';
-        return;
-      }
-      nicknameWarning.style.display = 'none';
+      // Показываем окно выбора режима
       modeSelectModal.style.display = 'flex';
     });
+
     // Выбор режима FLYING
     flyingModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
@@ -534,10 +528,12 @@
       selectedMode = "PLATFORMER";
       startPlatformerMode();
     });
-    // Обработчик нажатия на изображение Telegram
+
+    // Обработчик нажатия на иконку Telegram
     telegramImg.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
+
     shopBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       shop.style.display = 'flex';
@@ -547,6 +543,7 @@
       shop.style.display = 'none';
       menu.style.display = 'flex';
     });
+
     shareBtn.addEventListener('click', () => {
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
       const shareUrl = "https://t.me/FlyingSealBot/FLYING";
@@ -563,6 +560,7 @@
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
+
     let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
@@ -586,8 +584,10 @@
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
+
     let shadow = null;
     let selectedMode = "FLYING";
+
     function startFlyingMode() {
       gameStarted = true;
       score = 0;
@@ -633,7 +633,7 @@
           gameStarted = false;
           removeAllCoins();
           setTimeout(() => {
-            saveScore(username, score);
+            saveScore(userNameFromTelegram, score);
             gameOverOverlay.style.display = 'flex';
           }, 1000);
           return;
@@ -791,52 +791,11 @@
       topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
     }
     updateLeaderboard();
+
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
-      if (typeof trailsConfig !== 'undefined') {
-        let trailsHeader = document.createElement("h3");
-        trailsHeader.textContent = "Trails";
-        shopItemsDiv.appendChild(trailsHeader);
-        let trailsGrid = document.createElement("div");
-        trailsGrid.className = "shop-grid";
-        for (let id in trailsConfig) {
-          let trail = trailsConfig[id];
-          let div = document.createElement("div");
-          div.className = "shop-item";
-          div.innerHTML = `<strong>${trail.name}</strong><br>
-                           Price: ${trail.price} coins<br>`;
-          if (purchasedTrails.includes(trail.id)) {
-            if (currentTrailId === trail.id) { div.innerHTML += `<em>Selected</em>`; }
-            else {
-              let selectBtn = document.createElement("button");
-              selectBtn.textContent = "Select";
-              selectBtn.addEventListener("click", () => { 
-                currentTrailId = trail.id; 
-                localStorage.setItem("selectedTrail", currentTrailId); 
-                renderShopItems(); 
-              });
-              div.appendChild(selectBtn);
-            }
-          } else {
-            let buyBtn = document.createElement("button");
-            buyBtn.textContent = "Buy";
-            buyBtn.addEventListener("click", () => {
-              if (totalCoins >= trail.price) {
-                totalCoins -= trail.price;
-                localStorage.setItem("totalCoins", totalCoins);
-                menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
-                shopBalance.textContent = `Total Coins: ${totalCoins}`;
-                purchasedTrails.push(trail.id);
-                localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
-                renderShopItems();
-              } else { alert("Not enough coins!"); }
-            });
-            div.appendChild(buyBtn);
-          }
-          trailsGrid.appendChild(div);
-        }
-        shopItemsDiv.appendChild(trailsGrid);
-      }
+      // Пример конфигурации, если бы она была
+      // if (typeof trailsConfig !== 'undefined') { ... }
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
@@ -850,8 +809,8 @@
                          Price: ${design.price} coins<br>
                          <img src="${design.preview}" alt="${design.name}"><br>`;
         if (purchasedPipeDesigns.includes(design.id)) {
-          if (currentPipeDesign === design.id) { 
-            div.innerHTML += `<em>Selected</em>`; 
+          if (currentPipeDesign === design.id) {
+            div.innerHTML += `<em>Selected</em>`;
           } else {
             let selectBtn = document.createElement("button");
             selectBtn.textContent = "Select";
@@ -874,7 +833,9 @@
               purchasedPipeDesigns.push(design.id);
               localStorage.setItem("purchasedPipeDesigns", JSON.stringify(purchasedPipeDesigns));
               renderShopItems();
-            } else { alert("Not enough coins!"); }
+            } else {
+              alert("Not enough coins!");
+            }
           });
           div.appendChild(buyBtn);
         }
@@ -882,6 +843,7 @@
       }
       shopItemsDiv.appendChild(pipesGrid);
     }
+
     let platformerLevel = 1;
     let platformerGameStarted = false;
     let door, player;
@@ -891,6 +853,7 @@
     const platformH = 40;
     const groundHeight = 80;
     const platformHitboxOffset = 10;
+
     function startPlatformerMode() {
       coinCountElement.style.display = 'none';
       startPlatformerLevel();
@@ -959,6 +922,7 @@
       player.x += player.vx;
       player.y += player.vy;
       player.onGround = false;
+
       for (let i = 0; i < platforms.length; i++) {
         let plat = platforms[i];
         let left = plat.x + platformHitboxOffset;
@@ -988,6 +952,7 @@
       ctx.rotate(pAngle);
       ctx.drawImage(nerpaImg, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
+
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (
@@ -998,6 +963,7 @@
           platforms.splice(i, 1);
         }
       }
+      // Проверка двери (переход на следующий уровень)
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1019,6 +985,7 @@
         }, 1500);
         return;
       }
+      // Если упал за пределы экрана
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1033,6 +1000,7 @@
     }
     window.addEventListener("keydown", (e) => { keysDown[e.code] = true; });
     window.addEventListener("keyup", (e) => { keysDown[e.code] = false; });
+
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
     function handleTouchStart(e) {
@@ -1059,6 +1027,7 @@
         keysDown["ArrowUp"] = false;
       }
     }
+
     function drawPlatform(plat) {
       if (plat.isGround) {
         ctx.fillStyle = "#87CEFA";
