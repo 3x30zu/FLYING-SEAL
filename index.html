@@ -542,13 +542,19 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    const nerpaNormal = new Image();
-    nerpaNormal.src = 'https://ltdfoto.ru/images/2025/03/17/photo_2025-03-12_11-06-57-removebg-preview8aaf5888645e399d.png';
-    const nerpaFalling = new Image();
-    nerpaFalling.src = 'https://ltdfoto.ru/images/2025/03/18/photo_2025-03-12_11-06-40-removebg-previewf904bc1020206391.png';
+    // Загрузка новых изображений для seal
+    const sealJump = new Image();
+    sealJump.src = 'BACKGROUND/seal jump.png';
+    const sealFall = new Image();
+    sealFall.src = 'BACKGROUND/seal fall.png';
 
-    let nerpaImg = new Image();
-    nerpaImg.src = nerpaNormal.src;
+    // Текущая картинка нерпы – будем менять в зависимости от состояния (прыжок/падение)
+    let nerpaImg = sealJump;
+
+    // Функция обновления изображения в зависимости от вертикальной скорости
+    function updateShadowImage() {
+      nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
+    }
 
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -703,7 +709,8 @@
       particles = [];
       reactionMessages = [];
       coinCountElement.style.display = 'block';
-      nerpaImg.src = nerpaNormal.src;
+      // Начинаем с изображения для прыжка
+      nerpaImg = sealJump;
       shadow = {
         x: canvas.width * 0.1,
         y: canvas.height * 0.5,
@@ -766,7 +773,15 @@
       updateCoins();
       drawParticles();
       updateShadowImage();
-      ctx.drawImage(nerpaImg, shadow.x, shadow.y, shadow.width, shadow.height);
+      
+      // Рисуем seal с поворотом в зависимости от состояния (прыжок или падение)
+      ctx.save();
+      ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.rotate(angle);
+      ctx.drawImage(nerpaImg, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
+      ctx.restore();
+      
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
@@ -826,10 +841,6 @@
         design: design
       });
       createCoin(gapPosition, gap);
-    }
-
-    function updateShadowImage() {
-      nerpaImg.src = shadow.velocity >= 0 ? nerpaFalling.src : nerpaNormal.src;
     }
 
     function spawnParticle(x, y) {
@@ -1148,7 +1159,16 @@
         }
       }
 
-      nerpaImg.src = player.vy >= 0 ? nerpaFalling.src : nerpaNormal.src;
+      // Обновляем изображение игрока в зависимости от скорости прыжка/падения
+      nerpaImg = player.vy < 0 ? sealJump : sealFall;
+
+      // Рисуем игрока с поворотом
+      ctx.save();
+      ctx.translate(player.x + player.width/2, player.y + player.height/2);
+      let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.rotate(pAngle);
+      ctx.drawImage(nerpaImg, -player.width/2, -player.height/2, player.width, player.height);
+      ctx.restore();
 
       // Remove platforms if > 1 sec after landing (non-ground)
       for (let i = platforms.length - 1; i >= 0; i--) {
@@ -1198,9 +1218,6 @@
       // Draw platforms and door
       platforms.forEach(plat => { drawPlatform(plat); });
       drawDoor(door.x, door.y, door.width, door.height);
-
-      // Draw player
-      ctx.drawImage(nerpaImg, player.x, player.y, player.width, player.height);
 
       // Next frame
       requestAnimationFrame(() => platformerLoop(platforms));
