@@ -132,7 +132,7 @@
     #hardModeDescription p {
       margin: 0;
     }
-    /* Скрываем панель High Scores (но код остаётся) */
+    /* Скрываем панель High Scores (код остаётся) */
     #leaderboard {
       display: none; /* временно скрыто */
       margin-top: 40px;
@@ -300,11 +300,14 @@
       transition: all 0.1s;
       font-family: 'Press Start 2P', cursive;
     }
-    /* Иконка Telegram (уменьшенная) */
+    /* Иконка Telegram (уменьшенная и внизу) */
     #telegramImg {
-      width: 7vw;  /* уменьшаем ширину */
+      position: absolute;
+      bottom: 5vh;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5vw;
       cursor: pointer;
-      margin-bottom: 15px;
       z-index: 11;
     }
   </style>
@@ -329,15 +332,16 @@
     <button id="startBtn">PLAY</button>
     <!-- Кнопка SHOP -->
     <button id="shopBtn">SHOP</button>
-    <!-- Иконка Telegram под SHOP -->
-    <img id="telegramImg" src="BACKGROUND/telegrammm.png" alt="Telegram">
-
+    
     <!-- Скрытая панель High Scores (код оставлен, но display:none) -->
     <div id="leaderboard">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
     </div>
   </div>
+  <!-- Иконка Telegram (внизу) -->
+  <img id="telegramImg" src="BACKGROUND/telegrammm.png" alt="Telegram">
+
   <!-- Модальное окно для выбора режима -->
   <div id="modeSelectModal">
     <h2>Select Mode</h2>
@@ -368,19 +372,18 @@
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
   <script>
-    // Если игра запущена в Telegram WebApp, пытаемся получить username
-    let userNameFromTelegram = "Guest";
+    // Пытаемся всегда получить username из Telegram
+    let userNameFromTelegram = "NoUsername"; 
     if (window.Telegram && window.Telegram.WebApp) {
-      // Попытка получить имя пользователя из initDataUnsafe
+      window.Telegram.WebApp.ready();
       const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
       if (tgUser && tgUser.username) {
         userNameFromTelegram = tgUser.username;
       }
-      window.Telegram.WebApp.ready();
     }
-    // Устанавливаем приветствие
+    // Устанавливаем приветствие без звёздочек
     const userGreeting = document.getElementById('userGreeting');
-    userGreeting.textContent = `Hi *@${userNameFromTelegram}*!`;
+    userGreeting.textContent = `Hi @${userNameFromTelegram}!`;
 
     let pipes = [];
     let pipeSpeed = 2;
@@ -794,8 +797,8 @@
 
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
-      // Пример конфигурации, если бы она была
-      // if (typeof trailsConfig !== 'undefined') { ... }
+      /* Если есть конфиг по другим предметам (например, trailsConfig), 
+         можно добавить соответствующие блоки тут */
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
@@ -935,10 +938,12 @@
           player.y < bottom &&
           player.y + player.height > top
         ) {
+          // Проверка "сверху" платформы
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             player.y = plat.y - player.height;
             player.vy = 0;
             player.onGround = true;
+            // Платформа исчезает через 1 секунду, если не является землёй
             if (!plat.isGround && plat.disappearStartTime === null) {
               plat.disappearStartTime = performance.now();
             }
@@ -953,6 +958,7 @@
       ctx.drawImage(nerpaImg, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
 
+      // Удаляем "исчезающие" платформы
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (
@@ -963,7 +969,7 @@
           platforms.splice(i, 1);
         }
       }
-      // Проверка двери (переход на следующий уровень)
+      // Проверка достижения двери (переход на следующий уровень)
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -985,7 +991,7 @@
         }, 1500);
         return;
       }
-      // Если упал за пределы экрана
+      // Если игрок упал за пределы экрана
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -994,6 +1000,7 @@
         pauseBtn.style.display = 'none';
         return;
       }
+      // Рисуем оставшиеся платформы и дверь
       platforms.forEach(plat => { drawPlatform(plat); });
       drawDoor(door.x, door.y, door.width, door.height);
       requestAnimationFrame(() => platformerLoop(platforms));
