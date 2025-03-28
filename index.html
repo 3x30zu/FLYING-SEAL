@@ -7,7 +7,7 @@
   <!-- Подключаем шрифт Press Start 2P -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Устанавливаем шрифт Press Start 2P для всего документа */
+    /* Общие стили */
     html, body {
       margin: 0;
       padding: 0;
@@ -94,14 +94,14 @@
       animation: float 3s ease-in-out infinite;
       font-family: 'Press Start 2P', cursive;
     }
-    /* Кнопка Telegram (картинка) */
+    /* Кнопка Telegram */
     #telegramBtn {
       margin-bottom: 15px;
       width: 80px;
       height: auto;
       cursor: pointer;
     }
-    /* Счётчики */
+    /* Счётчики (Score и Coins) */
     #score, #coinCount {
       position: absolute;
       color: white;
@@ -116,6 +116,10 @@
     #coinCount {
       top: 5%;
       right: 5%;
+    }
+    /* Скрываем high scores, но оставляем код для дальнейшей работы */
+    #leaderboard {
+      display: none;
     }
     /* Стиль пиксельных кнопок */
     .pixelButton {
@@ -315,10 +319,13 @@
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
+    <!-- Блок high scores скрыт (раскомментируйте ниже, если потребуется) -->
+    <!--
     <div id="leaderboard">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
     </div>
+    -->
   </div>
   <!-- Модальное окно выбора режима -->
   <div id="modeSelectModal">
@@ -351,7 +358,7 @@
   <div id="coinCount">Coins: 0</div>
 
   <script>
-    // Принудительно скрываем окно выбора режима при загрузке страницы
+    // При загрузке страницы гарантируем, что окно выбора режима скрыто
     window.onload = function() {
       document.getElementById('modeSelectModal').style.display = 'none';
     };
@@ -451,7 +458,7 @@
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
 
-    /* Обработчики */
+    // Обработчики событий
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
       if (!username) {
@@ -502,11 +509,14 @@
       gameOverOverlay.style.display = 'none';
       startFlyingMode();
     });
+    // При нажатии на MAIN MENU очищаем счет и монеты
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
+      scoreElement.textContent = '';
+      coinCountElement.textContent = '';
     });
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
@@ -533,6 +543,8 @@
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
+      scoreElement.textContent = '';
+      coinCountElement.textContent = '';
     });
     nicknameInput.addEventListener('input', () => {
       if (nicknameInput.value.trim() !== '') {
