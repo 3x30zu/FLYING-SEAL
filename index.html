@@ -52,7 +52,6 @@
       justify-content: center;
       align-items: center;
       z-index: 10;
-      text-align: center; /* Центрируем содержимое */
     }
     #menu * {
       text-shadow: 2px 2px 4px #000;
@@ -144,7 +143,7 @@
       box-shadow: 2px 2px 0 #00ffff;
       transform: translate(2px, 2px);
     }
-    /* Кнопка SHOP */
+    /* Оставляем стили только для кнопки SHOP, так как TELEGRAM теперь картинка */
     #shopBtn {
       padding: 10px 20px;
       font-size: 3vw;
@@ -160,19 +159,6 @@
       animation: float 3s ease-in-out infinite;
       font-family: 'Press Start 2P', cursive;
     }
-
-    /* Ссылка с иконкой Telegram, размещаем под кнопкой SHOP */
-    #telegramLink {
-      margin-top: 10px;
-      display: block;
-    }
-    #telegramLink img {
-      width: 40px;
-      cursor: pointer;
-      display: block;
-      margin: 0 auto; /* Иконка по центру */
-    }
-
     #shop {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -347,15 +333,15 @@
     <p id="menuTotalCoins">Total Coins: 0</p>
     <p id="nicknameWarning">Enter your nickname!</p>
     <input type="text" id="nickname" placeholder="Enter your nickname">
-    <!-- Кнопка PLAY -->
+    <!-- Кнопка PLAY вместо GO! -->
     <button id="startBtn">PLAY</button>
+    <!-- Заменили кнопку TELEGRAM на изображение -->
+    <img id="telegramBtn" src="BACKGROUND/telegrammm.png" style="cursor: pointer; margin-bottom: 15px;" alt="Telegram">
     <!-- Кнопка SHOP -->
     <button id="shopBtn">SHOP</button>
-    <!-- Иконка Telegram под кнопкой SHOP -->
-    <a id="telegramLink" href="https://t.me/FlyingSealCoin" target="_blank">
-      <img src="BACKGROUND/telegrammm.png" alt="Telegram">
-    </a>
-    <!-- Кнопка MODES удалена -->
+    <!-- Кнопку MODES убрали, а вместо неё ничего не показываем -->
+    <!-- Под кнопкой SHOP расположим ещё одно изображение telegrammm.png -->
+    <img src="BACKGROUND/telegrammm.png" alt="Telegram" style="margin-bottom: 15px;">
     <div id="leaderboard">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
@@ -434,7 +420,9 @@
     const shopBackBtn = document.getElementById('shopBackBtn');
     const gameOverOverlay = document.getElementById('gameOverOverlay');
     const startBtn = document.getElementById('startBtn');
+    const telegramBtn = document.getElementById('telegramBtn'); // Теперь это <img>
     const shopBtn = document.getElementById('shopBtn');
+    // Удалили получение элемента modesBtn, так как он больше не нужен
     const shareBtn = document.getElementById('shareBtn');
     const continueBtn = document.getElementById('continueBtn');
     const mainMenuBtn = document.getElementById('mainMenuBtn');
@@ -451,6 +439,7 @@
     const modeSelectModal = document.getElementById('modeSelectModal');
     const flyingModeBtn = document.getElementById('flyingModeBtn');
     const platformerModeBtn = document.getElementById('platformerModeBtn');
+
     let gameStarted = false;
     let score = 0;
     let coinCount = 0;
@@ -459,35 +448,43 @@
     let hardModeEnabled = false;
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
+
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
     const retroArcadeSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ffff00'/></svg>";
+
     const pipeDesigns = {
       "0": { id: "0", name: "Standard", price: 0, preview: standardSVG, colors: ["#0000ff"], animation: "none" },
       "1": { id: "1", name: "Pixel Frost", price: 25, preview: pixelFrostSVG, colors: ["#a0e9ff"], animation: "blink" },
       "2": { id: "2", name: "Neon Pulse", price: 50, preview: neonPulseSVG, colors: ["#ff00ff"], animation: "pulse" },
       "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
+
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
     let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
+
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
+
     let particles = [];
     let coins = [];
     let reactionMessages = [];
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
     const sealJump = new Image();
     sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image();
     sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
+
     function updateShadowImage() {
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
@@ -512,6 +509,7 @@
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
+
     // Обработчик нажатия на кнопку PLAY – показываем модальное окно выбора режима
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
@@ -522,6 +520,7 @@
       nicknameWarning.style.display = 'none';
       modeSelectModal.style.display = 'flex';
     });
+
     // Выбор режима FLYING
     flyingModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
@@ -531,6 +530,7 @@
       selectedMode = "FLYING";
       startFlyingMode();
     });
+
     // Выбор режима PLATFORMER
     platformerModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
@@ -541,31 +541,42 @@
       selectedMode = "PLATFORMER";
       startPlatformerMode();
     });
+
+    // При клике на картинку Telegram (бывшая кнопка)
+    telegramBtn.addEventListener('click', () => {
+      window.open('https://t.me/FlyingSealCoin', '_blank');
+    });
+
     shopBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       shop.style.display = 'flex';
       renderShopItems();
     });
+
     shopBackBtn.addEventListener('click', () => {
       shop.style.display = 'none';
       menu.style.display = 'flex';
     });
+
     shareBtn.addEventListener('click', () => {
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
       const shareUrl = "https://t.me/FlyingSealBot/FLYING";
       const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
       window.open(telegramShareLink, '_blank');
     });
+
     continueBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       startFlyingMode();
     });
+
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
+
     let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
@@ -589,8 +600,10 @@
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
+
     let shadow = null;
     let selectedMode = "FLYING";
+
     function startFlyingMode() {
       gameStarted = true;
       score = 0;
@@ -619,6 +632,7 @@
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
+
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
@@ -663,6 +677,7 @@
       ctx.drawImage(nerpaImg, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
       ctx.restore();
       drawPipes();
+
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       drawReactions();
@@ -680,21 +695,26 @@
       let topPipeLeft = pipe.x + collisionOffsetLeft;
       let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
       let topPipeBottom = pipe.topHeight - collisionOffsetTop;
+
       let bottomPipeLeft = pipe.x + collisionOffsetLeft;
       let bottomPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
       let bottomPipeTop = pipe.bottomY + collisionOffsetBottom;
+
       let playerLeft = shadow.x;
       let playerRight = shadow.x + shadow.width;
       let playerTop = shadow.y;
       let playerBottom = shadow.y + shadow.height;
+
       let collidesTop =
         playerRight > topPipeLeft &&
         playerLeft < topPipeRight &&
         playerTop < topPipeBottom;
+
       let collidesBottom =
         playerRight > bottomPipeLeft &&
         playerLeft < bottomPipeRight &&
         playerBottom > bottomPipeTop;
+
       return collidesTop || collidesBottom;
     }
     function createPipe() {
@@ -702,6 +722,7 @@
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
       let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
       let color = design ? design.colors[0] : "#fff";
+
       pipes.push({
         x: canvas.width,
         topHeight: gapPosition,
@@ -759,6 +780,7 @@
       let cx = coin.x, cy = coin.y;
       let rx = shadow.x, ry = shadow.y;
       let rw = shadow.width, rh = shadow.height;
+
       let nearestX = Math.max(rx, Math.min(cx, rx + rw));
       let nearestY = Math.max(ry, Math.min(cy, ry + rh));
       let dx = cx - nearestX;
@@ -794,15 +816,17 @@
       topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
     }
     updateLeaderboard();
+
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
-      // Если есть объект trailsConfig, выведите товары "Trails"
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
         shopItemsDiv.appendChild(trailsHeader);
+
         let trailsGrid = document.createElement("div");
         trailsGrid.className = "shop-grid";
+
         for (let id in trailsConfig) {
           let trail = trailsConfig[id];
           let div = document.createElement("div");
@@ -810,14 +834,15 @@
           div.innerHTML = `<strong>${trail.name}</strong><br>
                            Price: ${trail.price} coins<br>`;
           if (purchasedTrails.includes(trail.id)) {
-            if (currentTrailId === trail.id) { div.innerHTML += `<em>Selected</em>`; }
-            else {
+            if (currentTrailId === trail.id) {
+              div.innerHTML += `<em>Selected</em>`;
+            } else {
               let selectBtn = document.createElement("button");
               selectBtn.textContent = "Select";
-              selectBtn.addEventListener("click", () => {
-                currentTrailId = trail.id;
-                localStorage.setItem("selectedTrail", currentTrailId);
-                renderShopItems();
+              selectBtn.addEventListener("click", () => { 
+                currentTrailId = trail.id; 
+                localStorage.setItem("selectedTrail", currentTrailId); 
+                renderShopItems(); 
               });
               div.appendChild(selectBtn);
             }
@@ -833,7 +858,9 @@
                 purchasedTrails.push(trail.id);
                 localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
                 renderShopItems();
-              } else { alert("Not enough coins!"); }
+              } else {
+                alert("Not enough coins!");
+              }
             });
             div.appendChild(buyBtn);
           }
@@ -841,12 +868,14 @@
         }
         shopItemsDiv.appendChild(trailsGrid);
       }
-      // Вывод товаров "Pipe Designs"
+
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
+
       let pipesGrid = document.createElement("div");
       pipesGrid.className = "shop-grid";
+
       for (let id in pipeDesigns) {
         let design = pipeDesigns[id];
         let div = document.createElement("div");
@@ -854,6 +883,7 @@
         div.innerHTML = `<strong>${design.name}</strong><br>
                          Price: ${design.price} coins<br>
                          <img src="${design.preview}" alt="${design.name}"><br>`;
+
         if (purchasedPipeDesigns.includes(design.id)) {
           if (currentPipeDesign === design.id) {
             div.innerHTML += `<em>Selected</em>`;
@@ -879,7 +909,9 @@
               purchasedPipeDesigns.push(design.id);
               localStorage.setItem("purchasedPipeDesigns", JSON.stringify(purchasedPipeDesigns));
               renderShopItems();
-            } else { alert("Not enough coins!"); }
+            } else {
+              alert("Not enough coins!");
+            }
           });
           div.appendChild(buyBtn);
         }
@@ -887,6 +919,7 @@
       }
       shopItemsDiv.appendChild(pipesGrid);
     }
+
     let platformerLevel = 1;
     let platformerGameStarted = false;
     let door, player;
@@ -896,6 +929,7 @@
     const platformH = 40;
     const groundHeight = 80;
     const platformHitboxOffset = 10;
+
     function startPlatformerMode() {
       coinCountElement.style.display = 'none';
       startPlatformerLevel();
@@ -964,30 +998,31 @@
       player.x += player.vx;
       player.y += player.vy;
       player.onGround = false;
+
       for (let i = 0; i < platforms.length; i++) {
         let plat = platforms[i];
         let left = plat.x + platformHitboxOffset;
         let right = plat.x + plat.width - platformHitboxOffset;
         let top = plat.y;
         let bottom = plat.y + plat.height;
+
         if (
           player.x < right &&
           player.x + player.width > left &&
           player.y < bottom &&
           player.y + player.height > top
         ) {
-          // Проверяем, упал ли сверху на платформу
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             player.y = plat.y - player.height;
             player.vy = 0;
             player.onGround = true;
-            // Начинаем отсчёт для исчезновения платформы, если это не земля
             if (!plat.isGround && plat.disappearStartTime === null) {
               plat.disappearStartTime = performance.now();
             }
           }
         }
       }
+
       nerpaImg = player.vy < 0 ? sealJump : sealFall;
       ctx.save();
       ctx.translate(player.x + player.width/2, player.y + player.height/2);
@@ -995,7 +1030,7 @@
       ctx.rotate(pAngle);
       ctx.drawImage(nerpaImg, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
-      // Удаляем платформы, у которых прошёл таймер исчезновения
+
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (
@@ -1006,7 +1041,7 @@
           platforms.splice(i, 1);
         }
       }
-      // Проверяем пересечение с дверью (выигрыш)
+
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1028,7 +1063,6 @@
         }, 1500);
         return;
       }
-      // Если упали за пределы экрана — game over
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1037,14 +1071,14 @@
         pauseBtn.style.display = 'none';
         return;
       }
-      // Рисуем платформы
       platforms.forEach(plat => { drawPlatform(plat); });
-      // Рисуем дверь
       drawDoor(door.x, door.y, door.width, door.height);
+
       requestAnimationFrame(() => platformerLoop(platforms));
     }
     window.addEventListener("keydown", (e) => { keysDown[e.code] = true; });
     window.addEventListener("keyup", (e) => { keysDown[e.code] = false; });
+
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
     function handleTouchStart(e) {
@@ -1055,13 +1089,14 @@
         let touch = e.touches[0];
         let x = touch.clientX;
         let y = touch.clientY;
-        // Если тапнули в верхней части экрана, считаем это "прыжком"
         if (y < canvas.height * 0.3 && player && player.onGround) {
           keysDown["ArrowUp"] = true;
         } else {
-          // Иначе двигаем влево/вправо
-          if (x < canvas.width / 2) { keysDown["ArrowLeft"] = true; }
-          else { keysDown["ArrowRight"] = true; }
+          if (x < canvas.width / 2) {
+            keysDown["ArrowLeft"] = true;
+          } else {
+            keysDown["ArrowRight"] = true;
+          }
         }
       }
     }
@@ -1087,14 +1122,6 @@
       ctx.strokeStyle = "#fff";
       ctx.lineWidth = 3;
       ctx.strokeRect(x, y, width, height);
-    }
-    function removeAllCoins() {
-      coins.forEach(coin => {
-        if (coin.el) {
-          coin.el.remove();
-        }
-      });
-      coins = [];
     }
   </script>
 </body>
