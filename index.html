@@ -42,25 +42,20 @@
       height: 100%;
       pointer-events: none;
     }
+    /* Убрали затемнение фона и изображение внутри #menu */
     #menu {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
       color: white;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 10;
+      /* background: none; — теперь фон не задаётся */
     }
     #menu * {
       text-shadow: 2px 2px 4px #000;
-    }
-    #menu img {
-      width: 80px;
-      height: auto;
-      margin-bottom: 15px;
-      cursor: pointer;
     }
     #menu h1 {
       font-size: 5vw;
@@ -275,7 +270,7 @@
     <p>(Tap or click anywhere to start)</p>
   </div>
   <div id="menu">
-    <img src="BACKGROUND/photo_2025-03-12_12-26-18.gif" alt="Menu Background">
+    <!-- Удалён тег <img> с фоновым GIF -->
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
     <p id="nicknameWarning">Enter your nickname!</p>
@@ -284,8 +279,8 @@
     <button id="startBtn">PLAY</button>
     <!-- Кнопка SHOP -->
     <button id="shopBtn">SHOP</button>
-    <!-- Кнопка Telegram теперь располагается под SHOP -->
-    <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
+    <!-- Кнопка Telegram -->
+    <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram" style="margin-bottom:15px;width:80px;height:auto;cursor:pointer;">
     <div id="leaderboard">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
@@ -320,6 +315,7 @@
   </div>
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
+
   <script>
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
@@ -335,6 +331,7 @@
     let collisionOffsetRight = 10;
     let collisionOffsetTop = 20;
     let collisionOffsetBottom = 20;
+
     function drawPipes() {
       pipes.forEach(pipe => {
         ctx.save();
@@ -356,6 +353,7 @@
         ctx.restore();
       });
     }
+
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
@@ -365,7 +363,6 @@
     const gameOverOverlay = document.getElementById('gameOverOverlay');
     const startBtn = document.getElementById('startBtn');
     const shopBtn = document.getElementById('shopBtn');
-    // Telegram кнопка теперь расположена под SHOP
     const telegramBtn = document.getElementById('telegramBtn');
     const shareBtn = document.getElementById('shareBtn');
     const continueBtn = document.getElementById('continueBtn');
@@ -453,7 +450,7 @@
       hardModeDescription.style.display = 'none';
     });
 
-    // Обработчик нажатия на кнопку PLAY – показываем модальное окно выбора режима
+    // Кнопка PLAY — открывает выбор режима
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
       if (!username) {
@@ -485,7 +482,7 @@
       startPlatformerMode();
     });
 
-    // Обработчик нажатия на кнопку Telegram
+    // Кнопка Telegram
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
