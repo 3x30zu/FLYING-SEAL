@@ -28,12 +28,16 @@
       font-family: 'Press Start 2P';
       src: url('BACKGROUND/bloq.ttf') format('truetype');
     }
+
+    /* Canvas с анимированным фоном */
     #gameCanvas {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       display: block;
       background: url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
     }
+
+    /* Контейнер для монет (absolutely positioned) */
     #coinContainer {
       position: absolute;
       top: 0;
@@ -42,17 +46,17 @@
       height: 100%;
       pointer-events: none;
     }
-    /* Убрали затемнение фона и изображение внутри #menu */
+
+    /* Главное меню (видимо) */
     #menu {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       color: white;
-      display: flex;
+      display: flex;               /* Включаем флекс */
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 10;
-      /* background: none; — теперь фон не задаётся */
+      z-index: 10;                /* Поверх canvas */
     }
     #menu * {
       text-shadow: 2px 2px 4px #000;
@@ -77,45 +81,7 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
     }
-    #hardModeDescription {
-      position: absolute;
-      top: 20%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #3498db;
-      border: 4px solid #fff;
-      padding: 20px;
-      z-index: 50;
-      font-size: 3vw;
-      display: none;
-      text-align: center;
-      width: 80%;
-    }
-    #hardModeDescription button {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: transparent;
-      border: none;
-      font-size: 3vw;
-      color: #fff;
-      cursor: pointer;
-      font-family: 'Press Start 2P', cursive;
-    }
-    #hardModeDescription p {
-      margin: 0;
-    }
-    #leaderboard {
-      margin-top: 40px;
-      text-align: center;
-      font-size: 12px;
-      background: #3498db;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
-      padding: 10px;
-      border-radius: 0;
-      image-rendering: pixelated;
-    }
+
     /* Кнопки главного меню */
     #startBtn, #shopBtn {
       padding: 10px 20px;
@@ -132,7 +98,33 @@
       animation: float 3s ease-in-out infinite;
       font-family: 'Press Start 2P', cursive;
     }
-    /* Общий стиль для кнопок в пиксельном стиле */
+
+    /* Кнопка Telegram (картинка) */
+    #telegramBtn {
+      margin-bottom: 15px;
+      width: 80px;
+      height: auto;
+      cursor: pointer;
+    }
+
+    /* Счётчик очков и монет */
+    #score, #coinCount {
+      position: absolute;
+      color: white;
+      font-size: 4vw;
+      z-index: 5;
+      font-family: 'Press Start 2P', cursive;
+    }
+    #score {
+      top: 5%;
+      left: 5%;
+    }
+    #coinCount {
+      top: 5%;
+      right: 5%;
+    }
+
+    /* Общий стиль для пиксельных кнопок */
     .pixelButton {
       padding: 10px 20px;
       font-size: 3vw;
@@ -152,6 +144,8 @@
       box-shadow: 2px 2px 0 #00ffff;
       transform: translate(2px, 2px);
     }
+
+    /* Магазин */
     #shop {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -206,6 +200,8 @@
       cursor: pointer;
       font-family: 'Press Start 2P', cursive;
     }
+
+    /* Окно game over */
     #gameOverOverlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -218,10 +214,8 @@
       text-align: center;
       z-index: 20;
     }
-    /* Используем класс .pixelButton для кнопок game over */
-    #gameOverOverlay button {
-      /* класс pixelButton применяется через HTML */
-    }
+
+    /* Меню паузы */
     #pauseMenu {
       display: none;
       position: absolute;
@@ -237,10 +231,8 @@
       max-width: 400px;
       font-family: 'Press Start 2P', cursive;
     }
-    /* Используем класс .pixelButton для кнопок pauseMenu */
-    #pauseMenu button {
-      /* класс pixelButton применяется через HTML */
-    }
+
+    /* Анимации */
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-20px); }
@@ -251,6 +243,8 @@
       50%  { transform: translateX(5px); }
       100% { transform: translateX(0); }
     }
+
+    /* Поле ввода никнейма */
     #menu input {
       font-size: 3vw;
       padding: 10px;
@@ -258,68 +252,145 @@
       margin-bottom: 15px;
       font-family: 'Press Start 2P', cursive;
     }
+
+    /* Модальное окно выбора режима: скрыто по умолчанию */
+    #modeSelectModal {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Press Start 2P', cursive;
+      color: #fff;
+    }
+    #modeSelectModal button {
+      padding: 10px 20px;
+      font-size: 3vw;
+      margin: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+      background: #3498db;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer;
+      transition: all 0.1s;
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    /* Блок hardModeDescription (если нужно) */
+    #hardModeDescription {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3498db;
+      border: 4px solid #fff;
+      padding: 20px;
+      z-index: 50;
+      font-size: 3vw;
+      display: none;
+      text-align: center;
+      width: 80%;
+    }
+    #hardModeDescription button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: transparent;
+      border: none;
+      font-size: 3vw;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+    }
+    #hardModeDescription p {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
+  <!-- Canvas с игрой -->
   <canvas id="gameCanvas"></canvas>
+  <!-- Контейнер для монет -->
   <div id="coinContainer"></div>
+  
+  <!-- Кнопка паузы (скрывается/показывается при выборе режима) -->
   <button id="pauseBtn">||</button>
+
+  <!-- Оверлей "How to Play?" -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
     <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
     <p>(Tap or click anywhere to start)</p>
   </div>
+
+  <!-- Главное меню -->
   <div id="menu">
-    <!-- Удалён тег <img> с фоновым GIF -->
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="menuTotalCoins">Total Coins: 0</p>
     <p id="nicknameWarning">Enter your nickname!</p>
     <input type="text" id="nickname" placeholder="Enter your nickname">
-    <!-- Кнопка PLAY -->
     <button id="startBtn">PLAY</button>
-    <!-- Кнопка SHOP -->
     <button id="shopBtn">SHOP</button>
-    <!-- Кнопка Telegram -->
-    <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram" style="margin-bottom:15px;width:80px;height:auto;cursor:pointer;">
+    <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
     <div id="leaderboard">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
     </div>
   </div>
-  <!-- Модальное окно для выбора режима -->
+
+  <!-- Модальное окно для выбора режима (скрыто по умолчанию) -->
   <div id="modeSelectModal">
     <h2>Select Mode</h2>
     <button id="flyingModeBtn">FLYING</button>
     <button id="platformerModeBtn">PLATFORMER</button>
   </div>
+
+  <!-- Блок hardModeDescription, если используется -->
   <div id="hardModeDescription">
     <button id="closeHardModeDesc">X</button>
     <p>HARD MODE: Narrow gaps and double coins!</p>
   </div>
+
+  <!-- Магазин -->
   <div id="shop">
     <h2>Shop</h2>
     <p id="shopBalance">Total Coins: 0</p>
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
+
+  <!-- Окно Game Over -->
   <div id="gameOverOverlay">
     <h2>Share the result with your friends!</h2>
     <button id="shareBtn" class="pixelButton">Share the result!</button>
     <button id="continueBtn" class="pixelButton">Continue game!</button>
     <button id="mainMenuBtn" class="pixelButton">MAIN MENU</button>
   </div>
+
+  <!-- Меню паузы -->
   <div id="pauseMenu">
     <h2>Paused</h2>
     <button id="resumeBtn" class="pixelButton">Resume</button>
     <button id="exitBtn" class="pixelButton">Main Menu</button>
   </div>
+
+  <!-- Счётчики очков и монет -->
   <div id="score"></div>
   <div id="coinCount">Coins: 0</div>
 
   <script>
+    /* Проверка, что Telegram.WebApp готов, если нужно */
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
     }
+
+    /* Глобальные переменные, настройки, элементы... */
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
@@ -331,28 +402,6 @@
     let collisionOffsetRight = 10;
     let collisionOffsetTop = 20;
     let collisionOffsetBottom = 20;
-
-    function drawPipes() {
-      pipes.forEach(pipe => {
-        ctx.save();
-        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
-        ctx.scale(1, -1);
-        ctx.drawImage(pipeImage, -pipeWidth / 2, 0, pipeWidth, pipe.topHeight);
-        ctx.restore();
-        ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
-      });
-    }
-    function drawParticles() {
-      particles.forEach(p => {
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = "#fff";
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
-    }
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -386,9 +435,13 @@
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = "";
     let hardModeEnabled = false;
+    let selectedMode = "FLYING";  /* Будет установлено после выбора */
+
+    /* Трейлы (если есть) */
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
+    /* Скины труб */
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
@@ -400,18 +453,27 @@
       "2": { id: "2", name: "Neon Pulse", price: 50, preview: neonPulseSVG, colors: ["#ff00ff"], animation: "pulse" },
       "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
-
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
     let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
 
+    /* Синхронизируем счётчик монет */
     menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
 
+    /* Эффекты (частицы, монеты, реакции) */
     let particles = [];
     let coins = [];
     let reactionMessages = [];
 
+    /* Изображения нерпы */
+    const sealJump = new Image();
+    sealJump.src = 'BACKGROUND/seal jump.png';
+    const sealFall = new Image();
+    sealFall.src = 'BACKGROUND/seal fall.png';
+    let nerpaImg = sealJump;
+
+    /* Функции */
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -419,38 +481,15 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    const sealJump = new Image();
-    sealJump.src = 'BACKGROUND/seal jump.png';
-    const sealFall = new Image();
-    sealFall.src = 'BACKGROUND/seal fall.png';
-    let nerpaImg = sealJump;
-
-    function updateShadowImage() {
-      nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
-    }
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && gameStarted && selectedMode === "FLYING") {
-        shadow.velocity = shadow.jump;
-      }
-    });
-    canvas.addEventListener('click', () => {
-      if (gameStarted && selectedMode === "FLYING") {
-        shadow.velocity = shadow.jump;
-      }
-    });
-    nicknameInput.addEventListener('input', () => {
-      if (nicknameInput.value.trim() !== '') {
-        nicknameWarning.style.display = 'none';
-      }
-    });
-    closeHardModeDesc.addEventListener('click', () => {
-      hardModeDescription.style.display = 'none';
-    });
+    function updateShadowImage() {
+      nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
+    }
 
-    // Кнопка PLAY — открывает выбор режима
+    /* ----- Обработчики нажатий и т.д. ----- */
+    // Кнопка PLAY
     startBtn.addEventListener('click', () => {
       username = nicknameInput.value.trim();
       if (!username) {
@@ -458,25 +497,24 @@
         return;
       }
       nicknameWarning.style.display = 'none';
+      // Показываем модальное окно выбора режима
       modeSelectModal.style.display = 'flex';
     });
 
-    // Выбор режима FLYING
+    // Выбор режима в модальном окне
     flyingModeBtn.addEventListener('click', () => {
-      modeSelectModal.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      pauseBtn.style.display = 'none';
+      modeSelectModal.style.display = 'none';  // Скрыть модалку
+      menu.style.display = 'none';            // Скрыть главное меню
+      gameOverOverlay.style.display = 'none'; // Скрыть game over, если было
+      pauseBtn.style.display = 'none';        // Кнопка паузы в Flying режиме пока скрыта
       selectedMode = "FLYING";
       startFlyingMode();
     });
-
-    // Выбор режима PLATFORMER
     platformerModeBtn.addEventListener('click', () => {
-      modeSelectModal.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      pauseBtn.style.display = 'block';
+      modeSelectModal.style.display = 'none';  // Скрыть модалку
+      menu.style.display = 'none';            // Скрыть главное меню
+      gameOverOverlay.style.display = 'none'; // Скрыть game over, если было
+      pauseBtn.style.display = 'block';       // В платформере нужна кнопка паузы
       coinCountElement.style.display = 'none';
       selectedMode = "PLATFORMER";
       startPlatformerMode();
@@ -487,29 +525,28 @@
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
 
+    // Кнопка SHOP
     shopBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       shop.style.display = 'flex';
       renderShopItems();
     });
-
     shopBackBtn.addEventListener('click', () => {
       shop.style.display = 'none';
       menu.style.display = 'flex';
     });
 
+    // Game Over кнопки
     shareBtn.addEventListener('click', () => {
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
       const shareUrl = "https://t.me/FlyingSealBot/FLYING";
       const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
       window.open(telegramShareLink, '_blank');
     });
-
     continueBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       startFlyingMode();
     });
-
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
@@ -517,6 +554,12 @@
       pauseBtn.style.display = 'none';
     });
 
+    // Закрытие hardModeDescription, если нужно
+    closeHardModeDesc.addEventListener('click', () => {
+      hardModeDescription.style.display = 'none';
+    });
+
+    // Пауза
     let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
@@ -541,8 +584,15 @@
       pauseBtn.style.display = 'none';
     });
 
-    let shadow = null;
-    let selectedMode = "FLYING";
+    // Проверка ввода никнейма
+    nicknameInput.addEventListener('input', () => {
+      if (nicknameInput.value.trim() !== '') {
+        nicknameWarning.style.display = 'none';
+      }
+    });
+
+    /* ----- FLYING MODE ----- */
+    let shadow = null; // Игрок в режиме Flying
 
     function startFlyingMode() {
       gameStarted = true;
@@ -568,16 +618,23 @@
     function flyingGameLoop() {
       if (!gameStarted || paused) return;
       clearCanvas();
+
+      // Применяем гравитацию
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
+
+      // Частицы "след" нерпы
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
 
+      // Появление труб
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
+      // Движение труб и проверка столкновений
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
+        // Увеличение счёта
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
@@ -585,6 +642,7 @@
             showReaction('Score ' + score);
           }
         }
+        // Проверка коллизии или вылета за экран
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           clearCanvas();
           gameStarted = false;
@@ -596,6 +654,7 @@
           return;
         }
       }
+      // Монеты
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -608,28 +667,51 @@
         }
       });
       updateCoins();
+
+      // Рисуем частицы, нерпу, трубы, реакции
       drawParticles();
       updateShadowImage();
+
       ctx.save();
       ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
       ctx.rotate(angle);
       ctx.drawImage(nerpaImg, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
       ctx.restore();
-      drawPipes();
 
+      drawPipes();
       scoreElement.textContent = `Score: ${score}`;
       coinCountElement.textContent = `Coins: ${coinCount}`;
       drawReactions();
+
       requestAnimationFrame(flyingGameLoop);
     }
-    function removeAllCoins() {
-      coins.forEach(coin => {
-        if (coin.el) {
-          coin.el.remove();
-        }
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.save();
+        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
+        ctx.scale(1, -1);
+        ctx.drawImage(pipeImage, -pipeWidth / 2, 0, pipeWidth, pipe.topHeight);
+        ctx.restore();
+        ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
-      coins = [];
+    }
+    function createPipe() {
+      let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
+      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+      // Скины труб (если нужно)
+      let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
+      let color = design ? design.colors[0] : "#fff";
+
+      pipes.push({
+        x: canvas.width,
+        topHeight: gapPosition,
+        bottomY: gapPosition + gap,
+        passed: false,
+        color: color,
+        design: design
+      });
+      createCoin(gapPosition, gap);
     }
     function checkCollision(pipe) {
       let topPipeLeft = pipe.x + collisionOffsetLeft;
@@ -657,33 +739,8 @@
 
       return collidesTop || collidesBottom;
     }
-    function createPipe() {
-      let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
-      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
-      let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
-      let color = design ? design.colors[0] : "#fff";
 
-      pipes.push({
-        x: canvas.width,
-        topHeight: gapPosition,
-        bottomY: gapPosition + gap,
-        passed: false,
-        color: color,
-        design: design
-      });
-      createCoin(gapPosition, gap);
-    }
-    function spawnParticle(x, y) {
-      particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
-    }
-    function updateParticles() {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i];
-        p.alpha -= p.decay;
-        p.x -= 0.5;
-        if (p.alpha <= 0) { particles.splice(i, 1); }
-      }
-    }
+    /* ----- Монеты ----- */
     function createCoin(gapPosition, gapSize) {
       let coin = {
         x: canvas.width + pipeWidth / 2,
@@ -708,13 +765,19 @@
         if (!coin.collected) {
           coin.el.style.left = (coin.x - coin.radius) + "px";
           coin.el.style.top = (coin.y - coin.radius) + "px";
-          coin.el.style.width = (coin.radius * 2) + "px";
-          coin.el.style.height = (coin.radius * 2) + "px";
         } else {
           coin.el.remove();
           coins.splice(index, 1);
         }
       });
+    }
+    function removeAllCoins() {
+      coins.forEach(coin => {
+        if (coin.el) {
+          coin.el.remove();
+        }
+      });
+      coins = [];
     }
     function checkCoinCollision(coin) {
       let cx = coin.x, cy = coin.y;
@@ -727,6 +790,34 @@
       let dy = cy - nearestY;
       return (dx * dx + dy * dy) < (coin.radius * coin.radius);
     }
+
+    /* ----- Частицы ----- */
+    function spawnParticle(x, y) {
+      particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
+    }
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.alpha -= p.decay;
+        p.x -= 0.5;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    /* ----- Реакции на экран ----- */
     function showReaction(message) {
       reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
     }
@@ -740,9 +831,13 @@
         ctx.fillText(msg.text, msg.x, msg.y);
         ctx.restore();
         msg.timer--;
-        if (msg.timer <= 0) { reactionMessages.splice(index, 1); }
+        if (msg.timer <= 0) {
+          reactionMessages.splice(index, 1);
+        }
       });
     }
+
+    /* ----- Сохранение/обновление рекордов ----- */
     function saveScore(name, points) {
       let scores = JSON.parse(localStorage.getItem("scores") || "[]");
       scores.push({ name, points });
@@ -757,8 +852,11 @@
     }
     updateLeaderboard();
 
+    /* ----- Магазин (рендер предметов) ----- */
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
+
+      // Пример, если есть объект trailsConfig
       if (typeof trailsConfig !== 'undefined') {
         let trailsHeader = document.createElement("h3");
         trailsHeader.textContent = "Trails";
@@ -809,6 +907,7 @@
         shopItemsDiv.appendChild(trailsGrid);
       }
 
+      // Скины труб
       let pipesHeader = document.createElement("h3");
       pipesHeader.textContent = "Pipe Designs";
       shopItemsDiv.appendChild(pipesHeader);
@@ -860,6 +959,7 @@
       shopItemsDiv.appendChild(pipesGrid);
     }
 
+    /* ----- PLATFORMER MODE ----- */
     let platformerLevel = 1;
     let platformerGameStarted = false;
     let door, player;
@@ -923,6 +1023,8 @@
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       clearCanvas();
+
+      // Управление
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -934,11 +1036,13 @@
         player.vy = player.jumpForce;
         player.onGround = false;
       }
+      // Применяем гравитацию
       player.vy += 0.5;
       player.x += player.vx;
       player.y += player.vy;
       player.onGround = false;
 
+      // Проверка коллизий с платформами
       for (let i = 0; i < platforms.length; i++) {
         let plat = platforms[i];
         let left = plat.x + platformHitboxOffset;
@@ -952,6 +1056,7 @@
           player.y < bottom &&
           player.y + player.height > top
         ) {
+          // Если приземлились на платформу сверху
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             player.y = plat.y - player.height;
             player.vy = 0;
@@ -963,6 +1068,7 @@
         }
       }
 
+      // Рисуем игрока
       nerpaImg = player.vy < 0 ? sealJump : sealFall;
       ctx.save();
       ctx.translate(player.x + player.width/2, player.y + player.height/2);
@@ -971,17 +1077,16 @@
       ctx.drawImage(nerpaImg, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
 
+      // Убираем исчезающие платформы
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
-        if (
-          !plat.isGround &&
-          plat.disappearStartTime !== null &&
-          performance.now() - plat.disappearStartTime > 1000
-        ) {
+        if (!plat.isGround && plat.disappearStartTime !== null &&
+            performance.now() - plat.disappearStartTime > 1000) {
           platforms.splice(i, 1);
         }
       }
 
+      // Проверка двери (конец уровня)
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1003,6 +1108,7 @@
         }, 1500);
         return;
       }
+      // Если упали за экран
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1011,11 +1117,31 @@
         pauseBtn.style.display = 'none';
         return;
       }
+
+      // Рисуем платформы
       platforms.forEach(plat => { drawPlatform(plat); });
+      // Рисуем дверь
       drawDoor(door.x, door.y, door.width, door.height);
 
       requestAnimationFrame(() => platformerLoop(platforms));
     }
+    function drawPlatform(plat) {
+      if (plat.isGround) {
+        ctx.fillStyle = "#87CEFA";
+        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+      } else {
+        ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
+      }
+    }
+    function drawDoor(x, y, width, height) {
+      ctx.fillStyle = "#663300";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, width, height);
+    }
+
+    /* Управление с клавиатуры и сенсорное (touch) */
     window.addEventListener("keydown", (e) => { keysDown[e.code] = true; });
     window.addEventListener("keyup", (e) => { keysDown[e.code] = false; });
 
@@ -1047,21 +1173,6 @@
         keysDown["ArrowRight"] = false;
         keysDown["ArrowUp"] = false;
       }
-    }
-    function drawPlatform(plat) {
-      if (plat.isGround) {
-        ctx.fillStyle = "#87CEFA";
-        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-      } else {
-        ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
-      }
-    }
-    function drawDoor(x, y, width, height) {
-      ctx.fillStyle = "#663300";
-      ctx.fillRect(x, y, width, height);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x, y, width, height);
     }
   </script>
 </body>
