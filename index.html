@@ -297,6 +297,27 @@
     #hardModeDescription p {
       margin: 0;
     }
+    /* How To Play Overlay */
+    #howToPlayOverlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 15;
+      background: rgba(0, 0, 0, 0.8);
+    }
+    #howToPlayOverlay h2 {
+      font-size: 5vw;
+      margin-bottom: 20px;
+    }
+    #howToPlayOverlay p {
+      font-size: 3vw;
+      text-align: center;
+      margin: 10px;
+    }
   </style>
 </head>
 <body>
@@ -339,9 +360,7 @@
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
   <!-- Используется один оверлей для отображения Game Over в обоих режимах -->
-  <div id="gameOverOverlay">
-    <!-- Содержимое обновляется динамически для PLATFORMER -->
-  </div>
+  <div id="gameOverOverlay"></div>
   <div id="pauseMenu">
     <h2>Paused</h2>
     <button id="resumeBtn" class="pixelButton">Resume</button>
@@ -544,6 +563,8 @@
     /* FLYING MODE */
     let shadow = null;
     function startFlyingMode() {
+      // Скрываем overlay инструкции при запуске игры
+      document.getElementById('howToPlayOverlay').style.display = 'none';
       gameStarted = true;
       score = 0;
       coinCount = 0;
@@ -876,6 +897,8 @@
     const groundHeight = 80;
     const platformHitboxOffset = 10;
     function startPlatformerLevel() {
+      // Скрываем overlay инструкции при запуске режима PLATFORMER
+      document.getElementById('howToPlayOverlay').style.display = 'none';
       currentPlatforms = generatePlatforms();
       currentPlatforms.sort((a, b) => a.y - b.y);
       let highestPlatform = currentPlatforms[0];
