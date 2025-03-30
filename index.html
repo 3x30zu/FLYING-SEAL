@@ -63,9 +63,13 @@
       margin-bottom: 10px;
       animation: bounce 2s infinite;
     }
-    /* Добавленный блок приветствия под заголовком */
+    /* Блок приветствия – изначально пустой, будет заполнен после авторизации */
     #greeting {
       font-size: 3vw;
+      margin-bottom: 20px;
+    }
+    /* Контейнер для виджета авторизации Telegram */
+    #telegramLoginWidget {
       margin-bottom: 20px;
     }
     /* Кнопки главного меню */
@@ -103,14 +107,14 @@
       top: 5%;
       left: 5%;
     }
-    /* coinCount по умолчанию скрыт – показывается только в режиме FLYING */
+    /* coinCount – по умолчанию скрыт, показывается только в режиме FLYING */
     #coinCount {
       top: 5%;
       right: 5%;
       display: none;
       align-items: center;
     }
-    /* Элемент с изображением и текстом внутри coinCount */
+    /* Статичный элемент с изображением и текстом внутри coinCount */
     #coinCount img {
       height: 4vw;
       margin-right: 5px;
@@ -299,12 +303,23 @@
   </div>
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
-    <!-- Добавленный блок приветствия -->
+    <!-- Блок приветствия, который будет заполнен после авторизации -->
     <p id="greeting"></p>
+    <!-- Контейнер для Telegram Login Widget -->
+    <div id="telegramLoginWidget">
+      <!-- Telegram Login Widget -->
+      <script async src="https://telegram.org/js/telegram-widget.js?15"
+              data-telegram-login="@FlyingSealBot"
+              data-size="large"
+              data-userpic="false"
+              data-request-access="write"
+              data-callback="onTelegramAuth">
+      </script>
+    </div>
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
-    <!-- Меню High Scores скрыто, но код оставлен для последующего добавления -->
+    <!-- Меню High Scores (скрыто) -->
     <div id="leaderboard" style="display:none;">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
@@ -338,25 +353,29 @@
     <button id="exitBtn" class="pixelButton">Main Menu</button>
   </div>
   <div id="score"></div>
-  <!-- Счётчик монет: теперь статичный элемент с изображением и текстом -->
+  <!-- Счётчик монет: статичный элемент с изображением и текстом -->
   <div id="coinCount">
     <img src="BACKGROUND/goldcoin.gif" alt="coin">
     <span id="coinText">0</span>
   </div>
 
   <script>
-    // Принудительно скрываем окно выбора режима при загрузке страницы
+    // Глобальная переменная для username, которая будет установлена после авторизации
+    let username = "Guest";
+
+    // Функция обратного вызова для Telegram Login Widget
+    function onTelegramAuth(user) {
+      console.log("Telegram user data:", user);
+      username = user.username || "Guest";
+      document.getElementById('greeting').textContent = "Hi, " + username;
+      // Опционально: можно скрыть виджет после авторизации
+      document.getElementById('telegramLoginWidget').style.display = 'none';
+    }
+
+    // Оставляем остальные обработчики и инициализацию игры
     window.onload = function() {
       document.getElementById('modeSelectModal').style.display = 'none';
-      if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.ready();
-      }
-      const username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
-                        window.Telegram.WebApp.initDataUnsafe.user &&
-                        window.Telegram.WebApp.initDataUnsafe.user.username)
-                       ? window.Telegram.WebApp.initDataUnsafe.user.username 
-                       : "Guest";
-      document.getElementById('greeting').textContent = "Hi, " + username;
+      // Если по какой-то причине данные не были получены, будет отображаться Guest
     };
 
     let pipes = [];
@@ -398,11 +417,6 @@
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
-    let username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
-                    window.Telegram.WebApp.initDataUnsafe.user &&
-                    window.Telegram.WebApp.initDataUnsafe.user.username)
-                     ? window.Telegram.WebApp.initDataUnsafe.user.username 
-                     : "Guest";
     let hardModeEnabled = false;
     let selectedMode = "FLYING";
 
@@ -607,7 +621,6 @@
       ctx.restore();
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
-      // Вместо перезаписи innerHTML обновляем только текст в span coinText
       document.getElementById('coinText').textContent = coinCount;
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
