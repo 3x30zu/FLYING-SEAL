@@ -63,21 +63,7 @@
       margin-bottom: 20px;
       animation: bounce 2s infinite;
     }
-    #menu p {
-      font-size: 3vw;
-      margin: 10px 0;
-    }
-    #nicknameWarning {
-      display: none;
-      color: red;
-      font-size: 3vw;
-      margin-bottom: 10px;
-      animation: blink 1s infinite;
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
+    /* Убраны поля ввода ника и отображение монет из главного меню */
     /* Кнопки главного меню */
     #startBtn, #shopBtn {
       padding: 10px 20px;
@@ -101,7 +87,7 @@
       height: auto;
       cursor: pointer;
     }
-    /* Счётчики */
+    /* Счётчики, изменён внешний вид счётчика монет */
     #score, #coinCount {
       position: absolute;
       color: white;
@@ -113,9 +99,16 @@
       top: 5%;
       left: 5%;
     }
+    /* Здесь coinCount теперь содержит иконку и число */
     #coinCount {
       top: 5%;
       right: 5%;
+      display: flex;
+      align-items: center;
+    }
+    #coinCount img {
+      height: 4vw;
+      margin-right: 5px;
     }
     /* Стиль пиксельных кнопок */
     .pixelButton {
@@ -232,14 +225,6 @@
       50%  { transform: translateX(5px); }
       100% { transform: translateX(0); }
     }
-    /* Поле ввода никнейма */
-    #menu input {
-      font-size: 3vw;
-      padding: 10px;
-      text-align: center;
-      margin-bottom: 15px;
-      font-family: 'Press Start 2P', cursive;
-    }
     /* Модальное окно выбора режима (скрыто по умолчанию) */
     #modeSelectModal {
       display: none;
@@ -309,9 +294,7 @@
   </div>
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
-    <p id="menuTotalCoins">Total Coins: 0</p>
-    <p id="nicknameWarning">Enter your nickname!</p>
-    <input type="text" id="nickname" placeholder="Enter your nickname">
+    <!-- Удалён ввод ника и вывод монет из главного меню -->
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
@@ -349,17 +332,22 @@
     <button id="exitBtn" class="pixelButton">Main Menu</button>
   </div>
   <div id="score"></div>
-  <div id="coinCount">Coins: 0</div>
+  <!-- Счётчик монет в режиме FLYING: иконка анимированной монеты и число -->
+  <div id="coinCount">
+    <img src="BACKGROUND/goldcoin.gif" alt="coin">
+    <span>0</span>
+  </div>
 
   <script>
     // Принудительно скрываем окно выбора режима при загрузке страницы
     window.onload = function() {
       document.getElementById('modeSelectModal').style.display = 'none';
+      // Если Telegram WebApp доступен, сообщаем, что всё готово
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+      }
     };
 
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.ready();
-    }
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
@@ -385,9 +373,6 @@
     const shareBtn = document.getElementById('shareBtn');
     const continueBtn = document.getElementById('continueBtn');
     const mainMenuBtn = document.getElementById('mainMenuBtn');
-    const nicknameInput = document.getElementById('nickname');
-    const nicknameWarning = document.getElementById('nicknameWarning');
-    const menuTotalCoinsElement = document.getElementById('menuTotalCoins');
     const topScoresList = document.getElementById('topScores');
     const hardModeDescription = document.getElementById('hardModeDescription');
     const closeHardModeDesc = document.getElementById('closeHardModeDesc');
@@ -402,7 +387,10 @@
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
-    let username = "";
+    // Получаем username из Telegram, если доступен
+    let username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.username)
+                     ? window.Telegram.WebApp.initDataUnsafe.user.username 
+                     : "Guest";
     let hardModeEnabled = false;
     let selectedMode = "FLYING";
 
@@ -424,7 +412,6 @@
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
     let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
 
-    menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
 
@@ -454,12 +441,7 @@
 
     /* Обработчики */
     startBtn.addEventListener('click', () => {
-      username = nicknameInput.value.trim();
-      if (!username) {
-        nicknameWarning.style.display = 'block';
-        return;
-      }
-      nicknameWarning.style.display = 'none';
+      // При клике на PLAY сразу открываем выбор режима, т.к. имя уже взято из Telegram
       modeSelectModal.style.display = 'flex';
     });
 
@@ -476,6 +458,7 @@
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
       pauseBtn.style.display = 'block';
+      // В платформере скрываем счётчик монет
       coinCountElement.style.display = 'none';
       selectedMode = "PLATFORMER";
       startPlatformerMode();
@@ -535,11 +518,6 @@
       gameStarted = false;
       pauseBtn.style.display = 'none';
     });
-    nicknameInput.addEventListener('input', () => {
-      if (nicknameInput.value.trim() !== '') {
-        nicknameWarning.style.display = 'none';
-      }
-    });
 
     /* FLYING MODE */
     let shadow = null;
@@ -553,7 +531,7 @@
       reactionMessages = [];
       // Показываем счётчики при начале игры
       scoreElement.style.display = 'block';
-      coinCountElement.style.display = 'block';
+      coinCountElement.style.display = 'flex';
       nerpaImg = sealJump;
       shadow = {
         x: canvas.width * 0.1,
@@ -606,7 +584,6 @@
           coinCount++;
           totalCoins++;
           localStorage.setItem("totalCoins", totalCoins);
-          menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
         }
       });
@@ -621,7 +598,8 @@
       ctx.restore();
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
-      coinCountElement.textContent = `Coins: ${coinCount}`;
+      // Обновляем coinCount с анимированной монеткой и числом
+      coinCountElement.innerHTML = `<img src="BACKGROUND/goldcoin.gif" alt="coin"><span>${coinCount}</span>`;
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
     }
@@ -804,7 +782,6 @@
               if (totalCoins >= trail.price) {
                 totalCoins -= trail.price;
                 localStorage.setItem("totalCoins", totalCoins);
-                menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
                 shopBalance.textContent = `Total Coins: ${totalCoins}`;
                 purchasedTrails.push(trail.id);
                 localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
@@ -851,7 +828,6 @@
             if (totalCoins >= design.price) {
               totalCoins -= design.price;
               localStorage.setItem("totalCoins", totalCoins);
-              menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
               shopBalance.textContent = `Total Coins: ${totalCoins}`;
               purchasedPipeDesigns.push(design.id);
               localStorage.setItem("purchasedPipeDesigns", JSON.stringify(purchasedPipeDesigns));
@@ -986,7 +962,6 @@
       ) {
         totalCoins += 10;
         localStorage.setItem("totalCoins", totalCoins);
-        menuTotalCoinsElement.textContent = `Total Coins: ${totalCoins}`;
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
         platformerGameStarted = false;
         ctx.fillStyle = "#fff";
