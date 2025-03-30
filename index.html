@@ -315,7 +315,8 @@
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
-    <div id="leaderboard">
+    <!-- Меню High Scores скрыто, но код оставлен для последующего добавления -->
+    <div id="leaderboard" style="display:none;">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
     </div>
@@ -550,6 +551,8 @@
       pipes = [];
       particles = [];
       reactionMessages = [];
+      // Показываем счётчики при начале игры
+      scoreElement.style.display = 'block';
       coinCountElement.style.display = 'block';
       nerpaImg = sealJump;
       shadow = {
@@ -586,6 +589,9 @@
           clearCanvas();
           gameStarted = false;
           removeAllCoins();
+          // Скрываем счётчики при окончании игры
+          scoreElement.style.display = 'none';
+          coinCountElement.style.display = 'none';
           setTimeout(() => {
             saveScore(username, score);
             gameOverOverlay.style.display = 'flex';
