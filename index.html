@@ -60,10 +60,14 @@
     }
     #menu h1 {
       font-size: 5vw;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       animation: bounce 2s infinite;
     }
-    /* Убраны поля ввода ника и отображение монет из главного меню */
+    /* Добавленный блок приветствия под заголовком */
+    #greeting {
+      font-size: 3vw;
+      margin-bottom: 20px;
+    }
     /* Кнопки главного меню */
     #startBtn, #shopBtn {
       padding: 10px 20px;
@@ -99,11 +103,11 @@
       top: 5%;
       left: 5%;
     }
-    /* Здесь coinCount теперь содержит иконку и число */
+    /* coinCount по умолчанию скрыт – показывается в режиме FLYING */
     #coinCount {
       top: 5%;
       right: 5%;
-      display: flex;
+      display: none;
       align-items: center;
     }
     #coinCount img {
@@ -294,7 +298,8 @@
   </div>
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
-    <!-- Удалён ввод ника и вывод монет из главного меню -->
+    <!-- Добавлен блок приветствия -->
+    <p id="greeting"></p>
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
@@ -332,7 +337,7 @@
     <button id="exitBtn" class="pixelButton">Main Menu</button>
   </div>
   <div id="score"></div>
-  <!-- Счётчик монет в режиме FLYING: иконка анимированной монеты и число -->
+  <!-- Счётчик монет: по умолчанию скрыт, показывается в режиме FLYING -->
   <div id="coinCount">
     <img src="BACKGROUND/goldcoin.gif" alt="coin">
     <span>0</span>
@@ -346,6 +351,11 @@
       if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
       }
+      // Получаем username из Telegram (если доступно) и обновляем приветствие
+      const username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.username)
+                       ? window.Telegram.WebApp.initDataUnsafe.user.username 
+                       : "Guest";
+      document.getElementById('greeting').textContent = "Hi, " + username;
     };
 
     let pipes = [];
@@ -387,7 +397,7 @@
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
-    // Получаем username из Telegram, если доступен
+    // Используем username, полученный в onload, либо "Guest"
     let username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.username)
                      ? window.Telegram.WebApp.initDataUnsafe.user.username 
                      : "Guest";
@@ -441,7 +451,7 @@
 
     /* Обработчики */
     startBtn.addEventListener('click', () => {
-      // При клике на PLAY сразу открываем выбор режима, т.к. имя уже взято из Telegram
+      // При клике на PLAY сразу открываем выбор режима, т.к. имя уже получено из Telegram
       modeSelectModal.style.display = 'flex';
     });
 
@@ -450,6 +460,8 @@
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
       pauseBtn.style.display = 'none';
+      // Показываем счётчик монет только в режиме FLYING
+      coinCountElement.style.display = 'flex';
       selectedMode = "FLYING";
       startFlyingMode();
     });
