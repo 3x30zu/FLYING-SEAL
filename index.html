@@ -91,7 +91,7 @@
       height: auto;
       cursor: pointer;
     }
-    /* Счётчики, изменён внешний вид счётчика монет */
+    /* Счётчики */
     #score, #coinCount {
       position: absolute;
       color: white;
@@ -103,13 +103,14 @@
       top: 5%;
       left: 5%;
     }
-    /* coinCount по умолчанию скрыт – показывается в режиме FLYING */
+    /* coinCount по умолчанию скрыт – показывается только в режиме FLYING */
     #coinCount {
       top: 5%;
       right: 5%;
       display: none;
       align-items: center;
     }
+    /* Элемент с изображением и текстом внутри coinCount */
     #coinCount img {
       height: 4vw;
       margin-right: 5px;
@@ -298,7 +299,7 @@
   </div>
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
-    <!-- Добавлен блок приветствия -->
+    <!-- Добавленный блок приветствия -->
     <p id="greeting"></p>
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
@@ -337,22 +338,22 @@
     <button id="exitBtn" class="pixelButton">Main Menu</button>
   </div>
   <div id="score"></div>
-  <!-- Счётчик монет: по умолчанию скрыт, показывается в режиме FLYING -->
+  <!-- Счётчик монет: теперь статичный элемент с изображением и текстом -->
   <div id="coinCount">
     <img src="BACKGROUND/goldcoin.gif" alt="coin">
-    <span>0</span>
+    <span id="coinText">0</span>
   </div>
 
   <script>
     // Принудительно скрываем окно выбора режима при загрузке страницы
     window.onload = function() {
       document.getElementById('modeSelectModal').style.display = 'none';
-      // Если Telegram WebApp доступен, сообщаем, что всё готово
       if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
       }
-      // Получаем username из Telegram (если доступно) и обновляем приветствие
-      const username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.username)
+      const username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
+                        window.Telegram.WebApp.initDataUnsafe.user &&
+                        window.Telegram.WebApp.initDataUnsafe.user.username)
                        ? window.Telegram.WebApp.initDataUnsafe.user.username 
                        : "Guest";
       document.getElementById('greeting').textContent = "Hi, " + username;
@@ -397,8 +398,9 @@
     let score = 0;
     let coinCount = 0;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
-    // Используем username, полученный в onload, либо "Guest"
-    let username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.username)
+    let username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
+                    window.Telegram.WebApp.initDataUnsafe.user &&
+                    window.Telegram.WebApp.initDataUnsafe.user.username)
                      ? window.Telegram.WebApp.initDataUnsafe.user.username 
                      : "Guest";
     let hardModeEnabled = false;
@@ -451,7 +453,6 @@
 
     /* Обработчики */
     startBtn.addEventListener('click', () => {
-      // При клике на PLAY сразу открываем выбор режима, т.к. имя уже получено из Telegram
       modeSelectModal.style.display = 'flex';
     });
 
@@ -460,7 +461,6 @@
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
       pauseBtn.style.display = 'none';
-      // Показываем счётчик монет только в режиме FLYING
       coinCountElement.style.display = 'flex';
       selectedMode = "FLYING";
       startFlyingMode();
@@ -470,7 +470,6 @@
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
       pauseBtn.style.display = 'block';
-      // В платформере скрываем счётчик монет
       coinCountElement.style.display = 'none';
       selectedMode = "PLATFORMER";
       startPlatformerMode();
@@ -541,7 +540,6 @@
       pipes = [];
       particles = [];
       reactionMessages = [];
-      // Показываем счётчики при начале игры
       scoreElement.style.display = 'block';
       coinCountElement.style.display = 'flex';
       nerpaImg = sealJump;
@@ -579,7 +577,6 @@
           clearCanvas();
           gameStarted = false;
           removeAllCoins();
-          // Скрываем счётчики при окончании игры
           scoreElement.style.display = 'none';
           coinCountElement.style.display = 'none';
           setTimeout(() => {
@@ -610,8 +607,8 @@
       ctx.restore();
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
-      // Обновляем coinCount с анимированной монеткой и числом
-      coinCountElement.innerHTML = `<img src="BACKGROUND/goldcoin.gif" alt="coin"><span>${coinCount}</span>`;
+      // Вместо перезаписи innerHTML обновляем только текст в span coinText
+      document.getElementById('coinText').textContent = coinCount;
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
     }
