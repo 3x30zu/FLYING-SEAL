@@ -275,7 +275,6 @@
       display: block;
       overflow: hidden;
     }
-    /* Внутри профиля – аватар (по умолчанию) */
     #profileBtn img {
       width: 100%;
       height: 100%;
@@ -288,7 +287,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.95);
+      background: rgba(0, 191, 255, 0.5);
       border: 4px solid #fff;
       padding: 20px;
       z-index: 80;
@@ -333,6 +332,11 @@
       cursor: pointer;
       font-size: 4vw;
     }
+    /* Отображение XP и Level в профиле */
+    #profileLevelXP {
+      font-size: 3vw;
+      margin-bottom: 15px;
+    }
     #closeProfileModal {
       padding: 5px 10px;
       font-size: 3vw;
@@ -367,7 +371,6 @@
   <div id="profileModal">
     <h2>Profile</h2>
     <div id="avatarSelection">
-      <!-- Три предустановленных аватара (в виде SVG-фигур) -->
       <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar1" data-avatar="red" class="selected">
       <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect x='10' y='10' width='80' height='80' fill='%2300ff00'/></svg>" alt="avatar2" data-avatar="green">
       <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><polygon points='50,5 95,95 5,95' fill='%230000ff'/></svg>" alt="avatar3" data-avatar="blue">
@@ -376,6 +379,7 @@
       <span id="nicknameDisplay">Guest</span>
       <span id="editNickname">&#9998;</span>
     </div>
+    <div id="profileLevelXP">Level: 0 | XP: 0 / 100</div>
     <button id="closeProfileModal">Close</button>
   </div>
   
@@ -431,13 +435,12 @@
 
   <script>
     /* ========= Профиль пользователя ========= */
-    // Загружаем ник и выбранный аватар из localStorage (по умолчанию "Guest" и "red")
     let userNickname = localStorage.getItem("userNickname") || "Guest";
     let userAvatar = localStorage.getItem("userAvatar") || "red";
-
     function updateProfileDisplay() {
       document.getElementById("nicknameDisplay").textContent = userNickname;
-      // Обновляем изображение аватара в профиле и в кнопке профиля
+      // Отображаем XP и Level в профиле
+      document.getElementById("profileLevelXP").textContent = "Level: " + userLevel + " | XP: " + userXP + " / " + xpThreshold;
       let avatarImg;
       if (userAvatar === "red") {
         avatarImg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>";
@@ -447,7 +450,6 @@
         avatarImg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><polygon points='50,5 95,95 5,95' fill='%230000ff'/></svg>";
       }
       document.getElementById("currentAvatar").src = avatarImg;
-      // Обновляем выделение в списке аватаров
       document.querySelectorAll("#avatarSelection img").forEach(img => {
         if (img.getAttribute("data-avatar") === userAvatar) {
           img.classList.add("selected");
@@ -456,7 +458,6 @@
         }
       });
     }
-    // При клике по карандашу предлагаем изменить ник
     document.getElementById("editNickname").addEventListener("click", () => {
       let newNick = prompt("Enter your new nickname:", userNickname);
       if(newNick !== null && newNick.trim() !== ""){
@@ -465,7 +466,6 @@
         updateProfileDisplay();
       }
     });
-    // Выбор аватара
     document.querySelectorAll("#avatarSelection img").forEach(img => {
       img.addEventListener("click", () => {
         userAvatar = img.getAttribute("data-avatar");
@@ -473,7 +473,6 @@
         updateProfileDisplay();
       });
     });
-    // Открытие и закрытие модального окна профиля
     document.getElementById("profileBtn").addEventListener("click", () => {
       document.getElementById("profileModal").style.display = "block";
       updateProfileDisplay();
@@ -488,8 +487,8 @@
     let userXP = parseInt(localStorage.getItem("userXP") || "0");
     const xpThreshold = 100;
     function updateLevelInfoDisplay() {
-      document.getElementById("levelText").textContent = "Level: " + userLevel;
-      document.getElementById("xpText").textContent = "XP: " + userXP + " / " + xpThreshold;
+      // Обновляем также информацию в профиле
+      document.getElementById("profileLevelXP").textContent = "Level: " + userLevel + " | XP: " + userXP + " / " + xpThreshold;
     }
     function addXP(points) {
       userXP += points;
@@ -500,11 +499,9 @@
       localStorage.setItem("userLevel", userLevel);
       localStorage.setItem("userXP", userXP);
       updateLevelInfoDisplay();
+      updateProfileDisplay();
     }
     /* ========= Конец системы уровней ========= */
-
-    // Панель уровня (если потребуется)
-    // (В данном варианте профиль и система уровней теперь в профиле)
 
     /* ========= Глобальные переменные для игры ========= */
     let pipes = [];
@@ -583,7 +580,6 @@
     function updateShadowImage() {
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
-    // Функции для скрытия/показа профиля (в главном меню)
     function hideProfileButton() {
       document.getElementById('profileBtn').style.display = 'none';
     }
@@ -599,7 +595,6 @@
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // В режиме FLYING не показываем кнопку паузы и профиль
       platformerPauseBtn.style.display = 'none';
       coinCountElement.style.display = 'flex';
       hideProfileButton();
@@ -610,7 +605,6 @@
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // В режиме PLATFORMER показываем кнопку паузы и скрываем профиль
       platformerPauseBtn.style.display = 'block';
       coinCountElement.style.display = 'none';
       hideProfileButton();
@@ -644,11 +638,9 @@
       }
     });
     mainMenuBtn.addEventListener('click', () => {
-      // При выходе в главное меню
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       showProfileButton();
-      // Сбрасываем все игровые флаги и очищаем канвас
       gameStarted = false;
       platformerGameStarted = false;
       paused = false;
@@ -663,7 +655,6 @@
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
-    // Пауза в PLATFORMER
     platformerPauseBtn.addEventListener('click', () => {
       paused = true;
       pauseMenu.style.display = 'block';
@@ -921,7 +912,6 @@
       topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
     }
     updateLeaderboard();
-
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
       if (typeof trailsConfig !== 'undefined') {
@@ -1023,13 +1013,11 @@
     let keysDown = {};
     let currentPlatforms = [];
     const platformW = 150, platformH = 40, groundHeight = 80, platformHitboxOffset = 10;
-    // Флаг: касался ли персонаж (не земли) платформы
     let hasTouchedPlatform = false;
 
     function generatePlatforms() {
       let platforms = [];
       const platformCount = 10;
-      // Земля
       platforms.push({
         x: 0,
         y: canvas.height - groundHeight,
@@ -1082,8 +1070,6 @@
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       clearCanvas();
-
-      // Движение игрока
       if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
         player.vx = -player.speed;
       } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
@@ -1099,8 +1085,6 @@
       player.x += player.vx;
       player.y += player.vy;
       player.onGround = false;
-
-      // Проверка коллизий с платформами
       for (let i = 0; i < platforms.length; i++) {
         let plat = platforms[i];
         let left = plat.x + platformHitboxOffset;
@@ -1113,9 +1097,7 @@
           player.y < bottom &&
           player.y + player.height > top
         ) {
-          // Если персонаж падает сверху
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
-            // Если не земля, отмечаем касание
             if (!plat.isGround) {
               hasTouchedPlatform = true;
               if (plat.disappearStartTime === null) {
@@ -1125,7 +1107,6 @@
             player.y = plat.y - player.height;
             player.vy = 0;
             player.onGround = true;
-            // Если это земля и ранее касание было – проигрыш
             if (plat.isGround && hasTouchedPlatform) {
               platformerGameStarted = false;
               alert("Game Over");
@@ -1135,16 +1116,12 @@
           }
         }
       }
-
-      // Если персонаж упал ниже экрана – проигрыш
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
         endPlatformer();
         return;
       }
-
-      // Рисуем персонажа с наклоном
       ctx.save();
       ctx.translate(player.x + player.width/2, player.y + player.height/2);
       let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
@@ -1152,8 +1129,6 @@
       let currentSprite = (player.vy < 0) ? sealJump : sealFall;
       ctx.drawImage(currentSprite, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
-
-      // Эффект испарения для платформ
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (!plat.isGround && plat.disappearStartTime !== null) {
@@ -1170,8 +1145,6 @@
       }
       platforms.forEach(plat => drawPlatform(plat));
       drawDoor(door.x, door.y, door.width, door.height);
-
-      // Проверка входа в дверь
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
