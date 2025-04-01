@@ -307,7 +307,7 @@
       box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer;
     }
-    /* Новая кнопка паузы для платформера */
+    /* Новая кнопка паузы для PLATFORMER */
     #platformerPauseBtn {
       position: absolute;
       top: 5%;
@@ -337,9 +337,9 @@
 <body>
   <canvas id="gameCanvas"></canvas>
   <div id="coinContainer"></div>
-  <!-- Новая кнопка паузы для PLATFORMER (скрыта по умолчанию) -->
+  <!-- Новая кнопка паузы для PLATFORMER -->
   <button id="platformerPauseBtn">||</button>
-  <!-- Кнопка для открытия панели уровня (будет скрыта во время игры) -->
+  <!-- Кнопка для открытия панели уровня (скрывается во время игры) -->
   <button id="lvlBtn">LVL</button>
   <!-- Модальное окно с информацией об уровне -->
   <div id="lvlPanel">
@@ -398,7 +398,7 @@
   </div>
 
   <script>
-    // Система уровней
+    // Глобальные переменные для системы уровней
     let userLevel = parseInt(localStorage.getItem("userLevel") || "0");
     let userXP = parseInt(localStorage.getItem("userXP") || "0");
     const xpThreshold = 100;
@@ -437,6 +437,7 @@
       document.getElementById('greeting').textContent = "Hi, " + username;
     };
 
+    // Глобальные переменные для игры
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
@@ -445,7 +446,6 @@
     const platformImage = new Image();
     platformImage.src = 'BACKGROUND/platform.png';
     let collisionOffsetLeft = 10, collisionOffsetRight = 10, collisionOffsetTop = 20, collisionOffsetBottom = 20;
-
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const menu = document.getElementById('menu');
@@ -469,7 +469,9 @@
     const platformerModeBtn = document.getElementById('platformerModeBtn');
     const platformerPauseBtn = document.getElementById('platformerPauseBtn');
 
+    // Объявляем глобальные переменные для игры
     let gameStarted = false, score = 0, coinCount = 0;
+    let paused = false;  // Обязательно объявляем paused
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
                     window.Telegram.WebApp.initDataUnsafe.user &&
@@ -477,7 +479,6 @@
                      ? window.Telegram.WebApp.initDataUnsafe.user.username 
                      : "Guest";
     let hardModeEnabled = false, selectedMode = "FLYING";
-
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
 
@@ -492,15 +493,11 @@
       "2": { id: "2", name: "Neon Pulse", price: 50, preview: neonPulseSVG, colors: ["#ff00ff"], animation: "pulse" },
       "3": { id: "3", name: "Retro Arcade", price: 100, preview: retroArcadeSVG, colors: ["#ffff00"], animation: "glow" }
     };
-
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
     let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
-
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
-
     let particles = [], coins = [], reactionMessages = [];
-
     const sealJump = new Image();
     sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image();
@@ -519,7 +516,7 @@
     function updateShadowImage() {
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
-    // При запуске игры скрываем кнопку LVL
+    // Скрытие и показ кнопки LVL
     function hideLevelButton() {
       document.getElementById('lvlBtn').style.display = 'none';
     }
@@ -527,7 +524,7 @@
       document.getElementById('lvlBtn').style.display = 'block';
     }
 
-    /* Обработчики для главного меню */
+    /* Обработчики главного меню */
     startBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'flex';
     });
@@ -586,7 +583,7 @@
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
-    // Обработчик для кнопки паузы в платформере
+    // Обработчик кнопки паузы для PLATFORMER
     platformerPauseBtn.addEventListener('click', () => {
       paused = true;
       document.getElementById("pauseMenu").style.display = 'block';
@@ -663,7 +660,7 @@
           addXP(score);
           setTimeout(() => {
             saveScore(username, score);
-            gameOverOverlay.style.display = 'flex';
+            gameOverOverlay.style.display = 'block';
           }, 1000);
           return;
         }
@@ -940,28 +937,6 @@
     const platformW = 150, platformH = 40, groundHeight = 80, platformHitboxOffset = 10;
     // Флаг: касался ли персонаж (кроме земли) платформы
     let hasTouchedPlatform = false;
-    function startPlatformerLevel() {
-      currentPlatforms = generatePlatforms();
-      hasTouchedPlatform = false;
-      currentPlatforms.sort((a, b) => a.y - b.y);
-      let highestPlatform = currentPlatforms[0];
-      let doorX = Math.random() * (canvas.width - 50);
-      let doorY = highestPlatform.y - 80;
-      door = { x: doorX, y: doorY, width: 50, height: 70 };
-      player = {
-        x: canvas.width * 0.1,
-        y: canvas.height - 150,
-        width: 50,
-        height: 50,
-        vx: 0,
-        vy: 0,
-        speed: 3,
-        jumpForce: -12,
-        onGround: false
-      };
-      platformerGameStarted = true;
-      platformerLoop(currentPlatforms);
-    }
     function generatePlatforms() {
       let platforms = [];
       const platformCount = 10;
@@ -986,6 +961,28 @@
         });
       }
       return platforms;
+    }
+    function startPlatformerLevel() {
+      currentPlatforms = generatePlatforms();
+      hasTouchedPlatform = false;
+      currentPlatforms.sort((a, b) => a.y - b.y);
+      let highestPlatform = currentPlatforms[0];
+      let doorX = Math.random() * (canvas.width - 50);
+      let doorY = highestPlatform.y - 80;
+      door = { x: doorX, y: doorY, width: 50, height: 70 };
+      player = {
+        x: canvas.width * 0.1,
+        y: canvas.height - 150,
+        width: 50,
+        height: 50,
+        vx: 0,
+        vy: 0,
+        speed: 3,
+        jumpForce: -12,
+        onGround: false
+      };
+      platformerGameStarted = true;
+      platformerLoop(currentPlatforms);
     }
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
@@ -1017,7 +1014,7 @@
           player.y < bottom &&
           player.y + player.height > top
         ) {
-          // Если персонаж падает на платформу, и это не земля, то устанавливаем флаг
+          // Если персонаж падает на не-земельную платформу, устанавливаем флаг
           if (!plat.isGround && player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             hasTouchedPlatform = true;
           }
@@ -1028,7 +1025,7 @@
           }
         }
       }
-      // Новое условие проигрыша: если персонаж хоть раз коснулся платформы и упал (player.y > canvas.height)
+      // Если персонаж коснулся платформы (не земли) и упал за нижнюю границу экрана – Game Over
       if (hasTouchedPlatform && player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
