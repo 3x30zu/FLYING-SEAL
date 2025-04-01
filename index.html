@@ -7,7 +7,7 @@
   <!-- Подключаем шрифт Press Start 2P -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Устанавливаем шрифт Press Start 2P для всего документа */
+    /* Общие стили */
     html, body {
       margin: 0;
       padding: 0;
@@ -82,7 +82,6 @@
       margin-bottom: 15px;
       transition: all 0.1s;
       animation: float 3s ease-in-out infinite;
-      font-family: 'Press Start 2P', cursive;
     }
     /* Кнопка Telegram (картинка) */
     #telegramBtn {
@@ -115,7 +114,7 @@
       height: 4vw;
       margin-right: 5px;
     }
-    /* Стиль пиксельных кнопок */
+    /* Стили для пиксельных кнопок */
     .pixelButton {
       padding: 10px 20px;
       font-size: 3vw;
@@ -286,12 +285,69 @@
     #hardModeDescription p {
       margin: 0;
     }
+    /* Стили для кнопки уровня (LVL) */
+    #lvlBtn {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      padding: 5px 10px;
+      font-size: 3vw;
+      color: #fff;
+      background: #e67e22;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer;
+      z-index: 60;
+      font-family: 'Press Start 2P', cursive;
+    }
+    /* Модальное окно для отображения уровня и опыта */
+    #lvlPanel {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      border: 4px solid #fff;
+      padding: 20px;
+      z-index: 70;
+      color: #fff;
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+    }
+    #lvlPanel h2 {
+      margin-bottom: 15px;
+      font-size: 5vw;
+    }
+    #lvlPanel p {
+      font-size: 3vw;
+      margin: 10px 0;
+    }
+    #closeLvlPanel {
+      padding: 5px 10px;
+      font-size: 3vw;
+      color: #fff;
+      background: #e74c3c;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+    }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
   <div id="coinContainer"></div>
   <button id="pauseBtn">||</button>
+  <!-- Кнопка для открытия панели уровня -->
+  <button id="lvlBtn">LVL</button>
+  <!-- Модальное окно с информацией об уровне и опыте -->
+  <div id="lvlPanel">
+    <h2>Level Info</h2>
+    <p id="levelText">Level: 0</p>
+    <p id="xpText">XP: 0 / 100</p>
+    <button id="closeLvlPanel">Close</button>
+  </div>
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
     <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
@@ -299,7 +355,7 @@
   </div>
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
-    <!-- Добавленный блок приветствия -->
+    <!-- Добавленный блок приветствия под заголовком -->
     <p id="greeting"></p>
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
@@ -338,13 +394,45 @@
     <button id="exitBtn" class="pixelButton">Main Menu</button>
   </div>
   <div id="score"></div>
-  <!-- Счётчик монет: теперь статичный элемент с изображением и текстом -->
+  <!-- Счётчик монет -->
   <div id="coinCount">
     <img src="BACKGROUND/goldcoin.gif" alt="coin">
     <span id="coinText">0</span>
   </div>
 
   <script>
+    // Инициализация системы уровней
+    let userLevel = parseInt(localStorage.getItem("userLevel") || "0");
+    let userXP = parseInt(localStorage.getItem("userXP") || "0");
+    const xpThreshold = 100; // Для каждого повышения уровня требуется 100 XP
+
+    function updateLevelInfoDisplay() {
+      document.getElementById("levelText").textContent = "Level: " + userLevel;
+      document.getElementById("xpText").textContent = "XP: " + userXP + " / " + xpThreshold;
+    }
+
+    // Функция для обновления уровня на основе набранных очков
+    function addXP(points) {
+      userXP += points;
+      // Пока набран достаточно XP для повышения уровня
+      while (userXP >= xpThreshold) {
+        userXP -= xpThreshold;
+        userLevel++;
+      }
+      localStorage.setItem("userLevel", userLevel);
+      localStorage.setItem("userXP", userXP);
+      updateLevelInfoDisplay();
+    }
+
+    // Обработчики для кнопки уровня и панели
+    document.getElementById("lvlBtn").addEventListener("click", () => {
+      document.getElementById("lvlPanel").style.display = "block";
+      updateLevelInfoDisplay();
+    });
+    document.getElementById("closeLvlPanel").addEventListener("click", () => {
+      document.getElementById("lvlPanel").style.display = "none";
+    });
+
     // Принудительно скрываем окно выбора режима при загрузке страницы
     window.onload = function() {
       document.getElementById('modeSelectModal').style.display = 'none';
@@ -502,6 +590,8 @@
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
+      // Обновляем уровень после игры
+      addXP(score);
     });
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
@@ -579,6 +669,8 @@
           removeAllCoins();
           scoreElement.style.display = 'none';
           coinCountElement.style.display = 'none';
+          // Обновляем уровень при завершении игры в режиме FLYING
+          addXP(score);
           setTimeout(() => {
             saveScore(username, score);
             gameOverOverlay.style.display = 'flex';
@@ -607,7 +699,6 @@
       ctx.restore();
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
-      // Вместо перезаписи innerHTML обновляем только текст в span coinText
       document.getElementById('coinText').textContent = coinCount;
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
