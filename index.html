@@ -362,6 +362,8 @@
   <button id="profileBtn">
     <img id="currentAvatar" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar">
   </button>
+  <!-- Кнопка паузы для PLATFORMER (будет отображаться только в этом режиме) -->
+  <button id="platformerPauseBtn" style="position: absolute; top: 120px; right: 10px; display: none;">Pause</button>
   
   <!-- Модальное окно профиля -->
   <div id="profileModal">
@@ -376,6 +378,9 @@
       <span id="nicknameDisplay">Guest</span>
       <span id="editNickname">&#9998;</span>
     </div>
+    <!-- Добавленные элементы для отображения уровня и XP -->
+    <p id="levelText">Level: 0</p>
+    <p id="xpText">XP: 0 / 100</p>
     <button id="closeProfileModal">Close</button>
   </div>
   
@@ -477,6 +482,7 @@
     document.getElementById("profileBtn").addEventListener("click", () => {
       document.getElementById("profileModal").style.display = "block";
       updateProfileDisplay();
+      updateLevelInfoDisplay();
     });
     document.getElementById("closeProfileModal").addEventListener("click", () => {
       document.getElementById("profileModal").style.display = "none";
