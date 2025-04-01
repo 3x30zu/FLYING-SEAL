@@ -7,7 +7,10 @@
   <!-- Подключаем шрифт Press Start 2P -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Общие стили */
+    /* Универсальное правило для замены шрифта во всей игре */
+    * {
+      font-family: 'Press Start 2P', cursive;
+    }
     html, body {
       margin: 0;
       padding: 0;
@@ -16,17 +19,12 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      font-family: sans-serif;
     }
     body {
       padding-top: env(safe-area-inset-top);
       padding-right: env(safe-area-inset-right);
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
-    }
-    @font-face {
-      font-family: 'Press Start 2P';
-      src: url('BACKGROUND/bloq.ttf') format('truetype');
     }
     /* Canvas с фоновым GIF */
     #gameCanvas {
@@ -62,14 +60,13 @@
       font-size: 5vw;
       margin-bottom: 10px;
       animation: bounce 2s infinite;
-      font-family: 'Press Start 2P', cursive;
     }
     /* Добавленный блок приветствия под заголовком */
     #greeting {
       font-size: 3vw;
       margin-bottom: 20px;
     }
-    /* Кнопки главного меню (теперь обычный шрифт) */
+    /* Кнопки главного меню */
     #startBtn, #shopBtn {
       padding: 10px 20px;
       font-size: 3vw;
@@ -82,7 +79,6 @@
       cursor: pointer;
       margin-bottom: 15px;
       transition: all 0.1s;
-      /* Шрифт по умолчанию */
     }
     /* Кнопка Telegram (картинка) */
     #telegramBtn {
@@ -97,7 +93,6 @@
       color: white;
       font-size: 4vw;
       z-index: 5;
-      font-family: 'Press Start 2P', cursive;
     }
     #score {
       top: 5%;
@@ -110,12 +105,11 @@
       display: none;
       align-items: center;
     }
-    /* Элемент с изображением и текстом внутри coinCount */
     #coinCount img {
       height: 4vw;
       margin-right: 5px;
     }
-    /* Стили для пиксельных кнопок (применяются для паузы, share и т.п.) */
+    /* Стили для пиксельных кнопок (например, паузы, share и т.п.) */
     .pixelButton {
       padding: 10px 20px;
       font-size: 3vw;
@@ -128,7 +122,6 @@
       cursor: pointer;
       margin-bottom: 15px;
       transition: all 0.1s;
-      font-family: 'Press Start 2P', cursive;
     }
     button:active {
       box-shadow: 2px 2px 0 #00ffff;
@@ -151,7 +144,6 @@
     #shop h2 {
       font-size: 5vw;
       margin-bottom: 20px;
-      font-family: 'Press Start 2P', cursive;
     }
     #shopBalance {
       font-size: 3vw;
@@ -178,7 +170,6 @@
     }
     .shop-item button {
       margin-top: 5px;
-      font-family: 'Press Start 2P', cursive;
     }
     #shop .back-btn {
       margin-top: 20px;
@@ -188,7 +179,6 @@
       font-size: 3vw;
       padding: 10px 20px;
       cursor: pointer;
-      font-family: 'Press Start 2P', cursive;
     }
     /* Окно Game Over */
     #gameOverOverlay {
@@ -217,7 +207,6 @@
       z-index: 30;
       width: 80%;
       max-width: 400px;
-      font-family: 'Press Start 2P', cursive;
     }
     /* Анимации */
     @keyframes bounce {
@@ -240,7 +229,6 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      font-family: 'Press Start 2P', cursive;
       color: #fff;
     }
     #modeSelectModal button {
@@ -255,7 +243,6 @@
       box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer;
       transition: all 0.1s;
-      font-family: 'Press Start 2P', cursive;
     }
     /* Hard Mode Description */
     #hardModeDescription {
@@ -281,12 +268,11 @@
       font-size: 3vw;
       color: #fff;
       cursor: pointer;
-      font-family: 'Press Start 2P', cursive;
     }
     #hardModeDescription p {
       margin: 0;
     }
-    /* Стили для кнопки уровня (LVL) – изменён отступ и стиль */
+    /* Кнопка LVL – отступ немного ниже и стили аналогичные остальным */
     #lvlBtn {
       position: absolute;
       top: 50px;
@@ -299,8 +285,6 @@
       box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer;
       z-index: 60;
-      /* Используем тот же шрифт, что и для обычных кнопок */
-      font-family: sans-serif;
     }
     /* Модальное окно для отображения уровня и опыта */
     #lvlPanel {
@@ -315,7 +299,8 @@
       z-index: 70;
       color: #fff;
       text-align: center;
-      font-family: 'Press Start 2P', cursive;
+      width: 80%;
+      max-width: 400px;
     }
     #lvlPanel h2 {
       margin-bottom: 15px;
@@ -333,13 +318,13 @@
       border: 4px solid #fff;
       box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer;
-      font-family: 'Press Start 2P', cursive;
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
   <div id="coinContainer"></div>
+  <!-- Кнопка паузы (будет отображаться в обоих режимах, но в режиме PLATFORMER выставляется display:block) -->
   <button id="pauseBtn">||</button>
   <!-- Кнопка для открытия панели уровня -->
   <button id="lvlBtn">LVL</button>
@@ -357,12 +342,12 @@
   </div>
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
-    <!-- Добавленный блок приветствия под заголовком -->
+    <!-- Добавленный блок приветствия -->
     <p id="greeting"></p>
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
-    <!-- Меню High Scores скрыто, но код оставлен для последующего добавления -->
+    <!-- Меню High Scores (скрыто) -->
     <div id="leaderboard" style="display:none;">
       <h3>High Scores</h3>
       <ul id="topScores"></ul>
@@ -406,14 +391,13 @@
     // Инициализация системы уровней
     let userLevel = parseInt(localStorage.getItem("userLevel") || "0");
     let userXP = parseInt(localStorage.getItem("userXP") || "0");
-    const xpThreshold = 100; // Для каждого повышения уровня требуется 100 XP
+    const xpThreshold = 100; // Для повышения уровня требуется 100 XP
 
     function updateLevelInfoDisplay() {
       document.getElementById("levelText").textContent = "Level: " + userLevel;
       document.getElementById("xpText").textContent = "XP: " + userXP + " / " + xpThreshold;
     }
 
-    // Функция для обновления уровня на основе набранных очков
     function addXP(points) {
       userXP += points;
       while (userXP >= xpThreshold) {
@@ -425,7 +409,7 @@
       updateLevelInfoDisplay();
     }
 
-    // Обработчики для кнопки уровня и панели
+    // Обработчики панели уровня
     document.getElementById("lvlBtn").addEventListener("click", () => {
       document.getElementById("lvlPanel").style.display = "block";
       updateLevelInfoDisplay();
@@ -434,7 +418,6 @@
       document.getElementById("lvlPanel").style.display = "none";
     });
 
-    // Принудительно скрываем окно выбора режима при загрузке страницы
     window.onload = function() {
       document.getElementById('modeSelectModal').style.display = 'none';
       if (window.Telegram && window.Telegram.WebApp) {
@@ -549,6 +532,7 @@
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
+      // В режиме FLYING скрываем кнопку паузы
       pauseBtn.style.display = 'none';
       coinCountElement.style.display = 'flex';
       selectedMode = "FLYING";
@@ -558,6 +542,7 @@
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
+      // В режиме PLATFORMER показываем кнопку паузы
       pauseBtn.style.display = 'block';
       coinCountElement.style.display = 'none';
       selectedMode = "PLATFORMER";
@@ -1040,20 +1025,18 @@
           }
         }
       }
-      nerpaImg = player.vy < 0 ? sealJump : sealFall;
       ctx.save();
       ctx.translate(player.x + player.width/2, player.y + player.height/2);
       let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
       ctx.rotate(pAngle);
       ctx.drawImage(nerpaImg, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
-      // Эффект "испарения" для платформ
+      // Эффект испарения платформ
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (!plat.isGround && plat.disappearStartTime !== null) {
           let elapsed = performance.now() - plat.disappearStartTime;
           if (elapsed < 1000) {
-            // Вычисляем прозрачность (от 1 до 0)
             plat.opacity = 1 - elapsed / 1000;
           } else {
             platforms.splice(i, 1);
