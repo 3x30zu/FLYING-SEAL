@@ -16,7 +16,7 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      font-family: 'Press Start 2P', cursive;
+      font-family: sans-serif;
     }
     body {
       padding-top: env(safe-area-inset-top);
@@ -62,13 +62,14 @@
       font-size: 5vw;
       margin-bottom: 10px;
       animation: bounce 2s infinite;
+      font-family: 'Press Start 2P', cursive;
     }
     /* Добавленный блок приветствия под заголовком */
     #greeting {
       font-size: 3vw;
       margin-bottom: 20px;
     }
-    /* Кнопки главного меню */
+    /* Кнопки главного меню (теперь обычный шрифт) */
     #startBtn, #shopBtn {
       padding: 10px 20px;
       font-size: 3vw;
@@ -81,7 +82,7 @@
       cursor: pointer;
       margin-bottom: 15px;
       transition: all 0.1s;
-      animation: float 3s ease-in-out infinite;
+      /* Шрифт по умолчанию */
     }
     /* Кнопка Telegram (картинка) */
     #telegramBtn {
@@ -114,7 +115,7 @@
       height: 4vw;
       margin-right: 5px;
     }
-    /* Стили для пиксельных кнопок */
+    /* Стили для пиксельных кнопок (применяются для паузы, share и т.п.) */
     .pixelButton {
       padding: 10px 20px;
       font-size: 3vw;
@@ -127,7 +128,6 @@
       cursor: pointer;
       margin-bottom: 15px;
       transition: all 0.1s;
-      animation: float 3s ease-in-out infinite;
       font-family: 'Press Start 2P', cursive;
     }
     button:active {
@@ -151,6 +151,7 @@
     #shop h2 {
       font-size: 5vw;
       margin-bottom: 20px;
+      font-family: 'Press Start 2P', cursive;
     }
     #shopBalance {
       font-size: 3vw;
@@ -285,20 +286,21 @@
     #hardModeDescription p {
       margin: 0;
     }
-    /* Стили для кнопки уровня (LVL) */
+    /* Стили для кнопки уровня (LVL) – изменён отступ и стиль */
     #lvlBtn {
       position: absolute;
-      top: 5px;
+      top: 50px;
       left: 5px;
       padding: 5px 10px;
       font-size: 3vw;
       color: #fff;
-      background: #e67e22;
+      background: #3498db;
       border: 4px solid #fff;
       box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer;
       z-index: 60;
-      font-family: 'Press Start 2P', cursive;
+      /* Используем тот же шрифт, что и для обычных кнопок */
+      font-family: sans-serif;
     }
     /* Модальное окно для отображения уровня и опыта */
     #lvlPanel {
@@ -414,7 +416,6 @@
     // Функция для обновления уровня на основе набранных очков
     function addXP(points) {
       userXP += points;
-      // Пока набран достаточно XP для повышения уровня
       while (userXP >= xpThreshold) {
         userXP -= xpThreshold;
         userLevel++;
@@ -590,7 +591,6 @@
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
-      // Обновляем уровень после игры
       addXP(score);
     });
     closeHardModeDesc.addEventListener('click', () => {
@@ -599,12 +599,12 @@
     let paused = false;
     pauseBtn.addEventListener('click', () => {
       paused = true;
-      pauseMenu.style.display = 'block';
+      document.getElementById("pauseMenu").style.display = 'block';
     });
     const resumeBtn = document.getElementById('resumeBtn');
     resumeBtn.addEventListener('click', () => {
       paused = false;
-      pauseMenu.style.display = 'none';
+      document.getElementById("pauseMenu").style.display = 'none';
       if (selectedMode === "FLYING") {
         flyingGameLoop();
       } else if (selectedMode === "PLATFORMER") {
@@ -614,7 +614,7 @@
     const exitBtn = document.getElementById('exitBtn');
     exitBtn.addEventListener('click', () => {
       paused = false;
-      pauseMenu.style.display = 'none';
+      document.getElementById("pauseMenu").style.display = 'none';
       menu.style.display = 'flex';
       gameStarted = false;
       pauseBtn.style.display = 'none';
@@ -669,7 +669,6 @@
           removeAllCoins();
           scoreElement.style.display = 'none';
           coinCountElement.style.display = 'none';
-          // Обновляем уровень при завершении игры в режиме FLYING
           addXP(score);
           setTimeout(() => {
             saveScore(username, score);
@@ -1048,12 +1047,24 @@
       ctx.rotate(pAngle);
       ctx.drawImage(nerpaImg, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
+      // Эффект "испарения" для платформ
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
-        if (!plat.isGround && plat.disappearStartTime !== null && performance.now() - plat.disappearStartTime > 1000) {
-          platforms.splice(i, 1);
+        if (!plat.isGround && plat.disappearStartTime !== null) {
+          let elapsed = performance.now() - plat.disappearStartTime;
+          if (elapsed < 1000) {
+            // Вычисляем прозрачность (от 1 до 0)
+            plat.opacity = 1 - elapsed / 1000;
+          } else {
+            platforms.splice(i, 1);
+            continue;
+          }
+        } else {
+          plat.opacity = 1;
         }
       }
+      platforms.forEach(plat => { drawPlatform(plat); });
+      drawDoor(door.x, door.y, door.width, door.height);
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1082,17 +1093,18 @@
         pauseBtn.style.display = 'none';
         return;
       }
-      platforms.forEach(plat => { drawPlatform(plat); });
-      drawDoor(door.x, door.y, door.width, door.height);
       requestAnimationFrame(() => platformerLoop(platforms));
     }
     function drawPlatform(plat) {
+      ctx.save();
+      ctx.globalAlpha = plat.opacity || 1;
       if (plat.isGround) {
         ctx.fillStyle = "#87CEFA";
         ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
       } else {
         ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
       }
+      ctx.restore();
     }
     function drawDoor(x, y, width, height) {
       ctx.fillStyle = "#663300";
