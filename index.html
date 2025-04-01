@@ -363,7 +363,7 @@
     <img id="currentAvatar" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar">
   </button>
   <!-- Кнопка паузы для PLATFORMER (будет отображаться только в этом режиме) -->
-  <button id="platformerPauseBtn" style="position: absolute; top: 120px; right: 10px; display: none;">Pause</button>
+  <button id="platformerPauseBtn" style="position: absolute; top: 120px; right: 10px; display: none;">||</button>
   
   <!-- Модальное окно профиля -->
   <div id="profileModal">
@@ -509,8 +509,8 @@
     }
     /* ========= Конец системы уровней ========= */
 
-    // Панель уровня (если потребуется)
-    // (В данном варианте профиль и система уровней теперь в профиле)
+    // Глобальные переменные для уровней в платформере
+    let platformerLevel = 1;
 
     /* ========= Глобальные переменные для игры ========= */
     let pipes = [];
@@ -654,6 +654,7 @@
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       showProfileButton();
+      platformerPauseBtn.style.display = 'none';
       // Сбрасываем все игровые флаги и очищаем канвас
       gameStarted = false;
       platformerGameStarted = false;
@@ -690,6 +691,7 @@
       pauseMenu.style.display = 'none';
       menu.style.display = 'flex';
       showProfileButton();
+      platformerPauseBtn.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
       clearCanvas();
@@ -1177,7 +1179,7 @@
       platforms.forEach(plat => drawPlatform(plat));
       drawDoor(door.x, door.y, door.width, door.height);
 
-      // Проверка входа в дверь
+      // Проверка входа в дверь (выигрыш)
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
