@@ -108,7 +108,7 @@
       height: 4vw;
       margin-right: 5px;
     }
-    /* Стили для пиксельных кнопок (в pause-меню и проч.) */
+    /* Стили для пиксельных кнопок (в pause-меню и т.п.) */
     .pixelButton {
       padding: 10px 20px;
       font-size: 3vw;
@@ -260,45 +260,80 @@
     #hardModeDescription p {
       margin: 0;
     }
-    /* Кнопка LVL – скрывается при запуске игры */
-    #lvlBtn {
+    /* Кнопка профиля – пиксельный круг вместо LVL */
+    #profileBtn {
       position: absolute;
       top: 50px;
       left: 5px;
-      padding: 5px 10px;
-      font-size: 3vw;
-      color: #fff;
-      background: #3498db;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
       border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
+      background: #3498db;
       cursor: pointer;
       z-index: 60;
+      display: block;
+      overflow: hidden;
     }
-    /* Модальное окно для уровня */
-    #lvlPanel {
+    /* Внутри профиля – аватар (по умолчанию) */
+    #profileBtn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* Модальное окно профиля */
+    #profileModal {
       display: none;
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.95);
       border: 4px solid #fff;
       padding: 20px;
-      z-index: 70;
+      z-index: 80;
       color: #fff;
       text-align: center;
       width: 80%;
       max-width: 400px;
     }
-    #lvlPanel h2 {
+    #profileModal h2 {
       margin-bottom: 15px;
       font-size: 5vw;
     }
-    #lvlPanel p {
-      font-size: 3vw;
-      margin: 10px 0;
+    /* Секция с аватарами */
+    #avatarSelection {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
     }
-    #closeLvlPanel {
+    #avatarSelection img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+    }
+    #avatarSelection img.selected {
+      border-color: #e67e22;
+    }
+    /* Секция с никнеймом */
+    #nicknameSection {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    #nicknameSection span {
+      font-size: 4vw;
+    }
+    #editNickname {
+      cursor: pointer;
+      font-size: 4vw;
+    }
+    #closeProfileModal {
       padding: 5px 10px;
       font-size: 3vw;
       color: #fff;
@@ -306,21 +341,6 @@
       border: 4px solid #fff;
       box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer;
-    }
-    /* Новая кнопка паузы для PLATFORMER */
-    #platformerPauseBtn {
-      position: absolute;
-      top: 5%;
-      right: 5%;
-      z-index: 60;
-      padding: 10px 20px;
-      font-size: 3vw;
-      color: #fff;
-      background: #3498db;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
-      cursor: pointer;
-      display: none;
     }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
@@ -337,17 +357,29 @@
 <body>
   <canvas id="gameCanvas"></canvas>
   <div id="coinContainer"></div>
-  <!-- Новая кнопка паузы для PLATFORMER -->
-  <button id="platformerPauseBtn">||</button>
-  <!-- Кнопка для открытия панели уровня (скрывается во время игры) -->
-  <button id="lvlBtn">LVL</button>
-  <!-- Модальное окно с информацией об уровне -->
-  <div id="lvlPanel">
-    <h2>Level Info</h2>
-    <p id="levelText">Level: 0</p>
-    <p id="xpText">XP: 0 / 100</p>
-    <button id="closeLvlPanel">Close</button>
+  
+  <!-- Кнопка профиля (пиксельный круг) -->
+  <button id="profileBtn">
+    <img id="currentAvatar" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar">
+  </button>
+  
+  <!-- Модальное окно профиля -->
+  <div id="profileModal">
+    <h2>Profile</h2>
+    <div id="avatarSelection">
+      <!-- Три предустановленных аватара (в виде SVG-фигур) -->
+      <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar1" data-avatar="red" class="selected">
+      <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect x='10' y='10' width='80' height='80' fill='%2300ff00'/></svg>" alt="avatar2" data-avatar="green">
+      <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><polygon points='50,5 95,95 5,95' fill='%230000ff'/></svg>" alt="avatar3" data-avatar="blue">
+    </div>
+    <div id="nicknameSection">
+      <span id="nicknameDisplay">Guest</span>
+      <span id="editNickname">&#9998;</span>
+    </div>
+    <button id="closeProfileModal">Close</button>
   </div>
+  
+  <!-- Остальные элементы интерфейса -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
     <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
@@ -398,7 +430,60 @@
   </div>
 
   <script>
-    // Глобальные переменные для системы уровней
+    /* ========= Профиль пользователя ========= */
+    // Загружаем ник и выбранный аватар из localStorage (по умолчанию "Guest" и "red")
+    let userNickname = localStorage.getItem("userNickname") || "Guest";
+    let userAvatar = localStorage.getItem("userAvatar") || "red";
+
+    function updateProfileDisplay() {
+      document.getElementById("nicknameDisplay").textContent = userNickname;
+      // Обновляем изображение аватара в профиле и в кнопке профиля
+      let avatarImg;
+      if (userAvatar === "red") {
+        avatarImg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>";
+      } else if (userAvatar === "green") {
+        avatarImg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect x='10' y='10' width='80' height='80' fill='%2300ff00'/></svg>";
+      } else if (userAvatar === "blue") {
+        avatarImg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><polygon points='50,5 95,95 5,95' fill='%230000ff'/></svg>";
+      }
+      document.getElementById("currentAvatar").src = avatarImg;
+      // Обновляем выделение в списке аватаров
+      document.querySelectorAll("#avatarSelection img").forEach(img => {
+        if (img.getAttribute("data-avatar") === userAvatar) {
+          img.classList.add("selected");
+        } else {
+          img.classList.remove("selected");
+        }
+      });
+    }
+    // При клике по карандашу предлагаем изменить ник
+    document.getElementById("editNickname").addEventListener("click", () => {
+      let newNick = prompt("Enter your new nickname:", userNickname);
+      if(newNick !== null && newNick.trim() !== ""){
+        userNickname = newNick.trim();
+        localStorage.setItem("userNickname", userNickname);
+        updateProfileDisplay();
+      }
+    });
+    // Выбор аватара
+    document.querySelectorAll("#avatarSelection img").forEach(img => {
+      img.addEventListener("click", () => {
+        userAvatar = img.getAttribute("data-avatar");
+        localStorage.setItem("userAvatar", userAvatar);
+        updateProfileDisplay();
+      });
+    });
+    // Открытие и закрытие модального окна профиля
+    document.getElementById("profileBtn").addEventListener("click", () => {
+      document.getElementById("profileModal").style.display = "block";
+      updateProfileDisplay();
+    });
+    document.getElementById("closeProfileModal").addEventListener("click", () => {
+      document.getElementById("profileModal").style.display = "none";
+    });
+    /* ========= Конец профиля ========= */
+
+    /* ========= Система уровней ========= */
     let userLevel = parseInt(localStorage.getItem("userLevel") || "0");
     let userXP = parseInt(localStorage.getItem("userXP") || "0");
     const xpThreshold = 100;
@@ -416,38 +501,12 @@
       localStorage.setItem("userXP", userXP);
       updateLevelInfoDisplay();
     }
-    // Панель уровня
-    document.getElementById("lvlBtn").addEventListener("click", () => {
-      document.getElementById("lvlPanel").style.display = "block";
-      updateLevelInfoDisplay();
-    });
-    document.getElementById("closeLvlPanel").addEventListener("click", () => {
-      document.getElementById("lvlPanel").style.display = "none";
-    });
+    /* ========= Конец системы уровней ========= */
 
-    // Функции для скрытия/показа кнопки уровня
-    function hideLevelButton() {
-      document.getElementById('lvlBtn').style.display = 'none';
-    }
-    function showLevelButton() {
-      document.getElementById('lvlBtn').style.display = 'block';
-    }
+    // Панель уровня (если потребуется)
+    // (В данном варианте профиль и система уровней теперь в профиле)
 
-    // При загрузке
-    window.onload = function() {
-      document.getElementById('modeSelectModal').style.display = 'none';
-      if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.ready();
-      }
-      const username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
-                        window.Telegram.WebApp.initDataUnsafe.user &&
-                        window.Telegram.WebApp.initDataUnsafe.user.username)
-                       ? window.Telegram.WebApp.initDataUnsafe.user.username 
-                       : "Guest";
-      document.getElementById('greeting').textContent = "Hi, " + username;
-    };
-
-    // Глобальные переменные для игры
+    /* ========= Глобальные переменные для игры ========= */
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
@@ -456,10 +515,8 @@
     const platformImage = new Image();
     platformImage.src = 'BACKGROUND/platform.png';
     let collisionOffsetLeft = 10, collisionOffsetRight = 10, collisionOffsetTop = 20, collisionOffsetBottom = 20;
-
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-
     const menu = document.getElementById('menu');
     const shop = document.getElementById('shop');
     const shopItemsDiv = document.getElementById('shopItems');
@@ -483,23 +540,20 @@
     const pauseMenu = document.getElementById("pauseMenu");
 
     let gameStarted = false, score = 0, coinCount = 0;
-    let paused = false;  
+    let paused = false;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
-    let username = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
+    let usernameGame = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
                     window.Telegram.WebApp.initDataUnsafe.user &&
                     window.Telegram.WebApp.initDataUnsafe.user.username)
                      ? window.Telegram.WebApp.initDataUnsafe.user.username 
                      : "Guest";
     let hardModeEnabled = false, selectedMode = "FLYING";
-
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
-
     const standardSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%230000ff'/></svg>";
     const pixelFrostSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23a0e9ff'/></svg>";
     const neonPulseSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ff00ff'/></svg>";
     const retroArcadeSVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><rect width='150' height='150' fill='%23ffff00'/></svg>";
-
     const pipeDesigns = {
       "0": { id: "0", name: "Standard", price: 0, preview: standardSVG, colors: ["#0000ff"], animation: "none" },
       "1": { id: "1", name: "Pixel Frost", price: 25, preview: pixelFrostSVG, colors: ["#a0e9ff"], animation: "blink" },
@@ -508,10 +562,8 @@
     };
     let purchasedPipeDesigns = JSON.parse(localStorage.getItem("purchasedPipeDesigns") || '["0"]');
     let currentPipeDesign = localStorage.getItem("selectedPipeDesign") || (purchasedPipeDesigns.length > 0 ? purchasedPipeDesigns[0] : "0");
-
     const shopBalance = document.getElementById('shopBalance');
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
-
     let particles = [], coins = [], reactionMessages = [];
     const sealJump = new Image();
     sealJump.src = 'BACKGROUND/seal jump.png';
@@ -525,15 +577,21 @@
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
     function updateShadowImage() {
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
+    // Функции для скрытия/показа профиля (в главном меню)
+    function hideProfileButton() {
+      document.getElementById('profileBtn').style.display = 'none';
+    }
+    function showProfileButton() {
+      document.getElementById('profileBtn').style.display = 'block';
+    }
 
-    // Обработчики главного меню
+    /* Обработчики главного меню */
     startBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'flex';
     });
@@ -541,22 +599,22 @@
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // В режиме FLYING не показываем кнопку паузы
+      // В режиме FLYING не показываем кнопку паузы и профиль
       platformerPauseBtn.style.display = 'none';
       coinCountElement.style.display = 'flex';
+      hideProfileButton();
       selectedMode = "FLYING";
-      hideLevelButton();
       startFlyingMode();
     });
     platformerModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // В режиме PLATFORMER показываем новую кнопку паузы
+      // В режиме PLATFORMER показываем кнопку паузы и скрываем профиль
       platformerPauseBtn.style.display = 'block';
       coinCountElement.style.display = 'none';
+      hideProfileButton();
       selectedMode = "PLATFORMER";
-      hideLevelButton();
       startPlatformerLevel();
     });
     telegramBtn.addEventListener('click', () => {
@@ -582,7 +640,6 @@
       if(selectedMode === "FLYING") {
         startFlyingMode();
       } else if(selectedMode === "PLATFORMER") {
-        // при желании можно сделать "продолжить" и для платформера
         startPlatformerLevel();
       }
     });
@@ -590,13 +647,12 @@
       // При выходе в главное меню
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
-      showLevelButton();
+      showProfileButton();
       // Сбрасываем все игровые флаги и очищаем канвас
       gameStarted = false;
       platformerGameStarted = false;
       paused = false;
       clearCanvas();
-      // Обнуляем платформы, счёт и т.д.
       currentPlatforms = [];
       pipes = [];
       coins = [];
@@ -607,7 +663,6 @@
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
-
     // Пауза в PLATFORMER
     platformerPauseBtn.addEventListener('click', () => {
       paused = true;
@@ -625,12 +680,10 @@
     });
     const exitBtn = document.getElementById('exitBtn');
     exitBtn.addEventListener('click', () => {
-      // Выход в главное меню
       paused = false;
       pauseMenu.style.display = 'none';
       menu.style.display = 'flex';
-      showLevelButton();
-      // Сброс
+      showProfileButton();
       gameStarted = false;
       platformerGameStarted = false;
       clearCanvas();
@@ -672,11 +725,9 @@
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
-      // Генерация труб
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
-      // Движение труб
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
@@ -686,7 +737,6 @@
             showReaction('Score ' + score);
           }
         }
-        // Проверка столкновений
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           clearCanvas();
           gameStarted = false;
@@ -695,13 +745,12 @@
           coinCountElement.style.display = 'none';
           addXP(score);
           setTimeout(() => {
-            saveScore(username, score);
+            saveScore(usernameGame, score);
             gameOverOverlay.style.display = 'block';
           }, 1000);
           return;
         }
       }
-      // Движение монет
       coins.forEach(coin => {
         coin.x -= pipeSpeed;
         if (!coin.collected && checkCoinCollision(coin)) {
@@ -715,7 +764,6 @@
       updateCoins();
       drawParticles();
       updateShadowImage();
-      // Рисуем персонажа
       ctx.save();
       ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
@@ -969,13 +1017,13 @@
       shopItemsDiv.appendChild(pipesGrid);
     }
 
-    /* PLATFORMER MODE */
+    /* ========= PLATFORMER MODE ========= */
     let platformerGameStarted = false;
     let door, player;
     let keysDown = {};
     let currentPlatforms = [];
     const platformW = 150, platformH = 40, groundHeight = 80, platformHitboxOffset = 10;
-    // Флаг: касался ли персонаж (кроме земли) платформы
+    // Флаг: касался ли персонаж (не земли) платформы
     let hasTouchedPlatform = false;
 
     function generatePlatforms() {
@@ -1010,15 +1058,13 @@
       platformerGameStarted = true;
       paused = false;
       hasTouchedPlatform = false;
-      score = 0;  // Можно вести отдельный счёт, если нужно
+      score = 0;
       currentPlatforms = generatePlatforms();
       currentPlatforms.sort((a, b) => a.y - b.y);
-
       let highestPlatform = currentPlatforms[0];
       let doorX = Math.random() * (canvas.width - 50);
       let doorY = highestPlatform.y - 80;
       door = { x: doorX, y: doorY, width: 50, height: 70 };
-
       player = {
         x: canvas.width * 0.1,
         y: canvas.height - 150,
@@ -1061,30 +1107,25 @@
         let right = plat.x + plat.width - platformHitboxOffset;
         let top = plat.y;
         let bottom = plat.y + plat.height;
-
-        // Проверяем пересечение
         if (
           player.x < right &&
           player.x + player.width > left &&
           player.y < bottom &&
           player.y + player.height > top
         ) {
-          // Если персонаж падал сверху
+          // Если персонаж падает сверху
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
-            // Если это не земля, значит коснулся платформы
+            // Если не земля, отмечаем касание
             if (!plat.isGround) {
               hasTouchedPlatform = true;
-              // Запускаем таймер исчезновения, если ещё не запущен
               if (plat.disappearStartTime === null) {
                 plat.disappearStartTime = performance.now();
               }
             }
-            // Приземление
             player.y = plat.y - player.height;
             player.vy = 0;
             player.onGround = true;
-
-            // Если это земля, но персонаж уже касался платформ => Game Over
+            // Если это земля и ранее касание было – проигрыш
             if (plat.isGround && hasTouchedPlatform) {
               platformerGameStarted = false;
               alert("Game Over");
@@ -1095,7 +1136,7 @@
         }
       }
 
-      // Если персонаж упал ниже экрана – тоже проигрыш
+      // Если персонаж упал ниже экрана – проигрыш
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1103,7 +1144,7 @@
         return;
       }
 
-      // Рисуем персонажа (с анимацией наклона)
+      // Рисуем персонажа с наклоном
       ctx.save();
       ctx.translate(player.x + player.width/2, player.y + player.height/2);
       let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
@@ -1115,14 +1156,11 @@
       // Эффект испарения для платформ
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
-        // Если платформа не земля и у неё есть время начала исчезновения
         if (!plat.isGround && plat.disappearStartTime !== null) {
           let elapsed = performance.now() - plat.disappearStartTime;
           if (elapsed < 1000) {
-            // Прозрачность от 1 до 0
             plat.opacity = 1 - elapsed / 1000;
           } else {
-            // Удаляем платформу
             platforms.splice(i, 1);
             continue;
           }
@@ -1130,13 +1168,10 @@
           plat.opacity = 1;
         }
       }
-
-      // Рисуем платформы
       platforms.forEach(plat => drawPlatform(plat));
-      // Рисуем дверь
       drawDoor(door.x, door.y, door.width, door.height);
 
-      // Проверяем вход в дверь
+      // Проверка входа в дверь
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1151,25 +1186,20 @@
         ctx.font = "20px 'Press Start 2P'";
         ctx.textAlign = "center";
         ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
-
         setTimeout(() => {
-          // Можно увеличить уровень или перейти к следующему
           platformerLevel++;
           startPlatformerLevel();
         }, 1500);
         return;
       }
-
-      // Продолжаем цикл
       requestAnimationFrame(() => platformerLoop(platforms));
     }
 
-    // Функция завершения режима платформера (очистка)
     function endPlatformer() {
       removeAllCoins();
       menu.style.display = 'flex';
       platformerPauseBtn.style.display = 'none';
-      showLevelButton();
+      showProfileButton();
       clearCanvas();
       currentPlatforms = [];
     }
@@ -1194,22 +1224,13 @@
       ctx.strokeRect(x, y, width, height);
     }
 
-    // Управление с клавиатуры
-    window.addEventListener("keydown", (e) => {
-      keysDown[e.code] = true;
-    });
-    window.addEventListener("keyup", (e) => {
-      keysDown[e.code] = false;
-    });
-
-    // Управление с тач-экрана
+    window.addEventListener("keydown", (e) => { keysDown[e.code] = true; });
+    window.addEventListener("keyup", (e) => { keysDown[e.code] = false; });
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
-
     function handleTouchStart(e) {
       e.preventDefault();
       if(selectedMode === "FLYING" && gameStarted){
-        // Прыжок
         shadow.velocity = shadow.jump;
       } else if(selectedMode === "PLATFORMER"){
         let touch = e.touches[0];
@@ -1226,7 +1247,6 @@
         }
       }
     }
-
     function handleTouchEnd(e) {
       e.preventDefault();
       if(selectedMode === "PLATFORMER"){
