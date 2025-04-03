@@ -108,7 +108,7 @@
       height: 4vw;
       margin-right: 5px;
     }
-    /* Стили для пиксельных кнопок (в pause-меню и т.п.) */
+    /* Стили для пиксельных кнопок */
     .pixelButton {
       padding: 10px 20px;
       font-size: 3vw;
@@ -260,7 +260,7 @@
     #hardModeDescription p {
       margin: 0;
     }
-    /* Кнопка профиля – пиксельный круг вместо LVL */
+    /* Кнопка профиля – пиксельный круг */
     #profileBtn {
       position: absolute;
       top: 50px;
@@ -275,7 +275,7 @@
       display: block;
       overflow: hidden;
     }
-    /* Внутри профиля – аватар (по умолчанию) */
+    /* Аватар в профиле */
     #profileBtn img {
       width: 100%;
       height: 100%;
@@ -301,7 +301,7 @@
       margin-bottom: 15px;
       font-size: 5vw;
     }
-    /* Секция с аватарами */
+    /* Секция аватаров */
     #avatarSelection {
       display: flex;
       justify-content: center;
@@ -318,7 +318,7 @@
     #avatarSelection img.selected {
       border-color: #e67e22;
     }
-    /* Секция с никнеймом */
+    /* Секция никнейма */
     #nicknameSection {
       display: flex;
       justify-content: center;
@@ -371,18 +371,17 @@
   <canvas id="gameCanvas"></canvas>
   <div id="coinContainer"></div>
   
-  <!-- Кнопка профиля (пиксельный круг) -->
+  <!-- Кнопка профиля -->
   <button id="profileBtn">
     <img id="currentAvatar" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar">
   </button>
-  <!-- Кнопка паузы для PLATFORMER (будет отображаться только в этом режиме) -->
+  <!-- Кнопка паузы для PLATFORMER -->
   <button id="platformerPauseBtn" style="position: absolute; top: 120px; right: 10px; display: none;">||</button>
   
   <!-- Модальное окно профиля -->
   <div id="profileModal">
     <h2>Profile</h2>
     <div id="avatarSelection">
-      <!-- Три предустановленных аватара (в виде SVG-фигур) -->
       <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar1" data-avatar="red" class="selected">
       <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect x='10' y='10' width='80' height='80' fill='%2300ff00'/></svg>" alt="avatar2" data-avatar="green">
       <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><polygon points='50,5 95,95 5,95' fill='%230000ff'/></svg>" alt="avatar3" data-avatar="blue">
@@ -391,7 +390,6 @@
       <span id="nicknameDisplay">Guest</span>
       <span id="editNickname">&#9998;</span>
     </div>
-    <!-- Добавленные элементы для отображения уровня и XP -->
     <p id="levelText">Level: 0</p>
     <p id="xpText">XP: 0 / 100</p>
     <button id="closeProfileModal">Close</button>
@@ -455,13 +453,11 @@
 
   <script>
     /* ========= Профиль пользователя ========= */
-    // Загружаем ник и выбранный аватар из localStorage (по умолчанию "Guest" и "red")
     let userNickname = localStorage.getItem("userNickname") || "Guest";
     let userAvatar = localStorage.getItem("userAvatar") || "red";
 
     function updateProfileDisplay() {
       document.getElementById("nicknameDisplay").textContent = userNickname;
-      // Обновляем изображение аватара в профиле и в кнопке профиля
       let avatarImg;
       if (userAvatar === "red") {
         avatarImg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>";
@@ -471,7 +467,6 @@
         avatarImg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><polygon points='50,5 95,95 5,95' fill='%230000ff'/></svg>";
       }
       document.getElementById("currentAvatar").src = avatarImg;
-      // Обновляем выделение в списке аватаров
       document.querySelectorAll("#avatarSelection img").forEach(img => {
         if (img.getAttribute("data-avatar") === userAvatar) {
           img.classList.add("selected");
@@ -480,7 +475,6 @@
         }
       });
     }
-    // При клике по карандашу предлагаем изменить ник
     document.getElementById("editNickname").addEventListener("click", () => {
       let newNick = prompt("Enter your new nickname:", userNickname);
       if(newNick !== null && newNick.trim() !== ""){
@@ -489,7 +483,6 @@
         updateProfileDisplay();
       }
     });
-    // Выбор аватара
     document.querySelectorAll("#avatarSelection img").forEach(img => {
       img.addEventListener("click", () => {
         userAvatar = img.getAttribute("data-avatar");
@@ -497,7 +490,6 @@
         updateProfileDisplay();
       });
     });
-    // Открытие и закрытие модального окна профиля
     document.getElementById("profileBtn").addEventListener("click", () => {
       document.getElementById("profileModal").style.display = "block";
       updateProfileDisplay();
@@ -528,10 +520,9 @@
     }
     /* ========= Конец системы уровней ========= */
 
-    // Глобальные переменные для уровней в платформере
     let platformerLevel = 1;
 
-    /* ========= Глобальные переменные для игры ========= */
+    /* ========= Глобальные переменные ========= */
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
@@ -597,6 +588,9 @@
     sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
 
+    // Переменная для контроля частоты появления монет в режиме FLYING
+    let flyingPipeCounter = 0;
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -609,7 +603,6 @@
     function updateShadowImage() {
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
-    // Функции для скрытия/показа профиля (в главном меню)
     function hideProfileButton() {
       document.getElementById('profileBtn').style.display = 'none';
     }
@@ -620,24 +613,26 @@
     /* Обработчики главного меню */
     startBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'flex';
+      // При входе в главное меню скрываем контролы PLATFORMER
+      platformerControls.style.display = 'none';
     });
     flyingModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // В режиме FLYING не показываем кнопку паузы, профиль и контролы для PLATFORMER
       platformerPauseBtn.style.display = 'none';
       coinCountElement.style.display = 'flex';
       hideProfileButton();
       platformerControls.style.display = 'none';
       selectedMode = "FLYING";
+      // Сбрасываем счётчик труб для монет
+      flyingPipeCounter = 0;
       startFlyingMode();
     });
     platformerModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // В режиме PLATFORMER показываем кнопку паузы, контролы и скрываем профиль
       platformerPauseBtn.style.display = 'block';
       coinCountElement.style.display = 'none';
       hideProfileButton();
@@ -656,6 +651,8 @@
     shopBackBtn.addEventListener('click', () => {
       shop.style.display = 'none';
       menu.style.display = 'flex';
+      // Скрываем контролы PLATFORMER, если они случайно видны
+      platformerControls.style.display = 'none';
     });
     shareBtn.addEventListener('click', () => {
       const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
@@ -672,13 +669,11 @@
       }
     });
     mainMenuBtn.addEventListener('click', () => {
-      // При выходе в главное меню
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       showProfileButton();
       platformerPauseBtn.style.display = 'none';
       platformerControls.style.display = 'none';
-      // Сбрасываем все игровые флаги и очищаем канвас
       gameStarted = false;
       platformerGameStarted = false;
       paused = false;
@@ -693,7 +688,6 @@
     closeHardModeDesc.addEventListener('click', () => {
       hardModeDescription.style.display = 'none';
     });
-    // Пауза в PLATFORMER
     platformerPauseBtn.addEventListener('click', () => {
       paused = true;
       pauseMenu.style.display = 'block';
@@ -818,6 +812,7 @@
         ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
+    // Создание трубы; в режиме FLYING монетка появляется только каждые 5 труб
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
@@ -831,7 +826,12 @@
         color: color,
         design: design
       });
-      createCoin(gapPosition, gap);
+      if(selectedMode === "FLYING") {
+        flyingPipeCounter++;
+        if (flyingPipeCounter % 5 === 0) {
+          createCoin(gapPosition, gap);
+        }
+      }
     }
     function checkCollision(pipe) {
       let topPipeLeft = pipe.x + collisionOffsetLeft;
@@ -1055,13 +1055,11 @@
     let keysDown = {};
     let currentPlatforms = [];
     const platformW = 150, platformH = 40, groundHeight = 80, platformHitboxOffset = 10;
-    // Флаг: касался ли персонаж (не земли) платформы
     let hasTouchedPlatform = false;
 
     function generatePlatforms() {
       let platforms = [];
       const platformCount = 10;
-      // Земля
       platforms.push({
         x: 0,
         y: canvas.height - groundHeight,
@@ -1115,7 +1113,6 @@
       if (!platformerGameStarted || paused) return;
       clearCanvas();
 
-      // Движение игрока через кнопки (клавиатура игнорируется в этом режиме)
       if (keysDown["ArrowLeft"]) {
         player.vx = -player.speed;
       } else if (keysDown["ArrowRight"]) {
@@ -1132,7 +1129,6 @@
       player.y += player.vy;
       player.onGround = false;
 
-      // Проверка коллизий с платформами
       for (let i = 0; i < platforms.length; i++) {
         let plat = platforms[i];
         let left = plat.x + platformHitboxOffset;
@@ -1145,7 +1141,6 @@
           player.y < bottom &&
           player.y + player.height > top
         ) {
-          // Если персонаж падает сверху
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
             if (!plat.isGround) {
               hasTouchedPlatform = true;
@@ -1166,7 +1161,6 @@
         }
       }
 
-      // Если персонаж упал ниже экрана – проигрыш
       if (player.y > canvas.height) {
         platformerGameStarted = false;
         alert("Game Over");
@@ -1174,7 +1168,6 @@
         return;
       }
 
-      // Рисуем персонажа с наклоном
       ctx.save();
       ctx.translate(player.x + player.width/2, player.y + player.height/2);
       let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
@@ -1183,7 +1176,6 @@
       ctx.drawImage(currentSprite, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
 
-      // Эффект исчезания для платформ
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (!plat.isGround && plat.disappearStartTime !== null) {
@@ -1201,7 +1193,6 @@
       platforms.forEach(plat => drawPlatform(plat));
       drawDoor(door.x, door.y, door.width, door.height);
 
-      // Проверка входа в дверь (выигрыш)
       if (
         player.x < door.x + door.width &&
         player.x + player.width > door.x &&
@@ -1255,7 +1246,6 @@
       ctx.strokeRect(x, y, width, height);
     }
 
-    // Отключаем клавиатурное управление в режиме PLATFORMER
     window.addEventListener("keydown", (e) => {
       if (selectedMode === "PLATFORMER") return;
       keysDown[e.code] = true;
@@ -1264,7 +1254,6 @@
       if (selectedMode === "PLATFORMER") return;
       keysDown[e.code] = false;
     });
-    // Обработчики касаний канваса (активны только для режима FLYING)
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
     function handleTouchStart(e) {
@@ -1272,15 +1261,12 @@
       if(selectedMode === "FLYING" && gameStarted){
         shadow.velocity = shadow.jump;
       }
-      // В режиме PLATFORMER касания канваса игнорируются
     }
     function handleTouchEnd(e) {
       e.preventDefault();
-      // Только для режима FLYING
     }
 
     // Обработчики кнопок управления для PLATFORMER
-    // Поддержка мыши и сенсорных событий
     document.getElementById("btnLeft").addEventListener("mousedown", () => { keysDown["ArrowLeft"] = true; });
     document.getElementById("btnLeft").addEventListener("mouseup", () => { keysDown["ArrowLeft"] = false; });
     document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = true; });
