@@ -121,6 +121,7 @@
       cursor: pointer;
       margin-bottom: 15px;
       transition: all 0.1s;
+      user-select: none;
     }
     button:active {
       box-shadow: 2px 2px 0 #00ffff;
@@ -352,6 +353,18 @@
       50%  { transform: translateX(5px); }
       100% { transform: translateX(0); }
     }
+    /* Контейнер для кнопок управления в PLATFORMER */
+    #platformerControls {
+      display: none;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+    }
+    #platformerControls button {
+      margin: 0 10px;
+    }
   </style>
 </head>
 <body>
@@ -427,6 +440,12 @@
     <h2>Paused</h2>
     <button id="resumeBtn" class="pixelButton">Resume</button>
     <button id="exitBtn" class="pixelButton">Main Menu</button>
+  </div>
+  <!-- Контейнер для кнопок управления в режиме PLATFORMER -->
+  <div id="platformerControls">
+    <button id="btnLeft" class="pixelButton">←</button>
+    <button id="btnUp" class="pixelButton">↑</button>
+    <button id="btnRight" class="pixelButton">→</button>
   </div>
   <div id="score"></div>
   <div id="coinCount">
@@ -544,6 +563,7 @@
     const platformerModeBtn = document.getElementById('platformerModeBtn');
     const platformerPauseBtn = document.getElementById('platformerPauseBtn');
     const pauseMenu = document.getElementById("pauseMenu");
+    const platformerControls = document.getElementById("platformerControls");
 
     let gameStarted = false, score = 0, coinCount = 0;
     let paused = false;
@@ -605,10 +625,11 @@
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // В режиме FLYING не показываем кнопку паузы и профиль
+      // В режиме FLYING не показываем кнопку паузы, профиль и контролы для PLATFORMER
       platformerPauseBtn.style.display = 'none';
       coinCountElement.style.display = 'flex';
       hideProfileButton();
+      platformerControls.style.display = 'none';
       selectedMode = "FLYING";
       startFlyingMode();
     });
@@ -616,10 +637,11 @@
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
-      // В режиме PLATFORMER показываем кнопку паузы и скрываем профиль
+      // В режиме PLATFORMER показываем кнопку паузы, контролы и скрываем профиль
       platformerPauseBtn.style.display = 'block';
       coinCountElement.style.display = 'none';
       hideProfileButton();
+      platformerControls.style.display = 'block';
       selectedMode = "PLATFORMER";
       startPlatformerLevel();
     });
@@ -655,6 +677,7 @@
       menu.style.display = 'flex';
       showProfileButton();
       platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
       // Сбрасываем все игровые флаги и очищаем канвас
       gameStarted = false;
       platformerGameStarted = false;
@@ -692,6 +715,7 @@
       menu.style.display = 'flex';
       showProfileButton();
       platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
       clearCanvas();
@@ -1091,15 +1115,15 @@
       if (!platformerGameStarted || paused) return;
       clearCanvas();
 
-      // Движение игрока
-      if ((keysDown["ArrowLeft"] || keysDown["KeyA"])) {
+      // Движение игрока через кнопки (клавиатура игнорируется в этом режиме)
+      if (keysDown["ArrowLeft"]) {
         player.vx = -player.speed;
-      } else if ((keysDown["ArrowRight"] || keysDown["KeyD"])) {
+      } else if (keysDown["ArrowRight"]) {
         player.vx = player.speed;
       } else {
         player.vx = 0;
       }
-      if ((keysDown["ArrowUp"] || keysDown["Space"] || keysDown["KeyW"]) && player.onGround) {
+      if (keysDown["ArrowUp"] && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
       }
@@ -1123,7 +1147,6 @@
         ) {
           // Если персонаж падает сверху
           if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
-            // Если не земля, отмечаем касание
             if (!plat.isGround) {
               hasTouchedPlatform = true;
               if (plat.disappearStartTime === null) {
@@ -1133,7 +1156,6 @@
             player.y = plat.y - player.height;
             player.vy = 0;
             player.onGround = true;
-            // Если это земля и ранее касание было – проигрыш
             if (plat.isGround && hasTouchedPlatform) {
               platformerGameStarted = false;
               alert("Game Over");
@@ -1161,7 +1183,7 @@
       ctx.drawImage(currentSprite, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
 
-      // Эффект испарения для платформ
+      // Эффект исчезания для платформ
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
         if (!plat.isGround && plat.disappearStartTime !== null) {
@@ -1207,6 +1229,7 @@
       removeAllCoins();
       menu.style.display = 'flex';
       platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
       showProfileButton();
       clearCanvas();
       currentPlatforms = [];
@@ -1232,37 +1255,46 @@
       ctx.strokeRect(x, y, width, height);
     }
 
-    window.addEventListener("keydown", (e) => { keysDown[e.code] = true; });
-    window.addEventListener("keyup", (e) => { keysDown[e.code] = false; });
+    // Отключаем клавиатурное управление в режиме PLATFORMER
+    window.addEventListener("keydown", (e) => {
+      if (selectedMode === "PLATFORMER") return;
+      keysDown[e.code] = true;
+    });
+    window.addEventListener("keyup", (e) => {
+      if (selectedMode === "PLATFORMER") return;
+      keysDown[e.code] = false;
+    });
+    // Обработчики касаний канваса (активны только для режима FLYING)
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
     canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
     function handleTouchStart(e) {
       e.preventDefault();
       if(selectedMode === "FLYING" && gameStarted){
         shadow.velocity = shadow.jump;
-      } else if(selectedMode === "PLATFORMER"){
-        let touch = e.touches[0];
-        let x = touch.clientX;
-        let y = touch.clientY;
-        if (y < canvas.height * 0.3 && player && player.onGround) {
-          keysDown["ArrowUp"] = true;
-        } else {
-          if (x < canvas.width / 2) {
-            keysDown["ArrowLeft"] = true;
-          } else {
-            keysDown["ArrowRight"] = true;
-          }
-        }
       }
+      // В режиме PLATFORMER касания канваса игнорируются
     }
     function handleTouchEnd(e) {
       e.preventDefault();
-      if(selectedMode === "PLATFORMER"){
-        keysDown["ArrowLeft"] = false;
-        keysDown["ArrowRight"] = false;
-        keysDown["ArrowUp"] = false;
-      }
+      // Только для режима FLYING
     }
+
+    // Обработчики кнопок управления для PLATFORMER
+    // Поддержка мыши и сенсорных событий
+    document.getElementById("btnLeft").addEventListener("mousedown", () => { keysDown["ArrowLeft"] = true; });
+    document.getElementById("btnLeft").addEventListener("mouseup", () => { keysDown["ArrowLeft"] = false; });
+    document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = true; });
+    document.getElementById("btnLeft").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = false; });
+    
+    document.getElementById("btnUp").addEventListener("mousedown", () => { keysDown["ArrowUp"] = true; });
+    document.getElementById("btnUp").addEventListener("mouseup", () => { keysDown["ArrowUp"] = false; });
+    document.getElementById("btnUp").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowUp"] = true; });
+    document.getElementById("btnUp").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowUp"] = false; });
+    
+    document.getElementById("btnRight").addEventListener("mousedown", () => { keysDown["ArrowRight"] = true; });
+    document.getElementById("btnRight").addEventListener("mouseup", () => { keysDown["ArrowRight"] = false; });
+    document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
+    document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
   </script>
 </body>
 </html>
