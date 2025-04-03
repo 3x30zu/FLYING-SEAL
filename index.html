@@ -452,6 +452,11 @@
   </div>
 
   <script>
+    // Скрываем контролы PLATFORMER при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('platformerControls').style.display = 'none';
+    });
+
     /* ========= Профиль пользователя ========= */
     let userNickname = localStorage.getItem("userNickname") || "Guest";
     let userAvatar = localStorage.getItem("userAvatar") || "red";
@@ -588,7 +593,7 @@
     sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
 
-    // Переменная для контроля частоты появления монет в режиме FLYING
+    // Переменная для контроля появления монет в режиме FLYING
     let flyingPipeCounter = 0;
 
     function resizeCanvas() {
@@ -625,7 +630,6 @@
       hideProfileButton();
       platformerControls.style.display = 'none';
       selectedMode = "FLYING";
-      // Сбрасываем счётчик труб для монет
       flyingPipeCounter = 0;
       startFlyingMode();
     });
@@ -651,7 +655,6 @@
     shopBackBtn.addEventListener('click', () => {
       shop.style.display = 'none';
       menu.style.display = 'flex';
-      // Скрываем контролы PLATFORMER, если они случайно видны
       platformerControls.style.display = 'none';
     });
     shareBtn.addEventListener('click', () => {
@@ -812,7 +815,7 @@
         ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
-    // Создание трубы; в режиме FLYING монетка появляется только каждые 5 труб
+    // Создание трубы и, в режиме FLYING, монетка появляется каждые 5 труб
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
