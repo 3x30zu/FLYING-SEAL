@@ -7,18 +7,12 @@
   <!-- Подключаем шрифт Press Start 2P -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Общие стили для игры */
-    * {
-      font-family: 'Press Start 2P', cursive;
-    }
+    /* Универсальное правило для замены шрифта во всей игре */
+    * { font-family: 'Press Start 2P', cursive; }
     html, body {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      margin: 0; padding: 0; box-sizing: border-box;
       background-color: #000;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
+      width: 100vw; height: 100vh; overflow: hidden;
     }
     body {
       padding-top: env(safe-area-inset-top);
@@ -26,210 +20,193 @@
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
     }
-    /* Canvas с фоновым изображением */
+    /* Canvas с фоновым GIF */
     #gameCanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       display: block;
       background: url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
     }
-    /* Контейнер для монет (не используется в режиме DUNK) */
+    /* Контейнер для монет */
     #coinContainer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
       pointer-events: none;
     }
-    /* Главное меню, профиль и прочее – стандартные стили */
+    /* Главное меню */
     #menu {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      color: white; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 10;
     }
-    #menu * {
-      text-shadow: 2px 2px 4px #000;
-    }
-    #menu h1 {
-      font-size: 5vw;
-      margin-bottom: 10px;
-      animation: bounce 2s infinite;
-    }
-    #greeting {
-      font-size: 3vw;
-      margin-bottom: 20px;
-    }
+    #menu * { text-shadow: 2px 2px 4px #000; }
+    #menu h1 { font-size: 5vw; margin-bottom: 10px; animation: bounce 2s infinite; }
+    /* Блок приветствия */
+    #greeting { font-size: 3vw; margin-bottom: 20px; }
+    /* Кнопки главного меню */
     #startBtn, #shopBtn {
-      padding: 10px 20px;
-      font-size: 3vw;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #fff;
-      background: #3498db;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
-      cursor: pointer;
-      margin-bottom: 15px;
-      transition: all 0.1s;
+      padding: 10px 20px; font-size: 3vw; letter-spacing: 2px;
+      text-transform: uppercase; color: #fff; background: #3498db;
+      border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer; margin-bottom: 15px; transition: all 0.1s;
     }
+    /* Кнопка Telegram (картинка) */
     #telegramBtn {
-      margin-bottom: 15px;
-      width: 80px;
-      height: auto;
-      cursor: pointer;
+      margin-bottom: 15px; width: 80px; height: auto; cursor: pointer;
     }
+    /* Счётчики */
     #score, #coinCount {
-      position: absolute;
-      color: white;
-      font-size: 4vw;
-      z-index: 5;
+      position: absolute; color: white; font-size: 4vw; z-index: 5;
     }
     #score { top: 5%; left: 5%; }
     #coinCount {
-      top: 5%;
-      right: 5%;
-      display: none;
-      align-items: center;
+      top: 5%; right: 5%;
+      display: none; align-items: center;
     }
     #coinCount img {
-      height: 4vw;
-      margin-right: 5px;
+      height: 4vw; margin-right: 5px;
     }
+    /* Стили для пиксельных кнопок */
     .pixelButton {
-      padding: 10px 20px;
-      font-size: 3vw;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #fff;
-      background: #3498db;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
-      cursor: pointer;
-      transition: all 0.1s;
-      user-select: none;
+      padding: 10px 20px; font-size: 3vw; letter-spacing: 2px;
+      text-transform: uppercase; color: #fff; background: #3498db;
+      border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer; transition: all 0.1s; user-select: none;
     }
     button:active {
       box-shadow: 2px 2px 0 #00ffff;
       transform: translate(2px, 2px);
     }
+    /* Магазин */
     #shop {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
-      color: white;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      overflow-y: auto;
-      padding: 10px;
-      z-index: 30;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
+                  url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
+      color: white; display: none; flex-direction: column;
+      align-items: center; overflow-y: auto; padding: 10px; z-index: 30;
     }
     #shop h2 { font-size: 5vw; margin-bottom: 20px; }
     #shopBalance { font-size: 3vw; margin-bottom: 20px; }
     .shop-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      width: 100%;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; width: 100%;
     }
     .shop-item {
-      background: #3498db;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
-      padding: 5px;
-      text-align: center;
-      image-rendering: pixelated;
+      background: #3498db; border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff; padding: 5px;
+      text-align: center; image-rendering: pixelated;
     }
     .shop-item img {
-      width: 100%;
-      image-rendering: pixelated;
-      margin-bottom: 5px;
+      width: 100%; image-rendering: pixelated; margin-bottom: 5px;
     }
     .shop-item button { margin-top: 5px; }
     #shop .back-btn {
-      margin-top: 20px;
-      background: #FF5722;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
-      font-size: 3vw;
-      padding: 10px 20px;
-      cursor: pointer;
+      margin-top: 20px; background: #FF5722;
+      border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
+      font-size: 3vw; padding: 10px 20px; cursor: pointer;
     }
+    /* Оверлей Game Over */
     #gameOverOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.8);
-      color: white;
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      z-index: 20;
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); color: white;
+      display: none; flex-direction: column; justify-content: center;
+      align-items: center; text-align: center; z-index: 20;
     }
+    /* Pause-меню */
     #pauseMenu {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.8);
-      color: white;
-      text-align: center;
-      padding: 20px;
-      z-index: 30;
-      width: 80%;
-      max-width: 400px;
+      display: none; position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8); color: white; text-align: center;
+      padding: 20px; z-index: 30; width: 80%; max-width: 400px;
     }
+    /* Модальное окно выбора режима */
     #modeSelectModal {
-      display: none;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.8);
-      z-index: 50;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #fff;
+      display: none; position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); z-index: 50;
+      flex-direction: column; justify-content: center;
+      align-items: center; color: #fff;
     }
     #modeSelectModal button {
-      padding: 10px 20px;
-      font-size: 3vw;
-      margin: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #fff;
-      background: #3498db;
-      border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff;
-      cursor: pointer;
+      padding: 10px 20px; font-size: 3vw; margin: 10px;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: #fff; background: #3498db; border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff; cursor: pointer;
       transition: all 0.1s;
+    }
+    /* Hard Mode Description */
+    #hardModeDescription {
+      position: absolute; top: 20%; left: 50%;
+      transform: translateX(-50%);
+      background: #3498db; border: 4px solid #fff;
+      padding: 20px; z-index: 50; font-size: 3vw;
+      display: none; text-align: center; width: 80%;
+    }
+    #hardModeDescription button {
+      position: absolute; top: 5px; right: 5px;
+      background: transparent; border: none;
+      font-size: 3vw; color: #fff; cursor: pointer;
+    }
+    #hardModeDescription p { margin: 0; }
+    /* Кнопка профиля – пиксельный круг */
+    #profileBtn {
+      position: absolute; top: 50px; left: 5px;
+      width: 60px; height: 60px; border-radius: 50%;
+      border: 4px solid #fff; background: #3498db;
+      cursor: pointer; z-index: 60; display: block;
+      overflow: hidden;
+    }
+    /* Аватар */
+    #profileBtn img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    /* Модальное окно профиля */
+    #profileModal {
+      display: none; position: fixed; top: 50%;
+      left: 50%; transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.95); border: 4px solid #fff;
+      padding: 20px; z-index: 80; color: #fff;
+      text-align: center; width: 80%; max-width: 400px;
+    }
+    #profileModal h2 { margin-bottom: 15px; font-size: 5vw; }
+    /* Секция аватаров */
+    #avatarSelection {
+      display: flex; justify-content: center;
+      gap: 10px; margin-bottom: 15px;
+    }
+    #avatarSelection img {
+      width: 50px; height: 50px; border-radius: 50%;
+      border: 3px solid transparent; cursor: pointer;
+    }
+    #avatarSelection img.selected { border-color: #e67e22; }
+    /* Секция никнейма */
+    #nicknameSection {
+      display: flex; justify-content: center;
+      align-items: center; gap: 10px; margin-bottom: 15px;
+    }
+    #nicknameSection span { font-size: 4vw; }
+    #editNickname { cursor: pointer; font-size: 4vw; }
+    #closeProfileModal {
+      padding: 5px 10px; font-size: 3vw;
+      color: #fff; background: #e74c3c;
+      border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer;
     }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-20px); }
       60% { transform: translateY(-10px); }
+    }
+    @keyframes float {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+      100% { transform: translateX(0); }
+    }
+    /* Контейнер для кнопок управления в режиме PLATFORMER */
+    #platformerControls {
+      display: none; position: absolute;
+      bottom: 20px; left: 0; right: 0; padding: 0 20px;
+      z-index: 100; display: flex;
+      justify-content: space-between; align-items: center;
     }
   </style>
 </head>
@@ -237,15 +214,47 @@
   <canvas id="gameCanvas"></canvas>
   <div id="coinContainer"></div>
   
-  <!-- Интерфейс профиля и меню (оставьте как есть) -->
-  <!-- Например, кнопка профиля -->
+  <!-- Кнопка профиля -->
   <button id="profileBtn">
     <img id="currentAvatar" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar">
   </button>
+  <!-- Кнопка паузы для PLATFORMER -->
   <button id="platformerPauseBtn" style="position: absolute; top: 120px; right: 10px; display: none;">||</button>
   
-  <!-- Модальное окно профиля и остальные элементы интерфейса ... (оставьте их без изменений) -->
+  <!-- Модальное окно профиля -->
+  <div id="profileModal">
+    <h2>Profile</h2>
+    <div id="avatarSelection">
+      <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar1" data-avatar="red" class="selected">
+      <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect x='10' y='10' width='80' height='80' fill='%2300ff00'/></svg>" alt="avatar2" data-avatar="green">
+      <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><polygon points='50,5 95,95 5,95' fill='%230000ff'/></svg>" alt="avatar3" data-avatar="blue">
+    </div>
+    <div id="nicknameSection">
+      <span id="nicknameDisplay">Guest</span>
+      <span id="editNickname">&#9998;</span>
+    </div>
+    <p id="levelText">Level: 0</p>
+    <p id="xpText">XP: 0 / 100</p>
+    <button id="closeProfileModal">Close</button>
+  </div>
   
+  <!-- Остальные элементы интерфейса -->
+  <div id="howToPlayOverlay">
+    <h2>HOW TO PLAY?</h2>
+    <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
+    <p>(Tap or click anywhere to start)</p>
+  </div>
+  <div id="menu">
+    <h1 id="gameTitle">FLYING SEAL</h1>
+    <p id="greeting"></p>
+    <button id="startBtn">PLAY</button>
+    <button id="shopBtn">SHOP</button>
+    <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
+    <div id="leaderboard" style="display:none;">
+      <h3>High Scores</h3>
+      <ul id="topScores"></ul>
+    </div>
+  </div>
   <!-- Модальное окно выбора режима -->
   <div id="modeSelectModal">
     <h2>Select Mode</h2>
@@ -253,20 +262,49 @@
     <button id="platformerModeBtn">PLATFORMER</button>
     <button id="dunkModeBtn">DUNK</button>
   </div>
-  
-  <!-- Пропущены остальные блоки (Shop, Game Over, Pause, etc.) – оставьте их как в предыдущей версии -->
-  <!-- ... -->
-  
+  <div id="hardModeDescription">
+    <button id="closeHardModeDesc">X</button>
+    <p>HARD MODE: Narrow gaps and double coins!</p>
+  </div>
+  <div id="shop">
+    <h2>Shop</h2>
+    <p id="shopBalance">Total Coins: 0</p>
+    <div id="shopItems"></div>
+    <button class="back-btn" id="shopBackBtn">Back</button>
+  </div>
+  <div id="gameOverOverlay">
+    <h2>Share the result with your friends!</h2>
+    <button id="shareBtn" class="pixelButton">Share the result!</button>
+    <button id="continueBtn" class="pixelButton">Continue game!</button>
+    <button id="mainMenuBtn" class="pixelButton">MAIN MENU</button>
+  </div>
+  <div id="pauseMenu">
+    <h2>Paused</h2>
+    <button id="resumeBtn" class="pixelButton">Resume</button>
+    <button id="exitBtn" class="pixelButton">Main Menu</button>
+  </div>
+  <!-- Контейнер для кнопок управления в режиме PLATFORMER -->
+  <div id="platformerControls">
+    <button id="btnLeft" class="pixelButton">←</button>
+    <button id="btnUp" class="pixelButton">↑</button>
+    <button id="btnRight" class="pixelButton">→</button>
+  </div>
   <div id="score"></div>
   <div id="coinCount">
     <img src="BACKGROUND/goldcoin.gif" alt="coin">
     <span id="coinText">0</span>
   </div>
-  
+
   <script>
-    // Общие переменные и функции профиля, уровней, прочее – оставьте их без изменений
+    // Скрываем контролы PLATFORMER при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('platformerControls').style.display = 'none';
+    });
+
+    /* ========= Профиль пользователя ========= */
     let userNickname = localStorage.getItem("userNickname") || "Guest";
     let userAvatar = localStorage.getItem("userAvatar") || "red";
+
     function updateProfileDisplay() {
       document.getElementById("nicknameDisplay").textContent = userNickname;
       let avatarImg;
@@ -279,8 +317,8 @@
       }
       document.getElementById("currentAvatar").src = avatarImg;
       document.querySelectorAll("#avatarSelection img").forEach(img => {
-        if (img.getAttribute("data-avatar") === userAvatar) img.classList.add("selected");
-        else img.classList.remove("selected");
+        if (img.getAttribute("data-avatar") === userAvatar) { img.classList.add("selected"); }
+        else { img.classList.remove("selected"); }
       });
     }
     document.getElementById("editNickname").addEventListener("click", () => {
@@ -306,6 +344,9 @@
     document.getElementById("closeProfileModal").addEventListener("click", () => {
       document.getElementById("profileModal").style.display = "none";
     });
+    /* ========= Конец профиля ========= */
+
+    /* ========= Система уровней ========= */
     let userLevel = parseInt(localStorage.getItem("userLevel") || "0");
     let userXP = parseInt(localStorage.getItem("userXP") || "0");
     const xpThreshold = 100;
@@ -320,10 +361,14 @@
       localStorage.setItem("userXP", userXP);
       updateLevelInfoDisplay();
     }
+    /* ========= Конец системы уровней ========= */
+
     let platformerLevel = 1;
-    
-    /* Глобальные переменные для всех режимов */
-    let pipes = [], pipeSpeed = 2, pipeWidth = 75;
+
+    /* ========= Глобальные переменные ========= */
+    let pipes = [];
+    let pipeSpeed = 2;
+    let pipeWidth = 75;
     const pipeImage = new Image(); pipeImage.src = 'BACKGROUND/PIPE.png';
     const platformImage = new Image(); platformImage.src = 'BACKGROUND/platform.png';
     let collisionOffsetLeft = 10, collisionOffsetRight = 10, collisionOffsetTop = 20, collisionOffsetBottom = 20;
@@ -352,15 +397,15 @@
     const platformerPauseBtn = document.getElementById('platformerPauseBtn');
     const pauseMenu = document.getElementById("pauseMenu");
     const platformerControls = document.getElementById("platformerControls");
-    
+
     let gameStarted = false, score = 0, coinCount = 0;
     let paused = false;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let usernameGame = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
-                        window.Telegram.WebApp.initDataUnsafe.user &&
-                        window.Telegram.WebApp.initDataUnsafe.user.username)
-                        ? window.Telegram.WebApp.initDataUnsafe.user.username 
-                        : "Guest";
+                    window.Telegram.WebApp.initDataUnsafe.user &&
+                    window.Telegram.WebApp.initDataUnsafe.user.username)
+                     ? window.Telegram.WebApp.initDataUnsafe.user.username 
+                     : "Guest";
     let hardModeEnabled = false, selectedMode = "FLYING";
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
@@ -382,52 +427,48 @@
     const sealJump = new Image(); sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image(); sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
-    
-    /* ========== Режим DUNK (SLINGSHOT + UPWARD GAME) ========== */
+
+    /* ========= РЕЖИМ DUNK (SLINGSHOT) =========
+       Реализовано управление "натяни и отпусти":
+       - Мяч изначально находится в нижней части экрана и не движется;
+       - При нажатии, если касание в пределах мяча – начинается drag, показывается направляющая линия;
+       - При отпускании вычисляется вектор броска, и мяч получает скорость;
+       - Далее действует гравитация и отражения от стен.
+    ============================================ */
     let dunkGameStarted = false;
-    let dunkLaunched = false;   // мяч запущен
+    let dunkLaunched = false; // флаг: мяч запущен (начал двигаться)
+    let dunkScore = 0;
+    let dunkPlayer = null;
+    let dunkBasket = null;
+    let dunkScored = false; // чтобы засчитывать один данк за бросок
+    // Параметры drag-and-release
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
-    let dunkScore = 0;
-    let dunkPlayer = null;
-    let dunkHoops = [];  // массив колец
-    const hoopRadius = 40;        // радиус кольца
-    const hoopInnerRadius = hoopRadius - 8;  // внутренняя зона кольца для успешного данка
-    let cameraOffset = 0;         // сдвиг для имитации движения вверх
-    
-    // Создание нового кольца. Новое кольцо появляется выше предыдущего или заданной позиции.
-    function spawnHoop(y) {
-      let hoop = {
-        x: canvas.width * 0.7 + (Math.random() - 0.5) * 50,
-        y: y,
-        radius: hoopRadius,
-        scored: false  // флаг, что данк для этого кольца уже засчитан
-      };
-      dunkHoops.push(hoop);
-    }
-    
-    // Инициализация режима DUNK
+
     function startDunkMode() {
       dunkGameStarted = true;
-      dunkLaunched = false;
-      dunkDragging = false;
+      dunkLaunched = false; // мяч пока не запущен – остаётся на месте
       dunkScore = 0;
-      cameraOffset = 0;
-      dunkHoops = [];
-      // Устанавливаем мяч выше нижней границы, чтобы он «висел» до начала броска
+      dunkScored = false;
+      dunkDragging = false;
+      // Инициализация мяча – располагаем его внизу экрана (как в оригинальном Dunk Shot)
       dunkPlayer = {
         x: canvas.width * 0.2,
-        y: canvas.height - 150,  // можно изменить для регулировки высоты стартовой позиции
+        y: canvas.height - 200,
         radius: canvas.width * 0.05,
         vx: 0,
         vy: 0,
         gravity: 0.5,
         rotation: 0
       };
-      // Создаём первое кольцо немного выше мяча
-      spawnHoop(dunkPlayer.y - 200);
-      // Добавляем слушатели для drag-and-release (мышь и touch)
+      // Корзина расположена справа, примерно на 40% высоты экрана
+      dunkBasket = {
+        x: canvas.width * 0.75,
+        y: canvas.height * 0.4,
+        radius: 40
+      };
+      // Добавляем слушатели для drag-and-release в режиме DUNK
       canvas.addEventListener("mousedown", dunkMouseDown);
       canvas.addEventListener("mousemove", dunkMouseMove);
       canvas.addEventListener("mouseup", dunkMouseUp);
@@ -436,76 +477,42 @@
       canvas.addEventListener("touchend", dunkTouchEnd, {passive: false});
       dunkGameLoop();
     }
-    
-    // Основной цикл режима DUNK
     function dunkGameLoop() {
       if (!dunkGameStarted || paused) return;
       clearCanvas();
-      
-      // Если мяч запущен – обновляем физику
+      // Если мяч уже запущен (после drag), обновляем физику
       if (dunkLaunched) {
         dunkPlayer.vy += dunkPlayer.gravity;
         dunkPlayer.x += dunkPlayer.vx;
         dunkPlayer.y += dunkPlayer.vy;
         dunkPlayer.rotation += 0.1;
       }
-      
-      // Отскок от стен
-      if (dunkPlayer.x - dunkPlayer.radius < 0) {
+      // Отскок от левой и правой стен
+      if(dunkPlayer.x - dunkPlayer.radius < 0) {
         dunkPlayer.x = dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
       }
-      if (dunkPlayer.x + dunkPlayer.radius > canvas.width) {
+      if(dunkPlayer.x + dunkPlayer.radius > canvas.width) {
         dunkPlayer.x = canvas.width - dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
       }
-      
-      // Рисуем кольца (учитываем сдвиг камеры)
-      for (let hoop of dunkHoops) {
-        drawHoop(hoop);
-        // Проверяем успешный данк: если расстояние от центра мяча до центра кольца меньше внутренней границы и мяч движется вниз
-        if (!hoop.scored && isDunkSuccessful(hoop, dunkPlayer)) {
-          hoop.scored = true;
-          dunkScore++;
-          showReaction("Dunk! Score: " + dunkScore);
-          // Поднимаем мяч (имитируем эффект удачного броска)
-          dunkPlayer.vy = -10;
-          // Если мяч поднимается выше центра экрана, сдвигаем все объекты вниз
-          if (dunkPlayer.y < canvas.height / 2) {
-            let shift = (canvas.height / 2) - dunkPlayer.y;
-            cameraOffset += shift;
-            dunkPlayer.y += shift;
-            for (let hoop of dunkHoops) {
-              hoop.y += shift;
-            }
-          }
-          // Спавним новое кольцо выше самого верхнего
-          let highest = Math.min(...dunkHoops.map(h => h.y));
-          spawnHoop(highest - 200);
-        }
-        // Если происходит столкновение с ободом (и мяч не проходит внутрь), инвертируем горизонтальную скорость
-        else if (isRimCollision(hoop, dunkPlayer)) {
-          dunkPlayer.vx = -dunkPlayer.vx * 0.8;
-        }
+      // Если мяч движется вниз и проходит через область корзины – засчитываем данк (один раз)
+      if (!dunkScored &&
+          dunkPlayer.vy > 0 &&
+          dunkPlayer.x + dunkPlayer.radius > dunkBasket.x - 20 &&
+          dunkPlayer.x - dunkPlayer.radius < dunkBasket.x + 20 &&
+          dunkPlayer.y > dunkBasket.y - 10 &&
+          dunkPlayer.y < dunkBasket.y + 10) {
+        dunkScore++;
+        dunkScored = true;
+        showReaction("Dunk! Score: " + dunkScore);
       }
-      
-      // Рисуем прицел, если происходит перетаскивание
-      if (dunkDragging) {
-        ctx.save();
-        ctx.strokeStyle = "#00ff00";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(dunkPlayer.x, dunkPlayer.y);
-        ctx.lineTo(dragCurrent.x, dragCurrent.y);
-        ctx.stroke();
-        ctx.restore();
-      }
-      
+      drawBasket();
       drawDunkBall();
-      
-      // Если мяч опустился ниже экрана – игра завершается
-      if (dunkPlayer.y - dunkPlayer.radius > canvas.height) {
+      // Если мяч уходит за пределы экрана – завершаем режим DUNK
+      if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
         dunkGameStarted = false;
+        // Убираем слушатели drag
         canvas.removeEventListener("mousedown", dunkMouseDown);
         canvas.removeEventListener("mousemove", dunkMouseMove);
         canvas.removeEventListener("mouseup", dunkMouseUp);
@@ -516,44 +523,54 @@
         setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
         return;
       }
-      
       scoreElement.textContent = `Dunk Score: ${dunkScore}`;
+      // Если производится drag – рисуем направляющую линию
+      if(dunkDragging) {
+        ctx.save();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(dunkPlayer.x, dunkPlayer.y);
+        ctx.lineTo(dragCurrent.x, dragCurrent.y);
+        ctx.stroke();
+        ctx.restore();
+      }
       requestAnimationFrame(dunkGameLoop);
     }
-    
-    // Обработчики drag-and-release мышью
     function dunkMouseDown(e) {
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
       const dist = Math.hypot(mouseX - dunkPlayer.x, mouseY - dunkPlayer.y);
-      if (dist <= dunkPlayer.radius) {
+      // Если клик внутри мяча
+      if(dist <= dunkPlayer.radius) {
         dunkDragging = true;
         dragStart = { x: mouseX, y: mouseY };
         dragCurrent = { x: mouseX, y: mouseY };
+        // Пока мяч не запущен – он остаётся неподвижным
         dunkLaunched = false;
+        // Обнуляем скорости
         dunkPlayer.vx = 0;
         dunkPlayer.vy = 0;
       }
     }
     function dunkMouseMove(e) {
-      if (dunkDragging) {
+      if(dunkDragging) {
         const rect = canvas.getBoundingClientRect();
         dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       }
     }
     function dunkMouseUp(e) {
-      if (dunkDragging) {
+      if(dunkDragging) {
         dunkDragging = false;
+        // Рассчитываем вектор броска: разница между dragStart и текущей точкой
         const dx = dragStart.x - dragCurrent.x;
         const dy = dragStart.y - dragCurrent.y;
+        // Запускаем мяч – масштабируем вектор (подбирайте коэффициент по вкусу)
         dunkPlayer.vx = dx * 0.2;
         dunkPlayer.vy = dy * 0.2;
-        dunkLaunched = true;
-        // Сбрасываем флаг успешного данка для всех колец
-        for (let hoop of dunkHoops) {
-          hoop.scored = false;
-        }
+        dunkLaunched = true; // теперь мяч начинает двигаться
+        dunkScored = false; // сбрасываем, чтобы можно было засчитать новый данк
       }
     }
     // Аналогичные обработчики для touch
@@ -564,17 +581,16 @@
       const touchX = touch.clientX - rect.left;
       const touchY = touch.clientY - rect.top;
       const dist = Math.hypot(touchX - dunkPlayer.x, touchY - dunkPlayer.y);
-      if (dist <= dunkPlayer.radius) {
+      if(dist <= dunkPlayer.radius) {
         dunkDragging = true;
         dragStart = { x: touchX, y: touchY };
         dragCurrent = { x: touchX, y: touchY };
         dunkLaunched = false;
-        dunkPlayer.vx = 0;
-        dunkPlayer.vy = 0;
+        dunkPlayer.vx = 0; dunkPlayer.vy = 0;
       }
     }
     function dunkTouchMove(e) {
-      if (dunkDragging) {
+      if(dunkDragging) {
         e.preventDefault();
         const touch = e.touches[0];
         const rect = canvas.getBoundingClientRect();
@@ -582,7 +598,7 @@
       }
     }
     function dunkTouchEnd(e) {
-      if (dunkDragging) {
+      if(dunkDragging) {
         e.preventDefault();
         dunkDragging = false;
         const dx = dragStart.x - dragCurrent.x;
@@ -590,28 +606,24 @@
         dunkPlayer.vx = dx * 0.2;
         dunkPlayer.vy = dy * 0.2;
         dunkLaunched = true;
-        for (let hoop of dunkHoops) {
-          hoop.scored = false;
-        }
+        dunkScored = false;
       }
     }
-    
-    // Отрисовка кольца
-    function drawHoop(hoop) {
+    function drawBasket() {
       ctx.save();
       ctx.lineWidth = 5;
       ctx.strokeStyle = "#FF4500";
+      // Рисуем дугу корзины
       ctx.beginPath();
-      ctx.arc(hoop.x, hoop.y, hoop.radius, Math.PI * 0.1, Math.PI * 0.9, false);
+      ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
       ctx.stroke();
+      // Рисуем подставку корзины
       ctx.beginPath();
-      ctx.moveTo(hoop.x + hoop.radius * Math.cos(Math.PI * 0.1), hoop.y - hoop.radius * Math.sin(Math.PI * 0.1));
-      ctx.lineTo(hoop.x + hoop.radius * Math.cos(Math.PI * 0.1), hoop.y - hoop.radius * Math.sin(Math.PI * 0.1) - 50);
+      ctx.moveTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1));
+      ctx.lineTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50);
       ctx.stroke();
       ctx.restore();
     }
-    
-    // Отрисовка мяча
     function drawDunkBall() {
       ctx.save();
       ctx.translate(dunkPlayer.x, dunkPlayer.y);
@@ -620,20 +632,127 @@
       ctx.drawImage(nerpaImg, -dunkPlayer.radius, -dunkPlayer.radius, ballSize, ballSize);
       ctx.restore();
     }
-    
-    // Проверка успешного данка: если расстояние от центра мяча до центра кольца меньше hoopInnerRadius и мяч движется вниз
-    function isDunkSuccessful(hoop, ball) {
-      let dist = Math.hypot(ball.x - hoop.x, ball.y - hoop.y);
-      return (dist < hoopInnerRadius && ball.vy > 0);
+
+    // Переменная для контроля появления монет в режиме FLYING
+    let flyingPipeCounter = 0;
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
-    
-    // Проверка столкновения с ободом кольца
-    function isRimCollision(hoop, ball) {
-      let dist = Math.hypot(ball.x - hoop.x, ball.y - hoop.y);
-      return (Math.abs(dist - hoop.radius) < 5 && ball.vy <= 0);
-    }
-    
-    /* Функции для режимов FLYING и PLATFORMER (оставлены как заглушки или без изменений) */
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    function updateShadowImage() { nerpaImg = shadow.velocity < 0 ? sealJump : sealFall; }
+    function hideProfileButton() { document.getElementById('profileBtn').style.display = 'none'; }
+    function showProfileButton() { document.getElementById('profileBtn').style.display = 'block'; }
+
+    /* ========== ОБРАБОТЧИКИ ГЛАВНОГО МЕНЮ ========== */
+    startBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'flex';
+      platformerControls.style.display = 'none';
+    });
+    flyingModeBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'none';
+      menu.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      platformerPauseBtn.style.display = 'none';
+      coinCountElement.style.display = 'flex';
+      hideProfileButton();
+      platformerControls.style.display = 'none';
+      selectedMode = "FLYING";
+      flyingPipeCounter = 0;
+      startFlyingMode();
+    });
+    platformerModeBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'none';
+      menu.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      platformerPauseBtn.style.display = 'block';
+      coinCountElement.style.display = 'none';
+      hideProfileButton();
+      platformerControls.style.display = 'flex';
+      selectedMode = "PLATFORMER";
+      startPlatformerLevel();
+    });
+    dunkModeBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'none';
+      menu.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      hideProfileButton();
+      selectedMode = "DUNK";
+      startDunkMode();
+    });
+    telegramBtn.addEventListener('click', () => { window.open('https://t.me/FlyingSealCoin', '_blank'); });
+    shopBtn.addEventListener('click', () => {
+      menu.style.display = 'none';
+      shop.style.display = 'flex';
+      renderShopItems();
+    });
+    shopBackBtn.addEventListener('click', () => {
+      shop.style.display = 'none';
+      menu.style.display = 'flex';
+      platformerControls.style.display = 'none';
+    });
+    shareBtn.addEventListener('click', () => {
+      const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
+      const shareUrl = "https://t.me/FlyingSealBot/FLYING";
+      const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+      window.open(telegramShareLink, '_blank');
+    });
+    continueBtn.addEventListener('click', () => {
+      gameOverOverlay.style.display = 'none';
+      if(selectedMode === "FLYING") { startFlyingMode(); }
+      else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
+      else if(selectedMode === "DUNK") { startDunkMode(); }
+    });
+    mainMenuBtn.addEventListener('click', () => {
+      gameOverOverlay.style.display = 'none';
+      menu.style.display = 'flex';
+      showProfileButton();
+      platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
+      gameStarted = false;
+      platformerGameStarted = false;
+      dunkGameStarted = false;
+      paused = false;
+      clearCanvas();
+      currentPlatforms = [];
+      pipes = [];
+      coins = [];
+      score = 0;
+      coinCount = 0;
+      addXP(score);
+    });
+    closeHardModeDesc.addEventListener('click', () => { hardModeDescription.style.display = 'none'; });
+    platformerPauseBtn.addEventListener('click', () => { paused = true; pauseMenu.style.display = 'block'; });
+    const resumeBtn = document.getElementById('resumeBtn');
+    resumeBtn.addEventListener('click', () => {
+      paused = false;
+      pauseMenu.style.display = 'none';
+      if (selectedMode === "FLYING") { flyingGameLoop(); }
+      else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
+      else if(selectedMode === "DUNK") { dunkGameLoop(); }
+    });
+    const exitBtn = document.getElementById('exitBtn');
+    exitBtn.addEventListener('click', () => {
+      paused = false;
+      pauseMenu.style.display = 'none';
+      menu.style.display = 'flex';
+      showProfileButton();
+      platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
+      gameStarted = false;
+      platformerGameStarted = false;
+      dunkGameStarted = false;
+      clearCanvas();
+      currentPlatforms = [];
+      pipes = [];
+      coins = [];
+      score = 0;
+      coinCount = 0;
+    });
+
+    /* ========= FLYING MODE ========= */
     let shadow = null;
     function startFlyingMode() {
       gameStarted = true;
@@ -658,125 +777,152 @@
       flyingGameLoop();
     }
     function flyingGameLoop() {
-      // Реализация FLYING режима (оставьте как в предыдущем коде)
-    }
-    function startPlatformerLevel() {
-      // Реализация PLATFORMER режима (оставьте как в предыдущем коде)
-    }
-    
-    /* Обработчики главного меню */
-    document.getElementById('startBtn').addEventListener('click', () => {
-      modeSelectModal.style.display = 'flex';
-      document.getElementById('platformerControls').style.display = 'none';
-    });
-    document.getElementById('flyingModeBtn').addEventListener('click', () => {
-      modeSelectModal.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      document.getElementById('platformerPauseBtn').style.display = 'none';
-      coinCountElement.style.display = 'flex';
-      hideProfileButton();
-      document.getElementById('platformerControls').style.display = 'none';
-      selectedMode = "FLYING";
-      startFlyingMode();
-    });
-    document.getElementById('platformerModeBtn').addEventListener('click', () => {
-      modeSelectModal.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      document.getElementById('platformerPauseBtn').style.display = 'block';
-      coinCountElement.style.display = 'none';
-      hideProfileButton();
-      document.getElementById('platformerControls').style.display = 'flex';
-      selectedMode = "PLATFORMER";
-      startPlatformerLevel();
-    });
-    document.getElementById('dunkModeBtn').addEventListener('click', () => {
-      modeSelectModal.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      hideProfileButton();
-      selectedMode = "DUNK";
-      startDunkMode();
-    });
-    document.getElementById('telegramBtn').addEventListener('click', () => {
-      window.open('https://t.me/FlyingSealCoin', '_blank');
-    });
-    document.getElementById('shopBtn').addEventListener('click', () => {
-      menu.style.display = 'none';
-      shop.style.display = 'flex';
-      renderShopItems();
-    });
-    document.getElementById('shopBackBtn').addEventListener('click', () => {
-      shop.style.display = 'none';
-      menu.style.display = 'flex';
-      document.getElementById('platformerControls').style.display = 'none';
-    });
-    document.getElementById('shareBtn').addEventListener('click', () => {
-      const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
-      const shareUrl = "https://t.me/FlyingSealBot/FLYING";
-      const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
-      window.open(telegramShareLink, '_blank');
-    });
-    document.getElementById('continueBtn').addEventListener('click', () => {
-      gameOverOverlay.style.display = 'none';
-      if(selectedMode === "FLYING") { startFlyingMode(); }
-      else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "DUNK") { startDunkMode(); }
-    });
-    document.getElementById('mainMenuBtn').addEventListener('click', () => {
-      gameOverOverlay.style.display = 'none';
-      menu.style.display = 'flex';
-      showProfileButton();
-      document.getElementById('platformerPauseBtn').style.display = 'none';
-      document.getElementById('platformerControls').style.display = 'none';
-      gameStarted = false;
-      // Останавливаем все режимы
-      dunkGameStarted = false;
-      paused = false;
+      if (!gameStarted || paused) return;
       clearCanvas();
-      // Сбрасываем данные
-      currentPlatforms = [];
-      pipes = [];
+      shadow.velocity += shadow.gravity;
+      shadow.y += shadow.velocity;
+      spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      updateParticles();
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) { createPipe(); }
+      for (let pipe of pipes) {
+        pipe.x -= pipeSpeed;
+        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
+          score++;
+          pipe.passed = true;
+          if (score % 10 === 0) { showReaction('Score ' + score); }
+        }
+        if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+          clearCanvas();
+          gameStarted = false;
+          removeAllCoins();
+          scoreElement.style.display = 'none';
+          coinCountElement.style.display = 'none';
+          addXP(score);
+          setTimeout(() => {
+            saveScore(usernameGame, score);
+            gameOverOverlay.style.display = 'block';
+          }, 1000);
+          return;
+        }
+      }
+      coins.forEach(coin => {
+        coin.x -= pipeSpeed;
+        if (!coin.collected && checkCoinCollision(coin)) {
+          coin.collected = true;
+          coinCount++;
+          totalCoins++;
+          localStorage.setItem("totalCoins", totalCoins);
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        }
+      });
+      updateCoins();
+      drawParticles();
+      updateShadowImage();
+      ctx.save();
+      ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.rotate(angle);
+      ctx.drawImage(nerpaImg, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
+      ctx.restore();
+      drawPipes();
+      scoreElement.textContent = `Score: ${score}`;
+      document.getElementById('coinText').textContent = coinCount;
+      drawReactions();
+      requestAnimationFrame(flyingGameLoop);
+    }
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.save();
+        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
+        ctx.scale(1, -1);
+        ctx.drawImage(pipeImage, -pipeWidth / 2, 0, pipeWidth, pipe.topHeight);
+        ctx.restore();
+        ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+      });
+    }
+    function createPipe() {
+      let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
+      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+      let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
+      let color = design ? design.colors[0] : "#fff";
+      pipes.push({
+        x: canvas.width,
+        topHeight: gapPosition,
+        bottomY: gapPosition + gap,
+        passed: false,
+        color: color,
+        design: design
+      });
+      if(selectedMode === "FLYING") {
+        flyingPipeCounter++;
+        if (flyingPipeCounter % 5 === 0) { createCoin(gapPosition, gap); }
+      }
+    }
+    function checkCollision(pipe) {
+      let topPipeLeft = pipe.x + collisionOffsetLeft;
+      let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let topPipeBottom = pipe.topHeight - collisionOffsetTop;
+      let bottomPipeLeft = pipe.x + collisionOffsetLeft;
+      let bottomPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let bottomPipeTop = pipe.bottomY + collisionOffsetBottom;
+      let playerLeft = shadow.x;
+      let playerRight = shadow.x + shadow.width;
+      let playerTop = shadow.y;
+      let playerBottom = shadow.y + shadow.height;
+      let collidesTop =
+        playerRight > topPipeLeft &&
+        playerLeft < topPipeRight &&
+        playerTop < topPipeBottom;
+      let collidesBottom =
+        playerRight > bottomPipeLeft &&
+        playerLeft < bottomPipeRight &&
+        playerBottom > bottomPipeTop;
+      return collidesTop || collidesBottom;
+    }
+    function createCoin(gapPosition, gapSize) {
+      let coin = {
+        x: canvas.width + pipeWidth / 2,
+        y: gapPosition + gapSize / 2,
+        radius: canvas.width * 0.03,
+        collected: false
+      };
+      let coinEl = document.createElement('img');
+      coinEl.src = 'BACKGROUND/goldcoin.gif';
+      coinEl.style.position = 'absolute';
+      coinEl.style.pointerEvents = 'none';
+      coinEl.style.left = (coin.x - coin.radius) + "px";
+      coinEl.style.top = (coin.y - coin.radius) + "px";
+      coinEl.style.width = (coin.radius * 2) + "px";
+      coinEl.style.height = (coin.radius * 2) + "px";
+      document.getElementById('coinContainer').appendChild(coinEl);
+      coin.el = coinEl;
+      coins.push(coin);
+    }
+    function updateCoins() {
+      coins.forEach((coin, index) => {
+        if (!coin.collected) {
+          coin.el.style.left = (coin.x - coin.radius) + "px";
+          coin.el.style.top = (coin.y - coin.radius) + "px";
+        } else {
+          coin.el.remove();
+          coins.splice(index, 1);
+        }
+      });
+    }
+    function removeAllCoins() {
+      coins.forEach(coin => { if (coin.el) { coin.el.remove(); } });
       coins = [];
-      score = 0;
-      coinCount = 0;
-      addXP(score);
-    });
-    document.getElementById('closeHardModeDesc').addEventListener('click', () => {
-      hardModeDescription.style.display = 'none';
-    });
-    document.getElementById('platformerPauseBtn').addEventListener('click', () => {
-      paused = true;
-      pauseMenu.style.display = 'block';
-    });
-    const resumeBtn = document.getElementById('resumeBtn');
-    resumeBtn.addEventListener('click', () => {
-      paused = false;
-      pauseMenu.style.display = 'none';
-      if (selectedMode === "FLYING") { flyingGameLoop(); }
-      else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
-      else if (selectedMode === "DUNK") { dunkGameLoop(); }
-    });
-    const exitBtn = document.getElementById('exitBtn');
-    exitBtn.addEventListener('click', () => {
-      paused = false;
-      pauseMenu.style.display = 'none';
-      menu.style.display = 'flex';
-      showProfileButton();
-      document.getElementById('platformerPauseBtn').style.display = 'none';
-      document.getElementById('platformerControls').style.display = 'none';
-      gameStarted = false;
-      dunkGameStarted = false;
-      clearCanvas();
-      currentPlatforms = [];
-      pipes = [];
-      coins = [];
-      score = 0;
-      coinCount = 0;
-    });
-    
-    // Функции для обновления монет и частиц (оставляем без изменений)
+    }
+    function checkCoinCollision(coin) {
+      let cx = coin.x, cy = coin.y;
+      let rx = shadow.x, ry = shadow.y;
+      let rw = shadow.width, rh = shadow.height;
+      let nearestX = Math.max(rx, Math.min(cx, rx + rw));
+      let nearestY = Math.max(ry, Math.min(cy, ry + rh));
+      let dx = cx - nearestX;
+      let dy = cy - nearestY;
+      return (dx * dx + dy * dy) < (coin.radius * coin.radius);
+    }
     function spawnParticle(x, y) {
       particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
     }
@@ -799,25 +945,307 @@
         ctx.restore();
       });
     }
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function showReaction(message) {
+      reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
     }
-    function updateShadowImage() { nerpaImg = shadow.velocity < 0 ? sealJump : sealFall; }
-    function hideProfileButton() { document.getElementById('profileBtn').style.display = 'none'; }
-    function showProfileButton() { document.getElementById('profileBtn').style.display = 'block'; }
-    
-    // Обработчики для PLATFORMER и FLYING режимов – оставляем без изменений (или их реализации вы можете добавить по образцу ранее)
-    
-    // Функция resizeCanvas
-    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    
-    // Остальной код для FLYING и PLATFORMER (заглушки или оставьте вашу предыдущую реализацию)
-    // ...
-    
-    // Функция renderShopItems – оставьте вашу реализацию магазина
-    
+    function drawReactions() {
+      reactionMessages.forEach((msg, index) => {
+        ctx.save();
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.globalAlpha = msg.timer / 120;
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(msg.text, msg.x, msg.y);
+        ctx.restore();
+        msg.timer--;
+        if (msg.timer <= 0) { reactionMessages.splice(index, 1); }
+      });
+    }
+    function saveScore(name, points) {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      scores.push({ name, points });
+      scores.sort((a, b) => b.points - a.points);
+      scores = scores.slice(0, 5);
+      localStorage.setItem("scores", JSON.stringify(scores));
+      updateLeaderboard();
+    }
+    function updateLeaderboard() {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
+    }
+    updateLeaderboard();
+
+    function renderShopItems() {
+      shopItemsDiv.innerHTML = "";
+      if (typeof trailsConfig !== 'undefined') {
+        let trailsHeader = document.createElement("h3");
+        trailsHeader.textContent = "Trails";
+        shopItemsDiv.appendChild(trailsHeader);
+        let trailsGrid = document.createElement("div");
+        trailsGrid.className = "shop-grid";
+        for (let id in trailsConfig) {
+          let trail = trailsConfig[id];
+          let div = document.createElement("div");
+          div.className = "shop-item";
+          div.innerHTML = `<strong>${trail.name}</strong><br>
+                           Price: ${trail.price} coins<br>`;
+          if (purchasedTrails.includes(trail.id)) {
+            if (currentTrailId === trail.id) { div.innerHTML += `<em>Selected</em>`; }
+            else {
+              let selectBtn = document.createElement("button");
+              selectBtn.textContent = "Select";
+              selectBtn.addEventListener("click", () => { 
+                currentTrailId = trail.id; 
+                localStorage.setItem("selectedTrail", currentTrailId); 
+                renderShopItems(); 
+              });
+              div.appendChild(selectBtn);
+            }
+          } else {
+            let buyBtn = document.createElement("button");
+            buyBtn.textContent = "Buy";
+            buyBtn.addEventListener("click", () => {
+              if (totalCoins >= trail.price) {
+                totalCoins -= trail.price;
+                localStorage.setItem("totalCoins", totalCoins);
+                shopBalance.textContent = `Total Coins: ${totalCoins}`;
+                purchasedTrails.push(trail.id);
+                localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
+                renderShopItems();
+              } else { alert("Not enough coins!"); }
+            });
+            div.appendChild(buyBtn);
+          }
+          trailsGrid.appendChild(div);
+        }
+        shopItemsDiv.appendChild(trailsGrid);
+      }
+      let pipesHeader = document.createElement("h3");
+      pipesHeader.textContent = "Pipe Designs";
+      shopItemsDiv.appendChild(pipesHeader);
+      let pipesGrid = document.createElement("div");
+      pipesGrid.className = "shop-grid";
+      for (let id in pipeDesigns) {
+        let design = pipeDesigns[id];
+        let div = document.createElement("div");
+        div.className = "shop-item";
+        div.innerHTML = `<strong>${design.name}</strong><br>
+                         Price: ${design.price} coins<br>
+                         <img src="${design.preview}" alt="${design.name}"><br>`;
+        if (purchasedPipeDesigns.includes(design.id)) {
+          if (currentPipeDesign === design.id) { div.innerHTML += `<em>Selected</em>`; }
+          else {
+            let selectBtn = document.createElement("button");
+            selectBtn.textContent = "Select";
+            selectBtn.addEventListener("click", () => {
+              currentPipeDesign = design.id;
+              localStorage.setItem("selectedPipeDesign", currentPipeDesign);
+              renderShopItems();
+            });
+            div.appendChild(selectBtn);
+          }
+        } else {
+          let buyBtn = document.createElement("button");
+          buyBtn.textContent = "Buy";
+          buyBtn.addEventListener("click", () => {
+            if (totalCoins >= design.price) {
+              totalCoins -= design.price;
+              localStorage.setItem("totalCoins", totalCoins);
+              shopBalance.textContent = `Total Coins: ${totalCoins}`;
+              purchasedPipeDesigns.push(design.id);
+              localStorage.setItem("purchasedPipeDesigns", JSON.stringify(purchasedPipeDesigns));
+              renderShopItems();
+            } else { alert("Not enough coins!"); }
+          });
+          div.appendChild(buyBtn);
+        }
+        pipesGrid.appendChild(div);
+      }
+      shopItemsDiv.appendChild(pipesGrid);
+    }
+
+    /* ========= PLATFORMER MODE ========= */
+    let platformerGameStarted = false;
+    let door, player;
+    let keysDown = {};
+    let currentPlatforms = [];
+    const platformW = 150, platformH = 40, groundHeight = 80, platformHitboxOffset = 10;
+    let hasTouchedPlatform = false;
+    function generatePlatforms() {
+      let platforms = [];
+      const platformCount = 10;
+      platforms.push({
+        x: 0,
+        y: canvas.height - groundHeight,
+        width: canvas.width,
+        height: groundHeight,
+        isGround: true,
+        disappearStartTime: null
+      });
+      const gap = (canvas.height - 150) / (platformCount - 1);
+      for (let i = 1; i < platformCount; i++) {
+        let y = canvas.height - groundHeight - i * gap;
+        let x = Math.random() * (canvas.width - platformW);
+        platforms.push({
+          x: x,
+          y: y,
+          width: platformW,
+          height: platformH,
+          isGround: false,
+          disappearStartTime: null
+        });
+      }
+      return platforms;
+    }
+    function startPlatformerLevel() {
+      platformerGameStarted = true;
+      paused = false;
+      hasTouchedPlatform = false;
+      score = 0;
+      currentPlatforms = generatePlatforms();
+      currentPlatforms.sort((a, b) => a.y - b.y);
+      let highestPlatform = currentPlatforms[0];
+      let doorX = Math.random() * (canvas.width - 50);
+      let doorY = highestPlatform.y - 80;
+      door = { x: doorX, y: doorY, width: 50, height: 70 };
+      player = {
+        x: canvas.width * 0.1,
+        y: canvas.height - 150,
+        width: 50,
+        height: 50,
+        vx: 0,
+        vy: 0,
+        speed: 3,
+        jumpForce: -12,
+        onGround: false
+      };
+      platformerLoop(currentPlatforms);
+    }
+    function platformerLoop(platforms) {
+      if (!platformerGameStarted || paused) return;
+      clearCanvas();
+      if (keysDown["ArrowLeft"]) { player.vx = -player.speed; }
+      else if (keysDown["ArrowRight"]) { player.vx = player.speed; }
+      else { player.vx = 0; }
+      if (keysDown["ArrowUp"] && player.onGround) {
+        player.vy = player.jumpForce;
+        player.onGround = false;
+      }
+      player.vy += 0.5;
+      player.x += player.vx;
+      player.y += player.vy;
+      player.onGround = false;
+      for (let i = 0; i < platforms.length; i++) {
+        let plat = platforms[i];
+        let left = plat.x + platformHitboxOffset;
+        let right = plat.x + plat.width - platformHitboxOffset;
+        let top = plat.y;
+        let bottom = plat.y + plat.height;
+        if (
+          player.x < right &&
+          player.x + player.width > left &&
+          player.y < bottom &&
+          player.y + player.height > top
+        ) {
+          if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
+            if (!plat.isGround) {
+              hasTouchedPlatform = true;
+              if (plat.disappearStartTime === null) {
+                plat.disappearStartTime = performance.now();
+              }
+            }
+            player.y = plat.y - player.height;
+            player.vy = 0;
+            player.onGround = true;
+            if (plat.isGround && hasTouchedPlatform) {
+              platformerGameStarted = false;
+              alert("Game Over");
+              endPlatformer();
+              return;
+            }
+          }
+        }
+      }
+      if (player.y > canvas.height) {
+        platformerGameStarted = false;
+        alert("Game Over");
+        endPlatformer();
+        return;
+      }
+      ctx.save();
+      ctx.translate(player.x + player.width/2, player.y + player.height/2);
+      let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.rotate(pAngle);
+      let currentSprite = (player.vy < 0) ? sealJump : sealFall;
+      ctx.drawImage(currentSprite, -player.width/2, -player.height/2, player.width, player.height);
+      ctx.restore();
+      for (let i = platforms.length - 1; i >= 0; i--) {
+        let plat = platforms[i];
+        if (!plat.isGround && plat.disappearStartTime !== null) {
+          let elapsed = performance.now() - plat.disappearStartTime;
+          if (elapsed < 1000) { plat.opacity = 1 - elapsed / 1000; }
+          else { platforms.splice(i, 1); continue; }
+        } else { plat.opacity = 1; }
+      }
+      platforms.forEach(plat => drawPlatform(plat));
+      drawDoor(door.x, door.y, door.width, door.height);
+      if (
+        player.x < door.x + door.width &&
+        player.x + player.width > door.x &&
+        player.y < door.y + door.height &&
+        player.y + player.height > door.y
+      ) {
+        totalCoins += 10;
+        localStorage.setItem("totalCoins", totalCoins);
+        shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        platformerGameStarted = false;
+        ctx.fillStyle = "#fff";
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
+        setTimeout(() => { platformerLevel++; startPlatformerLevel(); }, 1500);
+        return;
+      }
+      requestAnimationFrame(() => platformerLoop(platforms));
+    }
+    function endPlatformer() {
+      removeAllCoins();
+      menu.style.display = 'flex';
+      platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
+      showProfileButton();
+      clearCanvas();
+      currentPlatforms = [];
+    }
+    function drawPlatform(plat) {
+      ctx.save();
+      ctx.globalAlpha = plat.opacity || 1;
+      if (plat.isGround) { ctx.fillStyle = "#87CEFA"; ctx.fillRect(plat.x, plat.y, plat.width, plat.height); }
+      else { ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height); }
+      ctx.restore();
+    }
+    function drawDoor(x, y, width, height) {
+      ctx.fillStyle = "#663300";
+      ctx.fillRect(x, y, width, height);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, width, height);
+    }
+    window.addEventListener("keydown", (e) => { if (selectedMode !== "PLATFORMER") keysDown[e.code] = true; });
+    window.addEventListener("keyup", (e) => { if (selectedMode !== "PLATFORMER") keysDown[e.code] = false; });
+    // Обработчики кнопок управления для PLATFORMER
+    document.getElementById("btnLeft").addEventListener("mousedown", () => { keysDown["ArrowLeft"] = true; });
+    document.getElementById("btnLeft").addEventListener("mouseup", () => { keysDown["ArrowLeft"] = false; });
+    document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = true; });
+    document.getElementById("btnLeft").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = false; });
+    document.getElementById("btnUp").addEventListener("mousedown", () => { keysDown["ArrowUp"] = true; });
+    document.getElementById("btnUp").addEventListener("mouseup", () => { keysDown["ArrowUp"] = false; });
+    document.getElementById("btnUp").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowUp"] = true; });
+    document.getElementById("btnUp").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowUp"] = false; });
+    document.getElementById("btnRight").addEventListener("mousedown", () => { keysDown["ArrowRight"] = true; });
+    document.getElementById("btnRight").addEventListener("mouseup", () => { keysDown["ArrowRight"] = false; });
+    document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
+    document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
   </script>
 </body>
 </html>
