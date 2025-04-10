@@ -402,23 +402,23 @@
     let nerpaImg = sealJump;
 
     /* ========= DUNK (SLINGSHOT) =========
-         Изменения в режиме DUNK:
-         - До попадания (dunkScore == 0) прокрутка не применяется, позволяя прицелиться.
+         В режиме DUNK внесены следующие изменения:
+         - Пока dunkScore равен 0 (до попадания) прокрутка не применяется.
          - После попадания объекты движутся вверх.
-         - При столкновении с кольцом, если центр персонажа оказывается внутри кольца,
-           засчитывается попадание, а позиция персонажа фиксируется внутри кольца для продолжения игры.
-         - При ударе о внешнюю часть кольца происходит отскок.
-         - Из отрисовки убрана «палка» (отрисовывается только дуга кольца).
+         - Если центр персонажа оказывается внутри кольца (с коэффициентом 0.5, а не 0.3), засчитывается попадание, и позиция мяча фиксируется в центре кольца – игрок может затем "выстрелить" из этого кольца.
+         - Если персонаж касается внешней части кольца (расстояние меньше чем радиус+0.3*dunkPlayer.radius), применяется мягкий отскок с коэффициентом 0.5.
+         - Добавлена обработка отскока от стен: при столкновении с левым или правым краем скорость изменяется с уменьшением.
+         - Отрисовка кольца – теперь рисуется только дуга (без "палки").
     */
     let dunkGameStarted = false;
     let dunkLaunched = false;
     let dunkScore = 0;
     let dunkPlayer = null;
-    let dunkBaskets = []; // массив колец
+    let dunkBaskets = []; // Массив колец
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
-    const dunkScrollSpeed = 2; // скорость вертикальной прокрутки
+    const dunkScrollSpeed = 2; // Скорость вертикальной прокрутки
 
     function startDunkMode() {
       dunkGameStarted = true;
@@ -473,7 +473,17 @@
         dunkPlayer.rotation += 0.1;
       }
 
-      // Прокрутка вверх применяется только после первого попадания (dunkScore > 0)
+      // Отскок от стен: если мяч касается левый или правый край
+      if(dunkPlayer.x - dunkPlayer.radius < 0) {
+        dunkPlayer.x = dunkPlayer.radius;
+        dunkPlayer.vx = -dunkPlayer.vx * 0.7;
+      }
+      if(dunkPlayer.x + dunkPlayer.radius > canvas.width) {
+        dunkPlayer.x = canvas.width - dunkPlayer.radius;
+        dunkPlayer.vx = -dunkPlayer.vx * 0.7;
+      }
+
+      // Прокрутка вверх применяется только после первого попадания
       if (dunkScore > 0) {
         dunkPlayer.y -= dunkScrollSpeed;
         dunkBaskets.forEach(basket => {
@@ -481,7 +491,7 @@
         });
       }
 
-      // Генерация нового кольца: если самое верхнее кольцо ниже порога, создаём новое кольцо выше
+      // Генерация нового кольца: если самое верхнее кольцо ниже порога – создаём новое кольцо выше
       let topBasketY = Math.min(...dunkBaskets.map(b => b.y));
       if (topBasketY > 100) {
         let gap = 150 + Math.random() * 100;
@@ -498,25 +508,26 @@
         let dx = dunkPlayer.x - basket.x;
         let dy = dunkPlayer.y - basket.y;
         let dist = Math.sqrt(dx * dx + dy * dy);
-        // Если центр персонажа оказывается достаточно внутри кольца – считаем попадание и фиксируем позицию
-        if (dist < basket.radius - dunkPlayer.radius * 0.3) {
+        // Если центр персонажа оказывается внутри кольца (условие сделано мягче: коэффициент 0.5)
+        if (dist < basket.radius - dunkPlayer.radius * 0.5) {
           if (!basket.scored) {
             dunkScore++;
             basket.scored = true;
             showReaction("Dunk! Score: " + dunkScore);
           }
-          // «Прилипание»: позиция персонажа фиксируется внутри кольца
+          // Фиксируем позицию мяча внутри кольца – позволяя "вылететь" из него для следующего броска
           dunkPlayer.x = basket.x;
           dunkPlayer.y = basket.y;
           dunkPlayer.vx = 0;
           dunkPlayer.vy = 0;
         }
-        // Если персонаж ударяется о внешнюю часть кольца – выполняем отскок
+        // Если мяч касается внешней части кольца – выполняем мягкий отскок (коэффициент 0.5)
         else if (dist < basket.radius + dunkPlayer.radius * 0.3) {
           let angle = Math.atan2(dunkPlayer.y - basket.y, dunkPlayer.x - basket.x);
           let speed = Math.sqrt(dunkPlayer.vx * dunkPlayer.vx + dunkPlayer.vy * dunkPlayer.vy);
-          dunkPlayer.vx = Math.cos(angle) * speed;
-          dunkPlayer.vy = Math.sin(angle) * speed;
+          let bounceCoefficient = 0.5;
+          dunkPlayer.vx = Math.cos(angle) * speed * bounceCoefficient;
+          dunkPlayer.vy = Math.sin(angle) * speed * bounceCoefficient;
         }
       });
 
@@ -657,7 +668,7 @@
         dunkLaunched = true;
       }
     }
-    // Отрисовка колец – убрана отрисовка "палки", рисуется только дуга кольца
+    // Отрисовка колец – рисуется только дуга кольца
     function drawBaskets() {
       ctx.save();
       ctx.lineWidth = 5;
