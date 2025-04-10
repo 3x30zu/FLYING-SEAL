@@ -434,6 +434,9 @@
        - При нажатии, если касание в пределах мяча – начинается drag, показывается направляющая линия;
        - При отпускании вычисляется вектор броска, и мяч получает скорость;
        - Далее действует гравитация и отражения от стен.
+       Внесены изменения:
+         • При drag рисуется пунктирная линия (setLineDash);
+         • При попадании мяча в кольцо (физическая проверка столкновения по кругу) игра считается выигранной – удаляются слушатели и через секунду запускается новый уровень.
     ============================================ */
     let dunkGameStarted = false;
     let dunkLaunched = false; // флаг: мяч запущен (начал двигаться)
@@ -448,11 +451,11 @@
 
     function startDunkMode() {
       dunkGameStarted = true;
-      dunkLaunched = false; // мяч пока не запущен – остаётся на месте
+      dunkLaunched = false;
       dunkScore = 0;
       dunkScored = false;
       dunkDragging = false;
-      // Инициализация мяча – располагаем его внизу экрана (как в оригинальном Dunk Shot)
+      // Инициализация мяча – располагаем его внизу экрана
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
@@ -462,7 +465,7 @@
         gravity: 0.5,
         rotation: 0
       };
-      // Корзина расположена справа, примерно на 40% высоты экрана
+      // Физическое кольцо – корзина расположена справа, примерно на 40% высоты экрана
       dunkBasket = {
         x: canvas.width * 0.75,
         y: canvas.height * 0.4,
@@ -477,10 +480,18 @@
       canvas.addEventListener("touchend", dunkTouchEnd, {passive: false});
       dunkGameLoop();
     }
+    function removeDunkListeners() {
+      canvas.removeEventListener("mousedown", dunkMouseDown);
+      canvas.removeEventListener("mousemove", dunkMouseMove);
+      canvas.removeEventListener("mouseup", dunkMouseUp);
+      canvas.removeEventListener("touchstart", dunkTouchStart);
+      canvas.removeEventListener("touchmove", dunkTouchMove);
+      canvas.removeEventListener("touchend", dunkTouchEnd);
+    }
     function dunkGameLoop() {
       if (!dunkGameStarted || paused) return;
       clearCanvas();
-      // Если мяч уже запущен (после drag), обновляем физику
+      // Если мяч уже запущен – обновляем физику
       if (dunkLaunched) {
         dunkPlayer.vy += dunkPlayer.gravity;
         dunkPlayer.x += dunkPlayer.vx;
@@ -496,39 +507,38 @@
         dunkPlayer.x = canvas.width - dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
       }
-      // Если мяч движется вниз и проходит через область корзины – засчитываем данк (один раз)
-      if (!dunkScored &&
-          dunkPlayer.vy > 0 &&
-          dunkPlayer.x + dunkPlayer.radius > dunkBasket.x - 20 &&
-          dunkPlayer.x - dunkPlayer.radius < dunkBasket.x + 20 &&
-          dunkPlayer.y > dunkBasket.y - 10 &&
-          dunkPlayer.y < dunkBasket.y + 10) {
-        dunkScore++;
-        dunkScored = true;
-        showReaction("Dunk! Score: " + dunkScore);
+      // Физическая проверка столкновения мяча с корзиной (расстояние между центрами)
+      if (!dunkScored) {
+        let dx = dunkPlayer.x - dunkBasket.x;
+        let dy = dunkPlayer.y - dunkBasket.y;
+        let distance = Math.sqrt(dx*dx + dy*dy);
+        // Немного корректируем радиус для более точного попадания
+        if(distance < dunkBasket.radius - dunkPlayer.radius * 0.3){
+          dunkScore++;
+          dunkScored = true;
+          showReaction("Dunk! Score: " + dunkScore);
+          removeDunkListeners();
+          setTimeout(() => { addXP(dunkScore); startDunkMode(); }, 1000);
+          return;
+        }
       }
       drawBasket();
       drawDunkBall();
       // Если мяч уходит за пределы экрана – завершаем режим DUNK
       if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
         dunkGameStarted = false;
-        // Убираем слушатели drag
-        canvas.removeEventListener("mousedown", dunkMouseDown);
-        canvas.removeEventListener("mousemove", dunkMouseMove);
-        canvas.removeEventListener("mouseup", dunkMouseUp);
-        canvas.removeEventListener("touchstart", dunkTouchStart);
-        canvas.removeEventListener("touchmove", dunkTouchMove);
-        canvas.removeEventListener("touchend", dunkTouchEnd);
+        removeDunkListeners();
         addXP(dunkScore);
         setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
         return;
       }
       scoreElement.textContent = `Dunk Score: ${dunkScore}`;
-      // Если производится drag – рисуем направляющую линию
+      // Если производится drag – рисуем направляющую линию в виде пунктирной линии
       if(dunkDragging) {
         ctx.save();
         ctx.strokeStyle = "#fff";
         ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]); // пунктир
         ctx.beginPath();
         ctx.moveTo(dunkPlayer.x, dunkPlayer.y);
         ctx.lineTo(dragCurrent.x, dragCurrent.y);
@@ -542,14 +552,11 @@
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
       const dist = Math.hypot(mouseX - dunkPlayer.x, mouseY - dunkPlayer.y);
-      // Если клик внутри мяча
       if(dist <= dunkPlayer.radius) {
         dunkDragging = true;
         dragStart = { x: mouseX, y: mouseY };
         dragCurrent = { x: mouseX, y: mouseY };
-        // Пока мяч не запущен – он остаётся неподвижным
         dunkLaunched = false;
-        // Обнуляем скорости
         dunkPlayer.vx = 0;
         dunkPlayer.vy = 0;
       }
@@ -563,17 +570,14 @@
     function dunkMouseUp(e) {
       if(dunkDragging) {
         dunkDragging = false;
-        // Рассчитываем вектор броска: разница между dragStart и текущей точкой
         const dx = dragStart.x - dragCurrent.x;
         const dy = dragStart.y - dragCurrent.y;
-        // Запускаем мяч – масштабируем вектор (подбирайте коэффициент по вкусу)
         dunkPlayer.vx = dx * 0.2;
         dunkPlayer.vy = dy * 0.2;
-        dunkLaunched = true; // теперь мяч начинает двигаться
-        dunkScored = false; // сбрасываем, чтобы можно было засчитать новый данк
+        dunkLaunched = true;
+        dunkScored = false;
       }
     }
-    // Аналогичные обработчики для touch
     function dunkTouchStart(e) {
       e.preventDefault();
       const touch = e.touches[0];
@@ -586,7 +590,8 @@
         dragStart = { x: touchX, y: touchY };
         dragCurrent = { x: touchX, y: touchY };
         dunkLaunched = false;
-        dunkPlayer.vx = 0; dunkPlayer.vy = 0;
+        dunkPlayer.vx = 0; 
+        dunkPlayer.vy = 0;
       }
     }
     function dunkTouchMove(e) {
@@ -613,11 +618,9 @@
       ctx.save();
       ctx.lineWidth = 5;
       ctx.strokeStyle = "#FF4500";
-      // Рисуем дугу корзины
       ctx.beginPath();
       ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
       ctx.stroke();
-      // Рисуем подставку корзины
       ctx.beginPath();
       ctx.moveTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1));
       ctx.lineTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50);
@@ -632,125 +635,6 @@
       ctx.drawImage(nerpaImg, -dunkPlayer.radius, -dunkPlayer.radius, ballSize, ballSize);
       ctx.restore();
     }
-
-    // Переменная для контроля появления монет в режиме FLYING
-    let flyingPipeCounter = 0;
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
-    function updateShadowImage() { nerpaImg = shadow.velocity < 0 ? sealJump : sealFall; }
-    function hideProfileButton() { document.getElementById('profileBtn').style.display = 'none'; }
-    function showProfileButton() { document.getElementById('profileBtn').style.display = 'block'; }
-
-    /* ========== ОБРАБОТЧИКИ ГЛАВНОГО МЕНЮ ========== */
-    startBtn.addEventListener('click', () => {
-      modeSelectModal.style.display = 'flex';
-      platformerControls.style.display = 'none';
-    });
-    flyingModeBtn.addEventListener('click', () => {
-      modeSelectModal.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      platformerPauseBtn.style.display = 'none';
-      coinCountElement.style.display = 'flex';
-      hideProfileButton();
-      platformerControls.style.display = 'none';
-      selectedMode = "FLYING";
-      flyingPipeCounter = 0;
-      startFlyingMode();
-    });
-    platformerModeBtn.addEventListener('click', () => {
-      modeSelectModal.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      platformerPauseBtn.style.display = 'block';
-      coinCountElement.style.display = 'none';
-      hideProfileButton();
-      platformerControls.style.display = 'flex';
-      selectedMode = "PLATFORMER";
-      startPlatformerLevel();
-    });
-    dunkModeBtn.addEventListener('click', () => {
-      modeSelectModal.style.display = 'none';
-      menu.style.display = 'none';
-      gameOverOverlay.style.display = 'none';
-      hideProfileButton();
-      selectedMode = "DUNK";
-      startDunkMode();
-    });
-    telegramBtn.addEventListener('click', () => { window.open('https://t.me/FlyingSealCoin', '_blank'); });
-    shopBtn.addEventListener('click', () => {
-      menu.style.display = 'none';
-      shop.style.display = 'flex';
-      renderShopItems();
-    });
-    shopBackBtn.addEventListener('click', () => {
-      shop.style.display = 'none';
-      menu.style.display = 'flex';
-      platformerControls.style.display = 'none';
-    });
-    shareBtn.addEventListener('click', () => {
-      const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
-      const shareUrl = "https://t.me/FlyingSealBot/FLYING";
-      const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
-      window.open(telegramShareLink, '_blank');
-    });
-    continueBtn.addEventListener('click', () => {
-      gameOverOverlay.style.display = 'none';
-      if(selectedMode === "FLYING") { startFlyingMode(); }
-      else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "DUNK") { startDunkMode(); }
-    });
-    mainMenuBtn.addEventListener('click', () => {
-      gameOverOverlay.style.display = 'none';
-      menu.style.display = 'flex';
-      showProfileButton();
-      platformerPauseBtn.style.display = 'none';
-      platformerControls.style.display = 'none';
-      gameStarted = false;
-      platformerGameStarted = false;
-      dunkGameStarted = false;
-      paused = false;
-      clearCanvas();
-      currentPlatforms = [];
-      pipes = [];
-      coins = [];
-      score = 0;
-      coinCount = 0;
-      addXP(score);
-    });
-    closeHardModeDesc.addEventListener('click', () => { hardModeDescription.style.display = 'none'; });
-    platformerPauseBtn.addEventListener('click', () => { paused = true; pauseMenu.style.display = 'block'; });
-    const resumeBtn = document.getElementById('resumeBtn');
-    resumeBtn.addEventListener('click', () => {
-      paused = false;
-      pauseMenu.style.display = 'none';
-      if (selectedMode === "FLYING") { flyingGameLoop(); }
-      else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
-      else if(selectedMode === "DUNK") { dunkGameLoop(); }
-    });
-    const exitBtn = document.getElementById('exitBtn');
-    exitBtn.addEventListener('click', () => {
-      paused = false;
-      pauseMenu.style.display = 'none';
-      menu.style.display = 'flex';
-      showProfileButton();
-      platformerPauseBtn.style.display = 'none';
-      platformerControls.style.display = 'none';
-      gameStarted = false;
-      platformerGameStarted = false;
-      dunkGameStarted = false;
-      clearCanvas();
-      currentPlatforms = [];
-      pipes = [];
-      coins = [];
-      score = 0;
-      coinCount = 0;
-    });
 
     /* ========= FLYING MODE ========= */
     let shadow = null;
@@ -774,7 +658,18 @@
         gravity: 0.35,
         jump: -6
       };
+      // Добавляем обработчики для прыжка в режиме FLYING
+      canvas.addEventListener("mousedown", flyJump);
+      canvas.addEventListener("touchstart", flyJumpTouch);
       flyingGameLoop();
+    }
+    function flyJump(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyJumpTouch(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
     }
     function flyingGameLoop() {
       if (!gameStarted || paused) return;
@@ -1246,6 +1141,122 @@
     document.getElementById("btnRight").addEventListener("mouseup", () => { keysDown["ArrowRight"] = false; });
     document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
     document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
+
+    /* ========= ОБРАБОТЧИКИ ГЛАВНОГО МЕНЮ ========== */
+    startBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'flex';
+      platformerControls.style.display = 'none';
+    });
+    flyingModeBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'none';
+      menu.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      platformerPauseBtn.style.display = 'none';
+      coinCountElement.style.display = 'flex';
+      hideProfileButton();
+      platformerControls.style.display = 'none';
+      selectedMode = "FLYING";
+      flyingPipeCounter = 0;
+      startFlyingMode();
+    });
+    platformerModeBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'none';
+      menu.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      platformerPauseBtn.style.display = 'block';
+      coinCountElement.style.display = 'none';
+      hideProfileButton();
+      platformerControls.style.display = 'flex';
+      selectedMode = "PLATFORMER";
+      startPlatformerLevel();
+    });
+    dunkModeBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'none';
+      menu.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      hideProfileButton();
+      selectedMode = "DUNK";
+      startDunkMode();
+    });
+    telegramBtn.addEventListener('click', () => { window.open('https://t.me/FlyingSealCoin', '_blank'); });
+    shopBtn.addEventListener('click', () => {
+      menu.style.display = 'none';
+      shop.style.display = 'flex';
+      renderShopItems();
+    });
+    shopBackBtn.addEventListener('click', () => {
+      shop.style.display = 'none';
+      menu.style.display = 'flex';
+      platformerControls.style.display = 'none';
+    });
+    shareBtn.addEventListener('click', () => {
+      const shareText = `Beat my record in FLYING SEAL! My record is ${score}`;
+      const shareUrl = "https://t.me/FlyingSealBot/FLYING";
+      const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+      window.open(telegramShareLink, '_blank');
+    });
+    continueBtn.addEventListener('click', () => {
+      gameOverOverlay.style.display = 'none';
+      if(selectedMode === "FLYING") { startFlyingMode(); }
+      else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
+      else if(selectedMode === "DUNK") { startDunkMode(); }
+    });
+    mainMenuBtn.addEventListener('click', () => {
+      gameOverOverlay.style.display = 'none';
+      menu.style.display = 'flex';
+      showProfileButton();
+      platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
+      gameStarted = false;
+      platformerGameStarted = false;
+      dunkGameStarted = false;
+      paused = false;
+      clearCanvas();
+      currentPlatforms = [];
+      pipes = [];
+      coins = [];
+      score = 0;
+      coinCount = 0;
+      addXP(score);
+    });
+    closeHardModeDesc.addEventListener('click', () => { hardModeDescription.style.display = 'none'; });
+    platformerPauseBtn.addEventListener('click', () => { paused = true; pauseMenu.style.display = 'block'; });
+    const resumeBtn = document.getElementById('resumeBtn');
+    resumeBtn.addEventListener('click', () => {
+      paused = false;
+      pauseMenu.style.display = 'none';
+      if (selectedMode === "FLYING") { flyingGameLoop(); }
+      else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
+      else if(selectedMode === "DUNK") { dunkGameLoop(); }
+    });
+    const exitBtn = document.getElementById('exitBtn');
+    exitBtn.addEventListener('click', () => {
+      paused = false;
+      pauseMenu.style.display = 'none';
+      menu.style.display = 'flex';
+      showProfileButton();
+      platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
+      gameStarted = false;
+      platformerGameStarted = false;
+      dunkGameStarted = false;
+      clearCanvas();
+      currentPlatforms = [];
+      pipes = [];
+      coins = [];
+      score = 0;
+      coinCount = 0;
+    });
+    function hideProfileButton() { document.getElementById('profileBtn').style.display = 'none'; }
+    function showProfileButton() { document.getElementById('profileBtn').style.display = 'block'; }
+    function updateShadowImage() { nerpaImg = shadow.velocity < 0 ? sealJump : sealFall; }
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
   </script>
 </body>
 </html>
