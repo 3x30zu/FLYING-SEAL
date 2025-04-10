@@ -192,6 +192,7 @@
   <button id="profileBtn">
     <img id="currentAvatar" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar">
   </button>
+  <!-- Кнопка паузы используется и в других режимах, в том числе в DUNK -->
   <button id="platformerPauseBtn" style="position: absolute; top: 120px; right: 10px; display: none;">||</button>
   
   <div id="profileModal">
@@ -401,20 +402,22 @@
     let nerpaImg = sealJump;
 
     /* ========= DUNK (SLINGSHOT) =========
-       Основные изменения:
-         - gravity: 0.4 (чтобы можно было долетать до кольца).
-         - maxPull: 0.2 (увеличено с 0.15).
-         - Сила броска (в vx, vy): умножаем dx, dy на 0.24 (было 0.2).
+         Для режима DUNK внесены следующие изменения:
+         - Реализована постоянная вертикальная прокрутка: в каждом кадре объекты (мяч и кольца) сдвигаются вверх на фиксированную величину.
+         - Кольца (hoop’ы) генерируются динамически: когда верхнее кольцо опускается ниже порога, создаётся новое кольцо сверху.
+         - При попадании мяч пересчитывается счёт и кольцо удаляется.
+         - Добавлена кнопка паузы (используется существующий элемент platformerPauseBtn) для выхода в главное меню.
     */
     let dunkGameStarted = false;
     let dunkLaunched = false;
     let dunkScore = 0;
     let dunkPlayer = null;
-    let dunkBasket = null;
+    let dunkBaskets = []; // массив колец
     let dunkScored = false;
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
+    const dunkScrollSpeed = 2; // скорость вертикальной прокрутки (движения вверх)
 
     function startDunkMode() {
       dunkGameStarted = true;
@@ -422,7 +425,7 @@
       dunkScore = 0;
       dunkScored = false;
       dunkDragging = false;
-      // Увеличили гравитацию до 0.4
+      // Инициализируем игрока
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
@@ -432,17 +435,24 @@
         gravity: 0.4,
         rotation: 0
       };
-      dunkBasket = {
+      // Очищаем массив колец и создаём первое кольцо
+      dunkBaskets = [];
+      // Первое кольцо – позиционируется примерно на 40% высоты экрана
+      dunkBaskets.push({
         x: canvas.width * 0.75,
         y: canvas.height * 0.4,
-        radius: 40
-      };
+        radius: 40,
+        scored: false
+      });
+      // Добавляем обработчики событий для управления броском
       canvas.addEventListener("mousedown", dunkMouseDown);
       canvas.addEventListener("mousemove", dunkMouseMove);
       canvas.addEventListener("mouseup", dunkMouseUp);
       canvas.addEventListener("touchstart", dunkTouchStart, {passive: false});
       canvas.addEventListener("touchmove", dunkTouchMove, {passive: false});
       canvas.addEventListener("touchend", dunkTouchEnd, {passive: false});
+      // Показываем кнопку паузы
+      platformerPauseBtn.style.display = 'block';
       dunkGameLoop();
     }
     function removeDunkListeners() {
@@ -456,39 +466,53 @@
     function dunkGameLoop() {
       if (!dunkGameStarted || paused) return;
       clearCanvas();
+      // Обновляем физику игрока при броске
       if (dunkLaunched) {
         dunkPlayer.vy += dunkPlayer.gravity;
         dunkPlayer.x += dunkPlayer.vx;
         dunkPlayer.y += dunkPlayer.vy;
         dunkPlayer.rotation += 0.1;
       }
-      // Отскоки от стен
-      if(dunkPlayer.x - dunkPlayer.radius < 0) {
-        dunkPlayer.x = dunkPlayer.radius;
-        dunkPlayer.vx = -dunkPlayer.vx;
+      // Применяем постоянную вертикальную прокрутку (движение вверх)
+      dunkPlayer.y -= dunkScrollSpeed;
+      dunkBaskets.forEach(basket => {
+        basket.y -= dunkScrollSpeed;
+      });
+      // Генерация нового кольца: если верхнее (наиболее верхнее) кольцо ниже порогового значения (например, ниже 100px от верха),
+      // создаём новое кольцо выше
+      let topBasketY = Math.min(...dunkBaskets.map(b => b.y));
+      if (topBasketY > 100) {
+        // Определяем случайный горизонтальный диапазон и вертикальный зазор (например, 150-250)
+        let gap = 150 + Math.random() * 100;
+        dunkBaskets.push({
+          x: canvas.width * (0.5 + Math.random() * 0.4),
+          y: topBasketY - gap,
+          radius: 40,
+          scored: false
+        });
       }
-      if(dunkPlayer.x + dunkPlayer.radius > canvas.width) {
-        dunkPlayer.x = canvas.width - dunkPlayer.radius;
-        dunkPlayer.vx = -dunkPlayer.vx;
-      }
-      // Проверка попадания
-      if (!dunkScored) {
-        let dx = dunkPlayer.x - dunkBasket.x;
-        let dy = dunkPlayer.y - dunkBasket.y;
+      // Рисуем кольца и проверяем попадание
+      dunkBaskets.forEach((basket, index) => {
+        // Если игрок попадает в кольцо (расстояние меньше порога)
+        let dx = dunkPlayer.x - basket.x;
+        let dy = dunkPlayer.y - basket.y;
         let dist = Math.sqrt(dx*dx + dy*dy);
-        if(dist < dunkBasket.radius - dunkPlayer.radius * 0.3) {
+        if (!basket.scored && dist < basket.radius - dunkPlayer.radius * 0.3) {
           dunkScore++;
-          dunkScored = true;
+          basket.scored = true;
           showReaction("Dunk! Score: " + dunkScore);
-          removeDunkListeners();
-          setTimeout(() => { addXP(dunkScore); startDunkMode(); }, 1000);
-          return;
         }
-      }
-      drawBasket();
+      });
+      // Удаляем кольца, которые оказались ниже экрана
+      dunkBaskets = dunkBaskets.filter(basket => (basket.y - basket.radius) < canvas.height);
+      // Рисуем кольца
+      drawBaskets();
+      // Рисуем мяч
       drawDunkBall();
-      // Если мяч вышел за пределы экрана
-      if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x + dunkPlayer.radius < 0 || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
+      // Если мяч вышел за пределы экрана (снизу или сбоку)
+      if(dunkPlayer.y - dunkPlayer.radius > canvas.height || 
+         dunkPlayer.x + dunkPlayer.radius < 0 || 
+         dunkPlayer.x - dunkPlayer.radius > canvas.width) {
         dunkGameStarted = false;
         removeDunkListeners();
         addXP(dunkScore);
@@ -497,23 +521,20 @@
       }
       scoreElement.textContent = `Dunk Score: ${dunkScore}`;
       
-      // Предсказание траектории (пунктирная линия)
+      // Рисуем предсказание траектории, если игрок перемещает мяч
       if(dunkDragging) {
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
-        // Увеличили maxPull до 0.2
-        const maxPull = canvas.width * 0.2; 
+        const maxPull = canvas.width * 0.2;
         let pullDistance = Math.hypot(dx, dy);
         if(pullDistance > maxPull) {
           let scale = maxPull / pullDistance;
           dx *= scale;
           dy *= scale;
         }
-        // Увеличиваем силу броска с 0.2 до 0.24
         let vx = dx * 0.24;
         let vy = dy * 0.24;
         let predictedPoints = [];
-        // Моделируем несколько секунд (4 сек) с шагом 0.1
         let simulationTime = 4;
         let dt = 0.1;
         for(let t = 0; t < simulationTime; t += dt) {
@@ -521,7 +542,7 @@
           let py = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
           predictedPoints.push({ x: px, y: py });
           if(py > canvas.height || px < 0 || px > canvas.width) {
-            break; // завершаем если ушли за пределы
+            break;
           }
         }
         ctx.save();
@@ -575,7 +596,6 @@
         dunkPlayer.vx = dx * 0.24; 
         dunkPlayer.vy = dy * 0.24;
         dunkLaunched = true;
-        dunkScored = false;
       }
     }
     function dunkTouchStart(e) {
@@ -618,26 +638,27 @@
         dunkPlayer.vx = dx * 0.24;
         dunkPlayer.vy = dy * 0.24;
         dunkLaunched = true;
-        dunkScored = false;
       }
     }
-    function drawBasket() {
+    function drawBaskets() {
       ctx.save();
       ctx.lineWidth = 5;
       ctx.strokeStyle = "#FF4500";
-      ctx.beginPath();
-      ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(
-        dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1),
-        dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1)
-      );
-      ctx.lineTo(
-        dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1),
-        dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50
-      );
-      ctx.stroke();
+      dunkBaskets.forEach(basket => {
+        ctx.beginPath();
+        ctx.arc(basket.x, basket.y, basket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(
+          basket.x + basket.radius * Math.cos(Math.PI * 0.1),
+          basket.y - basket.radius * Math.sin(Math.PI * 0.1)
+        );
+        ctx.lineTo(
+          basket.x + basket.radius * Math.cos(Math.PI * 0.1),
+          basket.y - basket.radius * Math.sin(Math.PI * 0.1) - 50
+        );
+        ctx.stroke();
+      });
       ctx.restore();
     }
     function drawDunkBall() {
@@ -1206,14 +1227,16 @@
       gameOverOverlay.style.display = 'none';
       hideProfileButton();
       selectedMode = "DUNK";
+      // Показываем кнопку паузы и запускаем режим DUNK
+      platformerPauseBtn.style.display = 'block';
       startDunkMode();
     });
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
     shopBtn.addEventListener('click', () => {
-      menu.style.display = 'none';
       shop.style.display = 'flex';
+      menu.style.display = 'none';
       renderShopItems();
     });
     shopBackBtn.addEventListener('click', () => {
