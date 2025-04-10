@@ -432,17 +432,17 @@
        Управление "натяни и отпусти":
          - Мяч изначально находится в нижней части экрана и не движется.
          - При нажатии (если касание в пределах мяча) начинается drag.
-         - Во время drag показывается предсказательная пунктирная линия, рассчитывающая траекторию на основе вектора броска.
-         - При отпускании вычисляется вектор броска, и мяч получает скорость, после чего применяется гравитация и отражения.
-         - При попадании мяча в физическое кольцо (по круговой проверке) игра считается выигранной, начисляется счёт и через секунду запускается новый уровень.
+         - Во время drag рассчитывается полный прогноз траектории с учётом гравитации и отображается пунктирной линией.
+         - Добавлено ограничение по максимальной длине "натягивания" (чтобы персонаж не улетал слишком далеко).
+         - При отпускании вычисляется вектор броска, и мяч получает скорость; затем применяется гравитация и отскоки.
+         - При попадании мяча в физическое кольцо (по круговой проверке) игра считается выигранной, начисляется счёт и через секунду начинается новый уровень.
     ============================================ */
     let dunkGameStarted = false;
-    let dunkLaunched = false; // флаг: мяч запущен (начал двигаться)
+    let dunkLaunched = false;
     let dunkScore = 0;
     let dunkPlayer = null;
     let dunkBasket = null;
-    let dunkScored = false; // для засчитывания одного данка за бросок
-    // Параметры drag-and-release
+    let dunkScored = false;
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
@@ -453,23 +453,21 @@
       dunkScore = 0;
       dunkScored = false;
       dunkDragging = false;
-      // Инициализируем мяч внизу экрана
+      // Инициализируем мяч. Гравитация снижена до 0.3 для уменьшения "отлёта".
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
         radius: canvas.width * 0.05,
         vx: 0,
         vy: 0,
-        gravity: 0.5,
+        gravity: 0.3,
         rotation: 0
       };
-      // Физическое кольцо — корзина расположена справа примерно на 40% высоты экрана
       dunkBasket = {
         x: canvas.width * 0.75,
         y: canvas.height * 0.4,
         radius: 40
       };
-      // Добавляем слушатели для drag-and-release
       canvas.addEventListener("mousedown", dunkMouseDown);
       canvas.addEventListener("mousemove", dunkMouseMove);
       canvas.addEventListener("mouseup", dunkMouseUp);
@@ -489,14 +487,12 @@
     function dunkGameLoop() {
       if (!dunkGameStarted || paused) return;
       clearCanvas();
-      // Обновление физики, если мяч запущен
       if (dunkLaunched) {
         dunkPlayer.vy += dunkPlayer.gravity;
         dunkPlayer.x += dunkPlayer.vx;
         dunkPlayer.y += dunkPlayer.vy;
         dunkPlayer.rotation += 0.1;
       }
-      // Отскок от стен
       if(dunkPlayer.x - dunkPlayer.radius < 0) {
         dunkPlayer.x = dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
@@ -505,11 +501,11 @@
         dunkPlayer.x = canvas.width - dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
       }
-      // Физическая проверка попадания (расстояние между центрами)
+      // Проверка попадания в кольцо по круговой модели
       if (!dunkScored) {
         let dx = dunkPlayer.x - dunkBasket.x;
         let dy = dunkPlayer.y - dunkBasket.y;
-        let distance = Math.sqrt(dx*dx + dy*dy);
+        let distance = Math.sqrt(dx * dx + dy * dy);
         if(distance < dunkBasket.radius - dunkPlayer.radius * 0.3){
           dunkScore++;
           dunkScored = true;
@@ -521,7 +517,6 @@
       }
       drawBasket();
       drawDunkBall();
-      // Если мяч выходит за пределы экрана – завершаем режим DUNK
       if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
         dunkGameStarted = false;
         removeDunkListeners();
@@ -530,25 +525,44 @@
         return;
       }
       scoreElement.textContent = `Dunk Score: ${dunkScore}`;
-      // Отрисовка предсказательной траектории во время drag
+      
+      // Предсказание траектории при удержании (drag)
       if(dunkDragging) {
-        // Вычисляем вектор броска, исходя из разницы между начальными и текущими координатами
+        // Вычисляем вектор натягивания
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
+        // Ограничиваем максимальную дистанцию натягивания
+        let pullDistance = Math.hypot(dx, dy);
+        const maxPull = canvas.width * 0.15;
+        if(pullDistance > maxPull) {
+          let scale = maxPull / pullDistance;
+          dx *= scale;
+          dy *= scale;
+        }
         let vx = dx * 0.2;
         let vy = dy * 0.2;
+        // Запускаем симуляцию полной траектории: начинаем с текущей позиции мяча
+        let predictedX = dunkPlayer.x;
+        let predictedY = dunkPlayer.y;
+        let simulationDt = 0.1;
+        let predictedPoints = [];
+        for(let t = 0; t < 3; t += simulationDt) {
+          predictedX = dunkPlayer.x + vx * t;
+          predictedY = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
+          predictedPoints.push({ x: predictedX, y: predictedY });
+          // Завершаем симуляцию, если траектория выходит за пределы экрана
+          if(predictedY > canvas.height || predictedX < 0 || predictedX > canvas.width) break;
+        }
         ctx.save();
         ctx.strokeStyle = "#fff";
         ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]); // пунктирная линия
+        ctx.setLineDash([5, 5]);
         ctx.beginPath();
-        // Начинаем от текущей позиции мяча
-        ctx.moveTo(dunkPlayer.x, dunkPlayer.y);
-        // Рассчитываем предсказанные точки траектории (по физике: x = x0 + v*t; y = y0 + v*t + 0.5*g*t^2)
-        for(let t = 0.1; t <= 1.0; t += 0.1) {
-          let predictX = dunkPlayer.x + vx * t;
-          let predictY = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
-          ctx.lineTo(predictX, predictY);
+        if(predictedPoints.length > 0) {
+          ctx.moveTo(predictedPoints[0].x, predictedPoints[0].y);
+          for(let i = 1; i < predictedPoints.length; i++){
+            ctx.lineTo(predictedPoints[i].x, predictedPoints[i].y);
+          }
         }
         ctx.stroke();
         ctx.restore();
@@ -578,8 +592,16 @@
     function dunkMouseUp(e) {
       if(dunkDragging) {
         dunkDragging = false;
-        const dx = dragStart.x - dragCurrent.x;
-        const dy = dragStart.y - dragCurrent.y;
+        let dx = dragStart.x - dragCurrent.x;
+        let dy = dragStart.y - dragCurrent.y;
+        // Ограничиваем длину вектора натягивания
+        let pullDistance = Math.hypot(dx, dy);
+        const maxPull = canvas.width * 0.15;
+        if(pullDistance > maxPull) {
+          let scale = maxPull / pullDistance;
+          dx *= scale;
+          dy *= scale;
+        }
         dunkPlayer.vx = dx * 0.2;
         dunkPlayer.vy = dy * 0.2;
         dunkLaunched = true;
@@ -614,8 +636,15 @@
       if(dunkDragging) {
         e.preventDefault();
         dunkDragging = false;
-        const dx = dragStart.x - dragCurrent.x;
-        const dy = dragStart.y - dragCurrent.y;
+        let dx = dragStart.x - dragCurrent.x;
+        let dy = dragStart.y - dragCurrent.y;
+        let pullDistance = Math.hypot(dx, dy);
+        const maxPull = canvas.width * 0.15;
+        if(pullDistance > maxPull) {
+          let scale = maxPull / pullDistance;
+          dx *= scale;
+          dy *= scale;
+        }
         dunkPlayer.vx = dx * 0.2;
         dunkPlayer.vy = dy * 0.2;
         dunkLaunched = true;
@@ -666,7 +695,6 @@
         gravity: 0.35,
         jump: -6
       };
-      // Добавляем обработчики для прыжка в режиме FLYING
       canvas.addEventListener("mousedown", flyJump);
       canvas.addEventListener("touchstart", flyJumpTouch);
       flyingGameLoop();
