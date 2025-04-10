@@ -403,28 +403,35 @@
 
     /* ========= DUNK (SLINGSHOT) =========
          Изменения в режиме DUNK:
-         - До попадания (dunkScore == 0) прокрутка не применяется, чтобы игрок мог прицелиться.
-         - После попадания объекты (мяч и кольца) движутся вверх.
-         - Кольца генерируются динамически.
-         - Используется кнопка паузы (platformerPauseBtn) для выхода в главное меню.
+         - До попадания (dunkScore == 0) прокрутка не применяется, позволяя прицелиться.
+         - После попадания объекты движутся вверх.
+         - При столкновении с кольцом, если центр персонажа оказывается внутри кольца,
+           засчитывается попадание, а позиция персонажа фиксируется внутри кольца для продолжения игры.
+         - При ударе о внешнюю часть кольца происходит отскок.
+         - Из отрисовки убрана «палка» (отрисовывается только дуга кольца).
     */
     let dunkGameStarted = false;
     let dunkLaunched = false;
     let dunkScore = 0;
     let dunkPlayer = null;
-    let dunkBaskets = []; // Массив колец
-    let dunkScored = false;
+    let dunkBaskets = []; // массив колец
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
-    const dunkScrollSpeed = 2; // Скорость вертикальной прокрутки
+    const dunkScrollSpeed = 2; // скорость вертикальной прокрутки
 
     function startDunkMode() {
       dunkGameStarted = true;
       dunkLaunched = false;
       dunkScore = 0;
-      dunkScored = false;
-      dunkDragging = false;
+      dunkBaskets = [];
+      // Первое кольцо позиционируется примерно на 40% высоты экрана
+      dunkBaskets.push({
+        x: canvas.width * 0.75,
+        y: canvas.height * 0.4,
+        radius: 40,
+        scored: false
+      });
       // Инициализация игрока
       dunkPlayer = {
         x: canvas.width * 0.2,
@@ -435,14 +442,6 @@
         gravity: 0.4,
         rotation: 0
       };
-      // Очищаем массив колец и создаём первое кольцо
-      dunkBaskets = [];
-      dunkBaskets.push({
-        x: canvas.width * 0.75,
-        y: canvas.height * 0.4,
-        radius: 40,
-        scored: false
-      });
       // Назначаем обработчики ввода
       canvas.addEventListener("mousedown", dunkMouseDown);
       canvas.addEventListener("mousemove", dunkMouseMove);
@@ -474,7 +473,7 @@
         dunkPlayer.rotation += 0.1;
       }
 
-      // Прокрутка вверх применяется только после попадания (dunkScore > 0)
+      // Прокрутка вверх применяется только после первого попадания (dunkScore > 0)
       if (dunkScore > 0) {
         dunkPlayer.y -= dunkScrollSpeed;
         dunkBaskets.forEach(basket => {
@@ -482,7 +481,7 @@
         });
       }
 
-      // Генерация нового кольца: если самое верхнее кольцо ниже порога
+      // Генерация нового кольца: если самое верхнее кольцо ниже порога, создаём новое кольцо выше
       let topBasketY = Math.min(...dunkBaskets.map(b => b.y));
       if (topBasketY > 100) {
         let gap = 150 + Math.random() * 100;
@@ -494,15 +493,30 @@
         });
       }
 
-      // Проверка попадания: если расстояние между мячом и кольцом меньше допустимого, увеличиваем счет
+      // Обработка столкновений с кольцами
       dunkBaskets.forEach(basket => {
         let dx = dunkPlayer.x - basket.x;
         let dy = dunkPlayer.y - basket.y;
         let dist = Math.sqrt(dx * dx + dy * dy);
-        if (!basket.scored && dist < basket.radius - dunkPlayer.radius * 0.3) {
-          dunkScore++;
-          basket.scored = true;
-          showReaction("Dunk! Score: " + dunkScore);
+        // Если центр персонажа оказывается достаточно внутри кольца – считаем попадание и фиксируем позицию
+        if (dist < basket.radius - dunkPlayer.radius * 0.3) {
+          if (!basket.scored) {
+            dunkScore++;
+            basket.scored = true;
+            showReaction("Dunk! Score: " + dunkScore);
+          }
+          // «Прилипание»: позиция персонажа фиксируется внутри кольца
+          dunkPlayer.x = basket.x;
+          dunkPlayer.y = basket.y;
+          dunkPlayer.vx = 0;
+          dunkPlayer.vy = 0;
+        }
+        // Если персонаж ударяется о внешнюю часть кольца – выполняем отскок
+        else if (dist < basket.radius + dunkPlayer.radius * 0.3) {
+          let angle = Math.atan2(dunkPlayer.y - basket.y, dunkPlayer.x - basket.x);
+          let speed = Math.sqrt(dunkPlayer.vx * dunkPlayer.vx + dunkPlayer.vy * dunkPlayer.vy);
+          dunkPlayer.vx = Math.cos(angle) * speed;
+          dunkPlayer.vy = Math.sin(angle) * speed;
         }
       });
 
@@ -643,6 +657,7 @@
         dunkLaunched = true;
       }
     }
+    // Отрисовка колец – убрана отрисовка "палки", рисуется только дуга кольца
     function drawBaskets() {
       ctx.save();
       ctx.lineWidth = 5;
@@ -650,16 +665,6 @@
       dunkBaskets.forEach(basket => {
         ctx.beginPath();
         ctx.arc(basket.x, basket.y, basket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(
-          basket.x + basket.radius * Math.cos(Math.PI * 0.1),
-          basket.y - basket.radius * Math.sin(Math.PI * 0.1)
-        );
-        ctx.lineTo(
-          basket.x + basket.radius * Math.cos(Math.PI * 0.1),
-          basket.y - basket.radius * Math.sin(Math.PI * 0.1) - 50
-        );
         ctx.stroke();
       });
       ctx.restore();
