@@ -417,6 +417,7 @@
     <h2>Select Mode</h2>
     <button id="flyingModeBtn">FLYING</button>
     <button id="platformerModeBtn">PLATFORMER</button>
+    <button id="dunkModeBtn">DUNK</button>
   </div>
   <div id="hardModeDescription">
     <button id="closeHardModeDesc">X</button>
@@ -557,6 +558,7 @@
     const modeSelectModal = document.getElementById('modeSelectModal');
     const flyingModeBtn = document.getElementById('flyingModeBtn');
     const platformerModeBtn = document.getElementById('platformerModeBtn');
+    const dunkModeBtn = document.getElementById('dunkModeBtn');
     const platformerPauseBtn = document.getElementById('platformerPauseBtn');
     const pauseMenu = document.getElementById("pauseMenu");
     const platformerControls = document.getElementById("platformerControls");
@@ -592,6 +594,13 @@
     const sealFall = new Image();
     sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
+
+    // Переменные для режима DUNK
+    let dunkGameStarted = false;
+    let dunkScore = 0;
+    let dunkPlayer = null;
+    let dunkBasket = null;
+    let dunkScored = false; // Флаг, чтобы один бросок засчитывался один раз
 
     // Переменная для контроля появления монет в режиме FLYING
     let flyingPipeCounter = 0;
@@ -644,6 +653,14 @@
       selectedMode = "PLATFORMER";
       startPlatformerLevel();
     });
+    dunkModeBtn.addEventListener('click', () => {
+      modeSelectModal.style.display = 'none';
+      menu.style.display = 'none';
+      gameOverOverlay.style.display = 'none';
+      hideProfileButton();
+      selectedMode = "DUNK";
+      startDunkMode();
+    });
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
@@ -669,6 +686,8 @@
         startFlyingMode();
       } else if(selectedMode === "PLATFORMER") {
         startPlatformerLevel();
+      } else if(selectedMode === "DUNK") {
+        startDunkMode();
       }
     });
     mainMenuBtn.addEventListener('click', () => {
@@ -679,6 +698,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
+      dunkGameStarted = false;
       paused = false;
       clearCanvas();
       currentPlatforms = [];
@@ -703,6 +723,8 @@
         flyingGameLoop();
       } else if (selectedMode === "PLATFORMER") {
         platformerLoop(currentPlatforms);
+      } else if(selectedMode === "DUNK") {
+        dunkGameLoop();
       }
     });
     const exitBtn = document.getElementById('exitBtn');
@@ -715,6 +737,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
+      dunkGameStarted = false;
       clearCanvas();
       currentPlatforms = [];
       pipes = [];
@@ -1257,12 +1280,21 @@
       if (selectedMode === "PLATFORMER") return;
       keysDown[e.code] = false;
     });
+    // Обработчик нажатия для режима DUNK добавлен отдельно
+    window.addEventListener("keydown", (e) => {
+      if(selectedMode === "DUNK" && dunkGameStarted && e.code === "Space"){
+        dunkPlayer.vy = -10;
+      }
+    });
+    // Обновлённый обработчик касаний, который учитывает как режим FLYING, так и DUNK
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
-    canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+    canvas.addEventListener('mousedown', handleTouchStart, {passive: false});
     function handleTouchStart(e) {
       e.preventDefault();
       if(selectedMode === "FLYING" && gameStarted){
         shadow.velocity = shadow.jump;
+      } else if(selectedMode === "DUNK" && dunkGameStarted){
+        dunkPlayer.vy = -10;
       }
     }
     function handleTouchEnd(e) {
@@ -1284,6 +1316,97 @@
     document.getElementById("btnRight").addEventListener("mouseup", () => { keysDown["ArrowRight"] = false; });
     document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
     document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
+
+    /* ========= Режим DUNK ========= */
+    function startDunkMode() {
+      dunkGameStarted = true;
+      dunkScore = 0;
+      dunkScored = false;
+      // Инициализируем игрока (главного героя-мяч)
+      dunkPlayer = {
+        x: canvas.width * 0.1,
+        y: canvas.height - 50,
+        radius: canvas.width * 0.05,
+        vx: 5,
+        vy: -10,
+        gravity: 0.5,
+        rotation: 0
+      };
+      // Задаём позицию корзины – справа, примерно по высоте 40% от высоты экрана
+      dunkBasket = {
+        x: canvas.width * 0.75,
+        y: canvas.height * 0.4,
+        radius: 40
+      };
+      dunkGameLoop();
+    }
+
+    function dunkGameLoop() {
+      if (!dunkGameStarted || paused) return;
+      clearCanvas();
+
+      // Обновляем физику мяча
+      dunkPlayer.vy += dunkPlayer.gravity;
+      dunkPlayer.x += dunkPlayer.vx;
+      dunkPlayer.y += dunkPlayer.vy;
+      dunkPlayer.rotation += 0.1;
+
+      // Если мяч движется вниз и проходит через зону корзины – засчитываем данк
+      if (!dunkScored &&
+          dunkPlayer.vy > 0 &&
+          dunkPlayer.x + dunkPlayer.radius > dunkBasket.x - 20 &&
+          dunkPlayer.x - dunkPlayer.radius < dunkBasket.x + 20 &&
+          dunkPlayer.y > dunkBasket.y - 10 &&
+          dunkPlayer.y < dunkBasket.y + 10) {
+        dunkScore++;
+        dunkScored = true;
+        showReaction("Dunk! Score: " + dunkScore);
+      }
+
+      drawBasket();
+      drawDunkBall();
+
+      // Если мяч вышел за пределы экрана – завершаем режим DUNK
+      if (dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
+        dunkGameStarted = false;
+        addXP(dunkScore);
+        setTimeout(() => {
+          gameOverOverlay.style.display = 'block';
+        }, 1000);
+        return;
+      }
+
+      scoreElement.textContent = `Dunk Score: ${dunkScore}`;
+      requestAnimationFrame(dunkGameLoop);
+    }
+
+    function drawBasket() {
+      ctx.save();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "#FF4500";
+      // Рисуем дугу корзины
+      ctx.beginPath();
+      ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
+      ctx.stroke();
+      // Рисуем щиток (подставку) для корзины
+      ctx.beginPath();
+      ctx.moveTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1));
+      ctx.lineTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawDunkBall() {
+      ctx.save();
+      ctx.translate(dunkPlayer.x, dunkPlayer.y);
+      ctx.rotate(dunkPlayer.rotation);
+      let ballSize = dunkPlayer.radius * 2;
+      ctx.drawImage(nerpaImg, -dunkPlayer.radius, -dunkPlayer.radius, ballSize, ballSize);
+      ctx.restore();
+    }
+
+    /* ========= PLATFORMER CONTROLS ========= */
+    // (Код управления для PLATFORMER уже описан выше)
   </script>
 </body>
 </html>
