@@ -401,12 +401,10 @@
     let nerpaImg = sealJump;
 
     /* ========= DUNK (SLINGSHOT) =========
-       Изменения:
-         - гравитация = 0.4,
-         - увеличен maxPull до 0.2,
-         - сила броска умножается на 0.24.
-         Новое поведение: при попадании игрок фиксируется в центре кольца
-         и затем через 1 секунду начинается следующий бросок.
+       Основные изменения:
+         - gravity: 0.4 (чтобы можно было долетать до кольца).
+         - maxPull: 0.2 (увеличено с 0.15).
+         - Сила броска (в vx, vy): умножаем dx, dy на 0.24 (было 0.2).
     */
     let dunkGameStarted = false;
     let dunkLaunched = false;
@@ -424,7 +422,7 @@
       dunkScore = 0;
       dunkScored = false;
       dunkDragging = false;
-      // Устанавливаем гравитацию = 0.4
+      // Увеличили гравитацию до 0.4
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
@@ -473,20 +471,12 @@
         dunkPlayer.x = canvas.width - dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
       }
-      // Проверка попадания в кольцо
+      // Проверка попадания
       if (!dunkScored) {
         let dx = dunkPlayer.x - dunkBasket.x;
         let dy = dunkPlayer.y - dunkBasket.y;
         let dist = Math.sqrt(dx*dx + dy*dy);
-        // Изменённое условие: если расстояние меньше (радиус кольца минус небольшая поправка),
-        // считаем что попадание произошло.
-        if(dist < dunkBasket.radius - dunkPlayer.radius * 0.1) {
-          // Фиксируем игрока в центре кольца
-          dunkPlayer.x = dunkBasket.x;
-          dunkPlayer.y = dunkBasket.y;
-          dunkPlayer.vx = 0;
-          dunkPlayer.vy = 0;
-          dunkPlayer.rotation = 0;
+        if(dist < dunkBasket.radius - dunkPlayer.radius * 0.3) {
           dunkScore++;
           dunkScored = true;
           showReaction("Dunk! Score: " + dunkScore);
@@ -511,6 +501,7 @@
       if(dunkDragging) {
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
+        // Увеличили maxPull до 0.2
         const maxPull = canvas.width * 0.2; 
         let pullDistance = Math.hypot(dx, dy);
         if(pullDistance > maxPull) {
@@ -518,9 +509,11 @@
           dx *= scale;
           dy *= scale;
         }
+        // Увеличиваем силу броска с 0.2 до 0.24
         let vx = dx * 0.24;
         let vy = dy * 0.24;
         let predictedPoints = [];
+        // Моделируем несколько секунд (4 сек) с шагом 0.1
         let simulationTime = 4;
         let dt = 0.1;
         for(let t = 0; t < simulationTime; t += dt) {
@@ -528,7 +521,7 @@
           let py = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
           predictedPoints.push({ x: px, y: py });
           if(py > canvas.height || px < 0 || px > canvas.width) {
-            break;
+            break; // завершаем если ушли за пределы
           }
         }
         ctx.save();
