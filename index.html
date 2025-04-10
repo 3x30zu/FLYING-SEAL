@@ -7,7 +7,6 @@
   <!-- Подключаем шрифт Press Start 2P -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* Универсальное правило для замены шрифта во всей игре */
     * { font-family: 'Press Start 2P', cursive; }
     html, body {
       margin: 0; padding: 0; box-sizing: border-box;
@@ -20,19 +19,16 @@
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
     }
-    /* Canvas с фоновым GIF */
     #gameCanvas {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       display: block;
       background: url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
     }
-    /* Контейнер для монет */
     #coinContainer {
       position: absolute; top: 0; left: 0;
       width: 100%; height: 100%;
       pointer-events: none;
     }
-    /* Главное меню */
     #menu {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       color: white; display: flex; flex-direction: column;
@@ -40,20 +36,16 @@
     }
     #menu * { text-shadow: 2px 2px 4px #000; }
     #menu h1 { font-size: 5vw; margin-bottom: 10px; animation: bounce 2s infinite; }
-    /* Блок приветствия */
     #greeting { font-size: 3vw; margin-bottom: 20px; }
-    /* Кнопки главного меню */
     #startBtn, #shopBtn {
       padding: 10px 20px; font-size: 3vw; letter-spacing: 2px;
       text-transform: uppercase; color: #fff; background: #3498db;
       border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer; margin-bottom: 15px; transition: all 0.1s;
     }
-    /* Кнопка Telegram (картинка) */
     #telegramBtn {
       margin-bottom: 15px; width: 80px; height: auto; cursor: pointer;
     }
-    /* Счётчики */
     #score, #coinCount {
       position: absolute; color: white; font-size: 4vw; z-index: 5;
     }
@@ -65,7 +57,6 @@
     #coinCount img {
       height: 4vw; margin-right: 5px;
     }
-    /* Стили для пиксельных кнопок */
     .pixelButton {
       padding: 10px 20px; font-size: 3vw; letter-spacing: 2px;
       text-transform: uppercase; color: #fff; background: #3498db;
@@ -76,7 +67,6 @@
       box-shadow: 2px 2px 0 #00ffff;
       transform: translate(2px, 2px);
     }
-    /* Магазин */
     #shop {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
@@ -104,21 +94,18 @@
       border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
       font-size: 3vw; padding: 10px 20px; cursor: pointer;
     }
-    /* Оверлей Game Over */
     #gameOverOverlay {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.8); color: white;
       display: none; flex-direction: column; justify-content: center;
       align-items: center; text-align: center; z-index: 20;
     }
-    /* Pause-меню */
     #pauseMenu {
       display: none; position: absolute;
       top: 50%; left: 50%; transform: translate(-50%, -50%);
       background: rgba(0,0,0,0.8); color: white; text-align: center;
       padding: 20px; z-index: 30; width: 80%; max-width: 400px;
     }
-    /* Модальное окно выбора режима */
     #modeSelectModal {
       display: none; position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -133,7 +120,6 @@
       box-shadow: 4px 4px 0 #00ffff; cursor: pointer;
       transition: all 0.1s;
     }
-    /* Hard Mode Description */
     #hardModeDescription {
       position: absolute; top: 20%; left: 50%;
       transform: translateX(-50%);
@@ -147,7 +133,6 @@
       font-size: 3vw; color: #fff; cursor: pointer;
     }
     #hardModeDescription p { margin: 0; }
-    /* Кнопка профиля – пиксельный круг */
     #profileBtn {
       position: absolute; top: 50px; left: 5px;
       width: 60px; height: 60px; border-radius: 50%;
@@ -155,11 +140,9 @@
       cursor: pointer; z-index: 60; display: block;
       overflow: hidden;
     }
-    /* Аватар */
     #profileBtn img {
       width: 100%; height: 100%; object-fit: cover;
     }
-    /* Модальное окно профиля */
     #profileModal {
       display: none; position: fixed; top: 50%;
       left: 50%; transform: translate(-50%, -50%);
@@ -168,7 +151,6 @@
       text-align: center; width: 80%; max-width: 400px;
     }
     #profileModal h2 { margin-bottom: 15px; font-size: 5vw; }
-    /* Секция аватаров */
     #avatarSelection {
       display: flex; justify-content: center;
       gap: 10px; margin-bottom: 15px;
@@ -178,7 +160,6 @@
       border: 3px solid transparent; cursor: pointer;
     }
     #avatarSelection img.selected { border-color: #e67e22; }
-    /* Секция никнейма */
     #nicknameSection {
       display: flex; justify-content: center;
       align-items: center; gap: 10px; margin-bottom: 15px;
@@ -196,12 +177,6 @@
       40% { transform: translateY(-20px); }
       60% { transform: translateY(-10px); }
     }
-    @keyframes float {
-      0% { transform: translateX(0); }
-      50% { transform: translateX(5px); }
-      100% { transform: translateX(0); }
-    }
-    /* Контейнер для кнопок управления в режиме PLATFORMER */
     #platformerControls {
       display: none; position: absolute;
       bottom: 20px; left: 0; right: 0; padding: 0 20px;
@@ -214,14 +189,11 @@
   <canvas id="gameCanvas"></canvas>
   <div id="coinContainer"></div>
   
-  <!-- Кнопка профиля -->
   <button id="profileBtn">
     <img id="currentAvatar" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='45' fill='%23ff0000'/></svg>" alt="avatar">
   </button>
-  <!-- Кнопка паузы для PLATFORMER -->
   <button id="platformerPauseBtn" style="position: absolute; top: 120px; right: 10px; display: none;">||</button>
   
-  <!-- Модальное окно профиля -->
   <div id="profileModal">
     <h2>Profile</h2>
     <div id="avatarSelection">
@@ -238,7 +210,6 @@
     <button id="closeProfileModal">Close</button>
   </div>
   
-  <!-- Остальные элементы интерфейса -->
   <div id="howToPlayOverlay">
     <h2>HOW TO PLAY?</h2>
     <p>Use left/right arrow keys to move,<br>press up arrow or space to jump!</p>
@@ -255,40 +226,45 @@
       <ul id="topScores"></ul>
     </div>
   </div>
-  <!-- Модальное окно выбора режима -->
+
   <div id="modeSelectModal">
     <h2>Select Mode</h2>
     <button id="flyingModeBtn">FLYING</button>
     <button id="platformerModeBtn">PLATFORMER</button>
     <button id="dunkModeBtn">DUNK</button>
   </div>
+
   <div id="hardModeDescription">
     <button id="closeHardModeDesc">X</button>
     <p>HARD MODE: Narrow gaps and double coins!</p>
   </div>
+
   <div id="shop">
     <h2>Shop</h2>
     <p id="shopBalance">Total Coins: 0</p>
     <div id="shopItems"></div>
     <button class="back-btn" id="shopBackBtn">Back</button>
   </div>
+
   <div id="gameOverOverlay">
     <h2>Share the result with your friends!</h2>
     <button id="shareBtn" class="pixelButton">Share the result!</button>
     <button id="continueBtn" class="pixelButton">Continue game!</button>
     <button id="mainMenuBtn" class="pixelButton">MAIN MENU</button>
   </div>
+
   <div id="pauseMenu">
     <h2>Paused</h2>
     <button id="resumeBtn" class="pixelButton">Resume</button>
     <button id="exitBtn" class="pixelButton">Main Menu</button>
   </div>
-  <!-- Контейнер для кнопок управления в режиме PLATFORMER -->
+
   <div id="platformerControls">
     <button id="btnLeft" class="pixelButton">←</button>
     <button id="btnUp" class="pixelButton">↑</button>
     <button id="btnRight" class="pixelButton">→</button>
   </div>
+
   <div id="score"></div>
   <div id="coinCount">
     <img src="BACKGROUND/goldcoin.gif" alt="coin">
@@ -296,15 +272,13 @@
   </div>
 
   <script>
-    // Скрываем контролы PLATFORMER при загрузке страницы
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('platformerControls').style.display = 'none';
     });
 
-    /* ========= Профиль пользователя ========= */
+    /* ====== Профиль ====== */
     let userNickname = localStorage.getItem("userNickname") || "Guest";
     let userAvatar = localStorage.getItem("userAvatar") || "red";
-
     function updateProfileDisplay() {
       document.getElementById("nicknameDisplay").textContent = userNickname;
       let avatarImg;
@@ -317,8 +291,8 @@
       }
       document.getElementById("currentAvatar").src = avatarImg;
       document.querySelectorAll("#avatarSelection img").forEach(img => {
-        if (img.getAttribute("data-avatar") === userAvatar) { img.classList.add("selected"); }
-        else { img.classList.remove("selected"); }
+        if (img.getAttribute("data-avatar") === userAvatar) img.classList.add("selected");
+        else img.classList.remove("selected");
       });
     }
     document.getElementById("editNickname").addEventListener("click", () => {
@@ -344,9 +318,8 @@
     document.getElementById("closeProfileModal").addEventListener("click", () => {
       document.getElementById("profileModal").style.display = "none";
     });
-    /* ========= Конец профиля ========= */
 
-    /* ========= Система уровней ========= */
+    /* ====== Система уровней ====== */
     let userLevel = parseInt(localStorage.getItem("userLevel") || "0");
     let userXP = parseInt(localStorage.getItem("userXP") || "0");
     const xpThreshold = 100;
@@ -356,16 +329,16 @@
     }
     function addXP(points) {
       userXP += points;
-      while (userXP >= xpThreshold) { userXP -= xpThreshold; userLevel++; }
+      while (userXP >= xpThreshold) {
+        userXP -= xpThreshold;
+        userLevel++;
+      }
       localStorage.setItem("userLevel", userLevel);
       localStorage.setItem("userXP", userXP);
       updateLevelInfoDisplay();
     }
-    /* ========= Конец системы уровней ========= */
 
     let platformerLevel = 1;
-
-    /* ========= Глобальные переменные ========= */
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
@@ -397,15 +370,14 @@
     const platformerPauseBtn = document.getElementById('platformerPauseBtn');
     const pauseMenu = document.getElementById("pauseMenu");
     const platformerControls = document.getElementById("platformerControls");
-
     let gameStarted = false, score = 0, coinCount = 0;
     let paused = false;
     let totalCoins = parseInt(localStorage.getItem("totalCoins") || "0");
     let usernameGame = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe &&
-                    window.Telegram.WebApp.initDataUnsafe.user &&
-                    window.Telegram.WebApp.initDataUnsafe.user.username)
-                     ? window.Telegram.WebApp.initDataUnsafe.user.username 
-                     : "Guest";
+                        window.Telegram.WebApp.initDataUnsafe.user &&
+                        window.Telegram.WebApp.initDataUnsafe.user.username)
+                       ? window.Telegram.WebApp.initDataUnsafe.user.username 
+                       : "Guest";
     let hardModeEnabled = false, selectedMode = "FLYING";
     let purchasedTrails = JSON.parse(localStorage.getItem("purchasedTrails") || '["1"]');
     let currentTrailId = localStorage.getItem("selectedTrail") || "1";
@@ -428,15 +400,12 @@
     const sealFall = new Image(); sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
 
-    /* ========= РЕЖИМ DUNK (SLINGSHOT) =========
-       Управление "натяни и отпусти":
-         - Мяч изначально находится в нижней части экрана и не движется.
-         - При нажатии (если касание в пределах мяча) начинается drag.
-         - Во время drag рассчитывается полный прогноз траектории с учётом гравитации и отображается пунктирной линией.
-         - Добавлено ограничение по максимальной длине "натягивания" (чтобы персонаж не улетал слишком далеко).
-         - При отпускании вычисляется вектор броска, и мяч получает скорость; затем применяется гравитация и отскоки.
-         - При попадании мяча в физическое кольцо (по круговой проверке) игра считается выигранной, начисляется счёт и через секунду начинается новый уровень.
-    ============================================ */
+    /* ========= DUNK (SLINGSHOT) =========
+       Основные изменения:
+         - gravity: 0.4 (чтобы можно было долетать до кольца).
+         - maxPull: 0.2 (увеличено с 0.15).
+         - Сила броска (в vx, vy): умножаем dx, dy на 0.24 (было 0.2).
+    */
     let dunkGameStarted = false;
     let dunkLaunched = false;
     let dunkScore = 0;
@@ -453,14 +422,14 @@
       dunkScore = 0;
       dunkScored = false;
       dunkDragging = false;
-      // Инициализируем мяч. Гравитация снижена до 0.3 для уменьшения "отлёта".
+      // Увеличили гравитацию до 0.4
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
         radius: canvas.width * 0.05,
         vx: 0,
         vy: 0,
-        gravity: 0.3,
+        gravity: 0.4,
         rotation: 0
       };
       dunkBasket = {
@@ -493,6 +462,7 @@
         dunkPlayer.y += dunkPlayer.vy;
         dunkPlayer.rotation += 0.1;
       }
+      // Отскоки от стен
       if(dunkPlayer.x - dunkPlayer.radius < 0) {
         dunkPlayer.x = dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
@@ -501,12 +471,12 @@
         dunkPlayer.x = canvas.width - dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
       }
-      // Проверка попадания в кольцо по круговой модели
+      // Проверка попадания
       if (!dunkScored) {
         let dx = dunkPlayer.x - dunkBasket.x;
         let dy = dunkPlayer.y - dunkBasket.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        if(distance < dunkBasket.radius - dunkPlayer.radius * 0.3){
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < dunkBasket.radius - dunkPlayer.radius * 0.3) {
           dunkScore++;
           dunkScored = true;
           showReaction("Dunk! Score: " + dunkScore);
@@ -517,7 +487,8 @@
       }
       drawBasket();
       drawDunkBall();
-      if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
+      // Если мяч вышел за пределы экрана
+      if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x + dunkPlayer.radius < 0 || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
         dunkGameStarted = false;
         removeDunkListeners();
         addXP(dunkScore);
@@ -526,32 +497,32 @@
       }
       scoreElement.textContent = `Dunk Score: ${dunkScore}`;
       
-      // Предсказание траектории при удержании (drag)
+      // Предсказание траектории (пунктирная линия)
       if(dunkDragging) {
-        // Вычисляем вектор натягивания
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
-        // Ограничиваем максимальную дистанцию натягивания
+        // Увеличили maxPull до 0.2
+        const maxPull = canvas.width * 0.2; 
         let pullDistance = Math.hypot(dx, dy);
-        const maxPull = canvas.width * 0.15;
         if(pullDistance > maxPull) {
           let scale = maxPull / pullDistance;
           dx *= scale;
           dy *= scale;
         }
-        let vx = dx * 0.2;
-        let vy = dy * 0.2;
-        // Запускаем симуляцию полной траектории: начинаем с текущей позиции мяча
-        let predictedX = dunkPlayer.x;
-        let predictedY = dunkPlayer.y;
-        let simulationDt = 0.1;
+        // Увеличиваем силу броска с 0.2 до 0.24
+        let vx = dx * 0.24;
+        let vy = dy * 0.24;
         let predictedPoints = [];
-        for(let t = 0; t < 3; t += simulationDt) {
-          predictedX = dunkPlayer.x + vx * t;
-          predictedY = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
-          predictedPoints.push({ x: predictedX, y: predictedY });
-          // Завершаем симуляцию, если траектория выходит за пределы экрана
-          if(predictedY > canvas.height || predictedX < 0 || predictedX > canvas.width) break;
+        // Моделируем несколько секунд (4 сек) с шагом 0.1
+        let simulationTime = 4;
+        let dt = 0.1;
+        for(let t = 0; t < simulationTime; t += dt) {
+          let px = dunkPlayer.x + vx * t;
+          let py = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
+          predictedPoints.push({ x: px, y: py });
+          if(py > canvas.height || px < 0 || px > canvas.width) {
+            break; // завершаем если ушли за пределы
+          }
         }
         ctx.save();
         ctx.strokeStyle = "#fff";
@@ -573,7 +544,7 @@
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
-      const dist = Math.hypot(mouseX - dunkPlayer.x, mouseY - dunkPlayer.y);
+      let dist = Math.hypot(mouseX - dunkPlayer.x, mouseY - dunkPlayer.y);
       if(dist <= dunkPlayer.radius) {
         dunkDragging = true;
         dragStart = { x: mouseX, y: mouseY };
@@ -594,16 +565,15 @@
         dunkDragging = false;
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
-        // Ограничиваем длину вектора натягивания
+        const maxPull = canvas.width * 0.2;
         let pullDistance = Math.hypot(dx, dy);
-        const maxPull = canvas.width * 0.15;
         if(pullDistance > maxPull) {
           let scale = maxPull / pullDistance;
           dx *= scale;
           dy *= scale;
         }
-        dunkPlayer.vx = dx * 0.2;
-        dunkPlayer.vy = dy * 0.2;
+        dunkPlayer.vx = dx * 0.24; 
+        dunkPlayer.vy = dy * 0.24;
         dunkLaunched = true;
         dunkScored = false;
       }
@@ -614,7 +584,7 @@
       const rect = canvas.getBoundingClientRect();
       const touchX = touch.clientX - rect.left;
       const touchY = touch.clientY - rect.top;
-      const dist = Math.hypot(touchX - dunkPlayer.x, touchY - dunkPlayer.y);
+      let dist = Math.hypot(touchX - dunkPlayer.x, touchY - dunkPlayer.y);
       if(dist <= dunkPlayer.radius) {
         dunkDragging = true;
         dragStart = { x: touchX, y: touchY };
@@ -638,15 +608,15 @@
         dunkDragging = false;
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
+        const maxPull = canvas.width * 0.2;
         let pullDistance = Math.hypot(dx, dy);
-        const maxPull = canvas.width * 0.15;
         if(pullDistance > maxPull) {
           let scale = maxPull / pullDistance;
           dx *= scale;
           dy *= scale;
         }
-        dunkPlayer.vx = dx * 0.2;
-        dunkPlayer.vy = dy * 0.2;
+        dunkPlayer.vx = dx * 0.24;
+        dunkPlayer.vy = dy * 0.24;
         dunkLaunched = true;
         dunkScored = false;
       }
@@ -659,8 +629,14 @@
       ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1));
-      ctx.lineTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50);
+      ctx.moveTo(
+        dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1),
+        dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1)
+      );
+      ctx.lineTo(
+        dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1),
+        dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50
+      );
       ctx.stroke();
       ctx.restore();
     }
@@ -714,7 +690,9 @@
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
-      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) { createPipe(); }
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
+        createPipe();
+      }
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
@@ -786,7 +764,9 @@
       });
       if(selectedMode === "FLYING") {
         flyingPipeCounter++;
-        if (flyingPipeCounter % 5 === 0) { createCoin(gapPosition, gap); }
+        if (flyingPipeCounter % 5 === 0) {
+          createCoin(gapPosition, gap);
+        }
       }
     }
     function checkCollision(pipe) {
@@ -862,7 +842,9 @@
         let p = particles[i];
         p.alpha -= p.decay;
         p.x -= 0.5;
-        if (p.alpha <= 0) { particles.splice(i, 1); }
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
       }
     }
     function drawParticles() {
@@ -889,7 +871,9 @@
         ctx.fillText(msg.text, msg.x, msg.y);
         ctx.restore();
         msg.timer--;
-        if (msg.timer <= 0) { reactionMessages.splice(index, 1); }
+        if (msg.timer <= 0) {
+          reactionMessages.splice(index, 1);
+        }
       });
     }
     function saveScore(name, points) {
@@ -995,7 +979,7 @@
       shopItemsDiv.appendChild(pipesGrid);
     }
 
-    /* ========= PLATFORMER MODE ========= */
+    /* ====== PLATFORMER MODE ====== */
     let platformerGameStarted = false;
     let door, player;
     let keysDown = {};
@@ -1116,7 +1100,9 @@
           let elapsed = performance.now() - plat.disappearStartTime;
           if (elapsed < 1000) { plat.opacity = 1 - elapsed / 1000; }
           else { platforms.splice(i, 1); continue; }
-        } else { plat.opacity = 1; }
+        } else {
+          plat.opacity = 1;
+        }
       }
       platforms.forEach(plat => drawPlatform(plat));
       drawDoor(door.x, door.y, door.width, door.height);
@@ -1151,8 +1137,13 @@
     function drawPlatform(plat) {
       ctx.save();
       ctx.globalAlpha = plat.opacity || 1;
-      if (plat.isGround) { ctx.fillStyle = "#87CEFA"; ctx.fillRect(plat.x, plat.y, plat.width, plat.height); }
-      else { ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height); }
+      if (plat.isGround) {
+        ctx.fillStyle = "#87CEFA";
+        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+      }
+      else {
+        ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
+      }
       ctx.restore();
     }
     function drawDoor(x, y, width, height) {
@@ -1162,9 +1153,12 @@
       ctx.lineWidth = 3;
       ctx.strokeRect(x, y, width, height);
     }
-    window.addEventListener("keydown", (e) => { if (selectedMode !== "PLATFORMER") keysDown[e.code] = true; });
-    window.addEventListener("keyup", (e) => { if (selectedMode !== "PLATFORMER") keysDown[e.code] = false; });
-    // Обработчики кнопок управления для PLATFORMER
+    window.addEventListener("keydown", (e) => { 
+      if (selectedMode !== "PLATFORMER") keysDown[e.code] = true; 
+    });
+    window.addEventListener("keyup", (e) => { 
+      if (selectedMode !== "PLATFORMER") keysDown[e.code] = false; 
+    });
     document.getElementById("btnLeft").addEventListener("mousedown", () => { keysDown["ArrowLeft"] = true; });
     document.getElementById("btnLeft").addEventListener("mouseup", () => { keysDown["ArrowLeft"] = false; });
     document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = true; });
@@ -1178,7 +1172,7 @@
     document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
     document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
 
-    /* ========= ОБРАБОТЧИКИ ГЛАВНОГО МЕНЮ ========== */
+    /* ====== Главное меню и пауза ====== */
     startBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'flex';
       platformerControls.style.display = 'none';
@@ -1214,7 +1208,9 @@
       selectedMode = "DUNK";
       startDunkMode();
     });
-    telegramBtn.addEventListener('click', () => { window.open('https://t.me/FlyingSealCoin', '_blank'); });
+    telegramBtn.addEventListener('click', () => {
+      window.open('https://t.me/FlyingSealCoin', '_blank');
+    });
     shopBtn.addEventListener('click', () => {
       menu.style.display = 'none';
       shop.style.display = 'flex';
@@ -1255,8 +1251,13 @@
       coinCount = 0;
       addXP(score);
     });
-    closeHardModeDesc.addEventListener('click', () => { hardModeDescription.style.display = 'none'; });
-    platformerPauseBtn.addEventListener('click', () => { paused = true; pauseMenu.style.display = 'block'; });
+    closeHardModeDesc.addEventListener('click', () => {
+      hardModeDescription.style.display = 'none';
+    });
+    platformerPauseBtn.addEventListener('click', () => {
+      paused = true;
+      pauseMenu.style.display = 'block';
+    });
     const resumeBtn = document.getElementById('resumeBtn');
     resumeBtn.addEventListener('click', () => {
       paused = false;
@@ -1285,14 +1286,18 @@
     });
     function hideProfileButton() { document.getElementById('profileBtn').style.display = 'none'; }
     function showProfileButton() { document.getElementById('profileBtn').style.display = 'block'; }
-    function updateShadowImage() { nerpaImg = shadow.velocity < 0 ? sealJump : sealFall; }
+    function updateShadowImage() {
+      nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
+    }
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
   </script>
 </body>
 </html>
