@@ -8,9 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     /* Универсальное правило для замены шрифта во всей игре */
-    * {
-      font-family: 'Press Start 2P', cursive;
-    }
+    * { font-family: 'Press Start 2P', cursive; }
     html, body {
       margin: 0;
       padding: 0;
@@ -36,10 +34,8 @@
     /* Контейнер для монет */
     #coinContainer {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       pointer-events: none;
     }
     /* Главное меню */
@@ -53,19 +49,14 @@
       align-items: center;
       z-index: 10;
     }
-    #menu * {
-      text-shadow: 2px 2px 4px #000;
-    }
+    #menu * { text-shadow: 2px 2px 4px #000; }
     #menu h1 {
       font-size: 5vw;
       margin-bottom: 10px;
       animation: bounce 2s infinite;
     }
-    /* Добавленный блок приветствия */
-    #greeting {
-      font-size: 3vw;
-      margin-bottom: 20px;
-    }
+    /* Блок приветствия */
+    #greeting { font-size: 3vw; margin-bottom: 20px; }
     /* Кнопки главного меню */
     #startBtn, #shopBtn {
       padding: 10px 20px;
@@ -94,10 +85,7 @@
       font-size: 4vw;
       z-index: 5;
     }
-    #score {
-      top: 5%;
-      left: 5%;
-    }
+    #score { top: 5%; left: 5%; }
     #coinCount {
       top: 5%;
       right: 5%;
@@ -140,14 +128,8 @@
       padding: 10px;
       z-index: 30;
     }
-    #shop h2 {
-      font-size: 5vw;
-      margin-bottom: 20px;
-    }
-    #shopBalance {
-      font-size: 3vw;
-      margin-bottom: 20px;
-    }
+    #shop h2 { font-size: 5vw; margin-bottom: 20px; }
+    #shopBalance { font-size: 3vw; margin-bottom: 20px; }
     .shop-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -167,9 +149,7 @@
       image-rendering: pixelated;
       margin-bottom: 5px;
     }
-    .shop-item button {
-      margin-top: 5px;
-    }
+    .shop-item button { margin-top: 5px; }
     #shop .back-btn {
       margin-top: 20px;
       background: #FF5722;
@@ -179,7 +159,7 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    /* Окно Game Over */
+    /* Оверлей Game Over */
     #gameOverOverlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -257,9 +237,7 @@
       color: #fff;
       cursor: pointer;
     }
-    #hardModeDescription p {
-      margin: 0;
-    }
+    #hardModeDescription p { margin: 0; }
     /* Кнопка профиля – пиксельный круг */
     #profileBtn {
       position: absolute;
@@ -275,7 +253,7 @@
       display: block;
       overflow: hidden;
     }
-    /* Аватар в профиле */
+    /* Аватар */
     #profileBtn img {
       width: 100%;
       height: 100%;
@@ -315,9 +293,7 @@
       border: 3px solid transparent;
       cursor: pointer;
     }
-    #avatarSelection img.selected {
-      border-color: #e67e22;
-    }
+    #avatarSelection img.selected { border-color: #e67e22; }
     /* Секция никнейма */
     #nicknameSection {
       display: flex;
@@ -326,13 +302,8 @@
       gap: 10px;
       margin-bottom: 15px;
     }
-    #nicknameSection span {
-      font-size: 4vw;
-    }
-    #editNickname {
-      cursor: pointer;
-      font-size: 4vw;
-    }
+    #nicknameSection span { font-size: 4vw; }
+    #editNickname { cursor: pointer; font-size: 4vw; }
     #closeProfileModal {
       padding: 5px 10px;
       font-size: 3vw;
@@ -348,8 +319,8 @@
       60% { transform: translateY(-10px); }
     }
     @keyframes float {
-      0%   { transform: translateX(0); }
-      50%  { transform: translateX(5px); }
+      0% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
       100% { transform: translateX(0); }
     }
     /* Контейнер для кнопок управления в режиме PLATFORMER */
@@ -595,39 +566,230 @@
     sealFall.src = 'BACKGROUND/seal fall.png';
     let nerpaImg = sealJump;
 
-    // Переменные для режима DUNK
+    /* ========== РЕЖИМ DUNK (SLINGSHOT) ==========
+       Здесь реализовано управление методом "натяни и отпусти":
+       - При нажатии (или касании) на мяч, если касание близко к мячу, начинается состояние перетаскивания.
+       - При движении курсора (или пальца) рисуется линия (направление броска).
+       - При отпускании вычисляется вектор броска (разность начальной и конечной точек) и назначается скорость.
+       Также реализовано отражение от левой и правой стен.
+    ============================================ */
     let dunkGameStarted = false;
     let dunkScore = 0;
     let dunkPlayer = null;
     let dunkBasket = null;
-    let dunkScored = false; // Флаг, чтобы один бросок засчитывался один раз
+    let dunkScored = false; // Флаг, чтобы засчитывать только один данк за бросок
+    // Параметры для drag-and-release
+    let dunkDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragCurrent = { x: 0, y: 0 };
+
+    function startDunkMode() {
+      dunkGameStarted = true;
+      dunkScore = 0;
+      dunkScored = false;
+      dunkDragging = false;
+      // Инициализация мяча (игрока)
+      dunkPlayer = {
+        x: canvas.width * 0.2,
+        y: canvas.height - 50,
+        radius: canvas.width * 0.05,
+        vx: 0,
+        vy: 0,
+        gravity: 0.5,
+        rotation: 0
+      };
+      // Корзина располагается справа, на высоте примерно 40% от экрана
+      dunkBasket = {
+        x: canvas.width * 0.75,
+        y: canvas.height * 0.4,
+        radius: 40
+      };
+      // Добавляем слушатели для drag-and-release в DUNK режиме
+      canvas.addEventListener("mousedown", dunkMouseDown);
+      canvas.addEventListener("mousemove", dunkMouseMove);
+      canvas.addEventListener("mouseup", dunkMouseUp);
+      canvas.addEventListener("touchstart", dunkTouchStart, {passive: false});
+      canvas.addEventListener("touchmove", dunkTouchMove, {passive: false});
+      canvas.addEventListener("touchend", dunkTouchEnd, {passive: false});
+      dunkGameLoop();
+    }
+    function dunkGameLoop() {
+      if (!dunkGameStarted || paused) return;
+      clearCanvas();
+      // Если не происходит drag, обновляем физику броска
+      if (!dunkDragging) {
+        dunkPlayer.vy += dunkPlayer.gravity;
+        dunkPlayer.x += dunkPlayer.vx;
+        dunkPlayer.y += dunkPlayer.vy;
+        dunkPlayer.rotation += 0.1;
+      }
+      // Отскок от левой и правой стен
+      if(dunkPlayer.x - dunkPlayer.radius < 0) {
+        dunkPlayer.x = dunkPlayer.radius;
+        dunkPlayer.vx = -dunkPlayer.vx;
+      }
+      if(dunkPlayer.x + dunkPlayer.radius > canvas.width) {
+        dunkPlayer.x = canvas.width - dunkPlayer.radius;
+        dunkPlayer.vx = -dunkPlayer.vx;
+      }
+      // Проверка попадания (если мяч проходит через область корзины)
+      if (!dunkScored &&
+          dunkPlayer.vy > 0 &&
+          dunkPlayer.x + dunkPlayer.radius > dunkBasket.x - 20 &&
+          dunkPlayer.x - dunkPlayer.radius < dunkBasket.x + 20 &&
+          dunkPlayer.y > dunkBasket.y - 10 &&
+          dunkPlayer.y < dunkBasket.y + 10) {
+        dunkScore++;
+        dunkScored = true;
+        showReaction("Dunk! Score: " + dunkScore);
+      }
+      drawBasket();
+      drawDunkBall();
+      // Если мяч уходит за пределы экрана – завершаем режим DUNK
+      if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
+        dunkGameStarted = false;
+        // Убираем слушатели для drag
+        canvas.removeEventListener("mousedown", dunkMouseDown);
+        canvas.removeEventListener("mousemove", dunkMouseMove);
+        canvas.removeEventListener("mouseup", dunkMouseUp);
+        canvas.removeEventListener("touchstart", dunkTouchStart);
+        canvas.removeEventListener("touchmove", dunkTouchMove);
+        canvas.removeEventListener("touchend", dunkTouchEnd);
+        addXP(dunkScore);
+        setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
+        return;
+      }
+      scoreElement.textContent = `Dunk Score: ${dunkScore}`;
+      // Если происходит drag, рисуем линию броска
+      if(dunkDragging) {
+        ctx.save();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(dunkPlayer.x, dunkPlayer.y);
+        ctx.lineTo(dragCurrent.x, dragCurrent.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+      requestAnimationFrame(dunkGameLoop);
+    }
+    function dunkMouseDown(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      // Если точка нажатия внутри мяча
+      const dist = Math.hypot(mouseX - dunkPlayer.x, mouseY - dunkPlayer.y);
+      if(dist <= dunkPlayer.radius) {
+        dunkDragging = true;
+        dragStart = { x: mouseX, y: mouseY };
+        dragCurrent = { x: mouseX, y: mouseY };
+        // При начале перетаскивания сбрасываем скорость
+        dunkPlayer.vx = 0;
+        dunkPlayer.vy = 0;
+      }
+    }
+    function dunkMouseMove(e) {
+      if(dunkDragging) {
+        const rect = canvas.getBoundingClientRect();
+        dragCurrent = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+      }
+    }
+    function dunkMouseUp(e) {
+      if(dunkDragging) {
+        dunkDragging = false;
+        // Вектор броска = (dragStart - dragCurrent)
+        const dx = dragStart.x - dragCurrent.x;
+        const dy = dragStart.y - dragCurrent.y;
+        // Устанавливаем скорость – масштабируем вектор (подбирайте коэффициент по вкусу)
+        dunkPlayer.vx = dx * 0.2;
+        dunkPlayer.vy = dy * 0.2;
+        // Сбрасываем флаг попадания, чтобы можно было засчитать новый данк
+        dunkScored = false;
+      }
+    }
+    // Аналогичные обработчики для touch
+    function dunkTouchStart(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      const touchY = touch.clientY - rect.top;
+      const dist = Math.hypot(touchX - dunkPlayer.x, touchY - dunkPlayer.y);
+      if(dist <= dunkPlayer.radius) {
+        dunkDragging = true;
+        dragStart = { x: touchX, y: touchY };
+        dragCurrent = { x: touchX, y: touchY };
+        dunkPlayer.vx = 0;
+        dunkPlayer.vy = 0;
+      }
+    }
+    function dunkTouchMove(e) {
+      if(dunkDragging) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        dragCurrent = {
+          x: touch.clientX - rect.left,
+          y: touch.clientY - rect.top
+        };
+      }
+    }
+    function dunkTouchEnd(e) {
+      if(dunkDragging) {
+        e.preventDefault();
+        dunkDragging = false;
+        const dx = dragStart.x - dragCurrent.x;
+        const dy = dragStart.y - dragCurrent.y;
+        dunkPlayer.vx = dx * 0.2;
+        dunkPlayer.vy = dy * 0.2;
+        dunkScored = false;
+      }
+    }
+    function drawBasket() {
+      ctx.save();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "#FF4500";
+      // Рисуем дугу корзины
+      ctx.beginPath();
+      ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
+      ctx.stroke();
+      // Рисуем подставку корзины
+      ctx.beginPath();
+      ctx.moveTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1));
+      ctx.lineTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50);
+      ctx.stroke();
+      ctx.restore();
+    }
+    function drawDunkBall() {
+      ctx.save();
+      ctx.translate(dunkPlayer.x, dunkPlayer.y);
+      ctx.rotate(dunkPlayer.rotation);
+      let ballSize = dunkPlayer.radius * 2;
+      ctx.drawImage(nerpaImg, -dunkPlayer.radius, -dunkPlayer.radius, ballSize, ballSize);
+      ctx.restore();
+    }
 
     // Переменная для контроля появления монет в режиме FLYING
     let flyingPipeCounter = 0;
-
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
     function updateShadowImage() {
       nerpaImg = shadow.velocity < 0 ? sealJump : sealFall;
     }
-    function hideProfileButton() {
-      document.getElementById('profileBtn').style.display = 'none';
-    }
-    function showProfileButton() {
-      document.getElementById('profileBtn').style.display = 'block';
-    }
+    function hideProfileButton() { document.getElementById('profileBtn').style.display = 'none'; }
+    function showProfileButton() { document.getElementById('profileBtn').style.display = 'block'; }
 
-    /* Обработчики главного меню */
+    /* ========== ОБРАБОТЧИКИ ГЛАВНОГО МЕНЮ ========== */
     startBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'flex';
-      // При входе в главное меню скрываем контролы PLATFORMER
       platformerControls.style.display = 'none';
     });
     flyingModeBtn.addEventListener('click', () => {
@@ -682,13 +844,9 @@
     });
     continueBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
-      if(selectedMode === "FLYING") {
-        startFlyingMode();
-      } else if(selectedMode === "PLATFORMER") {
-        startPlatformerLevel();
-      } else if(selectedMode === "DUNK") {
-        startDunkMode();
-      }
+      if(selectedMode === "FLYING") { startFlyingMode(); }
+      else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
+      else if(selectedMode === "DUNK") { startDunkMode(); }
     });
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
@@ -719,13 +877,9 @@
     resumeBtn.addEventListener('click', () => {
       paused = false;
       pauseMenu.style.display = 'none';
-      if (selectedMode === "FLYING") {
-        flyingGameLoop();
-      } else if (selectedMode === "PLATFORMER") {
-        platformerLoop(currentPlatforms);
-      } else if(selectedMode === "DUNK") {
-        dunkGameLoop();
-      }
+      if (selectedMode === "FLYING") { flyingGameLoop(); }
+      else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
+      else if(selectedMode === "DUNK") { dunkGameLoop(); }
     });
     const exitBtn = document.getElementById('exitBtn');
     exitBtn.addEventListener('click', () => {
@@ -746,7 +900,9 @@
       coinCount = 0;
     });
 
-    /* FLYING MODE */
+    /* ========== FLYING MODE ==========
+       (Остальной код режима FLYING без изменений)
+    ============================================ */
     let shadow = null;
     function startFlyingMode() {
       gameStarted = true;
@@ -777,17 +933,13 @@
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
-      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
-        createPipe();
-      }
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) { createPipe(); }
       for (let pipe of pipes) {
         pipe.x -= pipeSpeed;
         if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
           score++;
           pipe.passed = true;
-          if (score % 10 === 0) {
-            showReaction('Score ' + score);
-          }
+          if (score % 10 === 0) { showReaction('Score ' + score); }
         }
         if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
           clearCanvas();
@@ -838,7 +990,6 @@
         ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
-    // Создание трубы и, в режиме FLYING, монетка появляется каждые 5 труб
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
@@ -854,9 +1005,7 @@
       });
       if(selectedMode === "FLYING") {
         flyingPipeCounter++;
-        if (flyingPipeCounter % 5 === 0) {
-          createCoin(gapPosition, gap);
-        }
+        if (flyingPipeCounter % 5 === 0) { createCoin(gapPosition, gap); }
       }
     }
     function checkCollision(pipe) {
@@ -911,11 +1060,7 @@
       });
     }
     function removeAllCoins() {
-      coins.forEach(coin => {
-        if (coin.el) {
-          coin.el.remove();
-        }
-      });
+      coins.forEach(coin => { if (coin.el) { coin.el.remove(); } });
       coins = [];
     }
     function checkCoinCollision(coin) {
@@ -1109,7 +1254,6 @@
       }
       return platforms;
     }
-
     function startPlatformerLevel() {
       platformerGameStarted = true;
       paused = false;
@@ -1134,18 +1278,13 @@
       };
       platformerLoop(currentPlatforms);
     }
-
     function platformerLoop(platforms) {
       if (!platformerGameStarted || paused) return;
       clearCanvas();
 
-      if (keysDown["ArrowLeft"]) {
-        player.vx = -player.speed;
-      } else if (keysDown["ArrowRight"]) {
-        player.vx = player.speed;
-      } else {
-        player.vx = 0;
-      }
+      if (keysDown["ArrowLeft"]) { player.vx = -player.speed; }
+      else if (keysDown["ArrowRight"]) { player.vx = player.speed; }
+      else { player.vx = 0; }
       if (keysDown["ArrowUp"] && player.onGround) {
         player.vy = player.jumpForce;
         player.onGround = false;
@@ -1206,15 +1345,9 @@
         let plat = platforms[i];
         if (!plat.isGround && plat.disappearStartTime !== null) {
           let elapsed = performance.now() - plat.disappearStartTime;
-          if (elapsed < 1000) {
-            plat.opacity = 1 - elapsed / 1000;
-          } else {
-            platforms.splice(i, 1);
-            continue;
-          }
-        } else {
-          plat.opacity = 1;
-        }
+          if (elapsed < 1000) { plat.opacity = 1 - elapsed / 1000; }
+          else { platforms.splice(i, 1); continue; }
+        } else { plat.opacity = 1; }
       }
       platforms.forEach(plat => drawPlatform(plat));
       drawDoor(door.x, door.y, door.width, door.height);
@@ -1233,15 +1366,11 @@
         ctx.font = "20px 'Press Start 2P'";
         ctx.textAlign = "center";
         ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
-        setTimeout(() => {
-          platformerLevel++;
-          startPlatformerLevel();
-        }, 1500);
+        setTimeout(() => { platformerLevel++; startPlatformerLevel(); }, 1500);
         return;
       }
       requestAnimationFrame(() => platformerLoop(platforms));
     }
-
     function endPlatformer() {
       removeAllCoins();
       menu.style.display = 'flex';
@@ -1251,19 +1380,13 @@
       clearCanvas();
       currentPlatforms = [];
     }
-
     function drawPlatform(plat) {
       ctx.save();
       ctx.globalAlpha = plat.opacity || 1;
-      if (plat.isGround) {
-        ctx.fillStyle = "#87CEFA";
-        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-      } else {
-        ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
-      }
+      if (plat.isGround) { ctx.fillStyle = "#87CEFA"; ctx.fillRect(plat.x, plat.y, plat.width, plat.height); }
+      else { ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height); }
       ctx.restore();
     }
-
     function drawDoor(x, y, width, height) {
       ctx.fillStyle = "#663300";
       ctx.fillRect(x, y, width, height);
@@ -1271,142 +1394,21 @@
       ctx.lineWidth = 3;
       ctx.strokeRect(x, y, width, height);
     }
-
-    window.addEventListener("keydown", (e) => {
-      if (selectedMode === "PLATFORMER") return;
-      keysDown[e.code] = true;
-    });
-    window.addEventListener("keyup", (e) => {
-      if (selectedMode === "PLATFORMER") return;
-      keysDown[e.code] = false;
-    });
-    // Обработчик нажатия для режима DUNK добавлен отдельно
-    window.addEventListener("keydown", (e) => {
-      if(selectedMode === "DUNK" && dunkGameStarted && e.code === "Space"){
-        dunkPlayer.vy = -10;
-      }
-    });
-    // Обновлённый обработчик касаний, который учитывает как режим FLYING, так и DUNK
-    canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
-    canvas.addEventListener('mousedown', handleTouchStart, {passive: false});
-    function handleTouchStart(e) {
-      e.preventDefault();
-      if(selectedMode === "FLYING" && gameStarted){
-        shadow.velocity = shadow.jump;
-      } else if(selectedMode === "DUNK" && dunkGameStarted){
-        dunkPlayer.vy = -10;
-      }
-    }
-    function handleTouchEnd(e) {
-      e.preventDefault();
-    }
-
+    window.addEventListener("keydown", (e) => { if (selectedMode !== "PLATFORMER") keysDown[e.code] = true; });
+    window.addEventListener("keyup", (e) => { if (selectedMode !== "PLATFORMER") keysDown[e.code] = false; });
     // Обработчики кнопок управления для PLATFORMER
     document.getElementById("btnLeft").addEventListener("mousedown", () => { keysDown["ArrowLeft"] = true; });
     document.getElementById("btnLeft").addEventListener("mouseup", () => { keysDown["ArrowLeft"] = false; });
     document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = true; });
     document.getElementById("btnLeft").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = false; });
-    
     document.getElementById("btnUp").addEventListener("mousedown", () => { keysDown["ArrowUp"] = true; });
     document.getElementById("btnUp").addEventListener("mouseup", () => { keysDown["ArrowUp"] = false; });
     document.getElementById("btnUp").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowUp"] = true; });
     document.getElementById("btnUp").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowUp"] = false; });
-    
     document.getElementById("btnRight").addEventListener("mousedown", () => { keysDown["ArrowRight"] = true; });
     document.getElementById("btnRight").addEventListener("mouseup", () => { keysDown["ArrowRight"] = false; });
     document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
     document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
-
-    /* ========= Режим DUNK ========= */
-    function startDunkMode() {
-      dunkGameStarted = true;
-      dunkScore = 0;
-      dunkScored = false;
-      // Инициализируем игрока (главного героя-мяч)
-      dunkPlayer = {
-        x: canvas.width * 0.1,
-        y: canvas.height - 50,
-        radius: canvas.width * 0.05,
-        vx: 5,
-        vy: -10,
-        gravity: 0.5,
-        rotation: 0
-      };
-      // Задаём позицию корзины – справа, примерно по высоте 40% от высоты экрана
-      dunkBasket = {
-        x: canvas.width * 0.75,
-        y: canvas.height * 0.4,
-        radius: 40
-      };
-      dunkGameLoop();
-    }
-
-    function dunkGameLoop() {
-      if (!dunkGameStarted || paused) return;
-      clearCanvas();
-
-      // Обновляем физику мяча
-      dunkPlayer.vy += dunkPlayer.gravity;
-      dunkPlayer.x += dunkPlayer.vx;
-      dunkPlayer.y += dunkPlayer.vy;
-      dunkPlayer.rotation += 0.1;
-
-      // Если мяч движется вниз и проходит через зону корзины – засчитываем данк
-      if (!dunkScored &&
-          dunkPlayer.vy > 0 &&
-          dunkPlayer.x + dunkPlayer.radius > dunkBasket.x - 20 &&
-          dunkPlayer.x - dunkPlayer.radius < dunkBasket.x + 20 &&
-          dunkPlayer.y > dunkBasket.y - 10 &&
-          dunkPlayer.y < dunkBasket.y + 10) {
-        dunkScore++;
-        dunkScored = true;
-        showReaction("Dunk! Score: " + dunkScore);
-      }
-
-      drawBasket();
-      drawDunkBall();
-
-      // Если мяч вышел за пределы экрана – завершаем режим DUNK
-      if (dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
-        dunkGameStarted = false;
-        addXP(dunkScore);
-        setTimeout(() => {
-          gameOverOverlay.style.display = 'block';
-        }, 1000);
-        return;
-      }
-
-      scoreElement.textContent = `Dunk Score: ${dunkScore}`;
-      requestAnimationFrame(dunkGameLoop);
-    }
-
-    function drawBasket() {
-      ctx.save();
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = "#FF4500";
-      // Рисуем дугу корзины
-      ctx.beginPath();
-      ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
-      ctx.stroke();
-      // Рисуем щиток (подставку) для корзины
-      ctx.beginPath();
-      ctx.moveTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1));
-      ctx.lineTo(dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1), dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    function drawDunkBall() {
-      ctx.save();
-      ctx.translate(dunkPlayer.x, dunkPlayer.y);
-      ctx.rotate(dunkPlayer.rotation);
-      let ballSize = dunkPlayer.radius * 2;
-      ctx.drawImage(nerpaImg, -dunkPlayer.radius, -dunkPlayer.radius, ballSize, ballSize);
-      ctx.restore();
-    }
-
-    /* ========= PLATFORMER CONTROLS ========= */
-    // (Код управления для PLATFORMER уже описан выше)
   </script>
 </body>
 </html>
