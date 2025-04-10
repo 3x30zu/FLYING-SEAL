@@ -399,16 +399,20 @@
     let particles = [], coins = [], reactionMessages = [];
     const sealJump = new Image(); sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image(); sealFall.src = 'BACKGROUND/seal fall.png';
+    // Увеличен размер персонажа: радиус 7% от ширины холста
     let nerpaImg = sealJump;
 
     /* ========= DUNK (SLINGSHOT) =========
-         В режиме DUNK внесены следующие изменения:
+         Изменения в режиме DUNK:
          - Пока dunkScore равен 0 (до попадания) прокрутка не применяется.
          - После попадания объекты движутся вверх.
-         - Если центр персонажа оказывается внутри кольца (с коэффициентом 0.5, а не 0.3), засчитывается попадание, и позиция мяча фиксируется в центре кольца – игрок может затем "выстрелить" из этого кольца.
-         - Если персонаж касается внешней части кольца (расстояние меньше чем радиус+0.3*dunkPlayer.radius), применяется мягкий отскок с коэффициентом 0.5.
-         - Добавлена обработка отскока от стен: при столкновении с левым или правым краем скорость изменяется с уменьшением.
-         - Отрисовка кольца – теперь рисуется только дуга (без "палки").
+         - Условие попадания: если расстояние от центра персонажа до центра кольца меньше 90% от радиуса кольца,
+           считается попадание – позиция мяча фиксируется в центре кольца.
+         - Если мяч касается внешней части кольца (расстояние меньше чем radius + 0.3*dunkPlayer.radius),
+           применяется мягкий отскок с коэффициентом 0.5.
+         - Добавлена обработка отскока от стен (коэффициент 0.7).
+         - Из отрисовки кольца убрана "палка" – рисуется только дуга.
+         - Размер персонажа увеличен (радиус вычисляется как 7% от ширины холста).
     */
     let dunkGameStarted = false;
     let dunkLaunched = false;
@@ -432,11 +436,11 @@
         radius: 40,
         scored: false
       });
-      // Инициализация игрока
+      // Инициализация персонажа с новым размером (радиус 7% от ширины)
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
-        radius: canvas.width * 0.05,
+        radius: canvas.width * 0.07,
         vx: 0,
         vy: 0,
         gravity: 0.4,
@@ -473,7 +477,7 @@
         dunkPlayer.rotation += 0.1;
       }
 
-      // Отскок от стен: если мяч касается левый или правый край
+      // Отскок от стен
       if(dunkPlayer.x - dunkPlayer.radius < 0) {
         dunkPlayer.x = dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx * 0.7;
@@ -508,20 +512,20 @@
         let dx = dunkPlayer.x - basket.x;
         let dy = dunkPlayer.y - basket.y;
         let dist = Math.sqrt(dx * dx + dy * dy);
-        // Если центр персонажа оказывается внутри кольца (условие сделано мягче: коэффициент 0.5)
-        if (dist < basket.radius - dunkPlayer.radius * 0.5) {
+        // Если центр персонажа оказывается внутри кольца (условие упрощено: 90% от радиуса)
+        if (dist < basket.radius * 0.9) {
           if (!basket.scored) {
             dunkScore++;
             basket.scored = true;
             showReaction("Dunk! Score: " + dunkScore);
           }
-          // Фиксируем позицию мяча внутри кольца – позволяя "вылететь" из него для следующего броска
+          // Фиксируем позицию в центре кольца, позволяя затем прыгнуть из него
           dunkPlayer.x = basket.x;
           dunkPlayer.y = basket.y;
           dunkPlayer.vx = 0;
           dunkPlayer.vy = 0;
         }
-        // Если мяч касается внешней части кольца – выполняем мягкий отскок (коэффициент 0.5)
+        // Если мяч почти касается кольца снаружи – мягкий отскок
         else if (dist < basket.radius + dunkPlayer.radius * 0.3) {
           let angle = Math.atan2(dunkPlayer.y - basket.y, dunkPlayer.x - basket.x);
           let speed = Math.sqrt(dunkPlayer.vx * dunkPlayer.vx + dunkPlayer.vy * dunkPlayer.vy);
@@ -668,7 +672,7 @@
         dunkLaunched = true;
       }
     }
-    // Отрисовка колец – рисуется только дуга кольца
+    // Отрисовка колец: рисуется только дуга кольца
     function drawBaskets() {
       ctx.save();
       ctx.lineWidth = 5;
