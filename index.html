@@ -429,21 +429,19 @@
     let nerpaImg = sealJump;
 
     /* ========= РЕЖИМ DUNK (SLINGSHOT) =========
-       Реализовано управление "натяни и отпусти":
-       - Мяч изначально находится в нижней части экрана и не движется;
-       - При нажатии, если касание в пределах мяча – начинается drag, показывается направляющая линия;
-       - При отпускании вычисляется вектор броска, и мяч получает скорость;
-       - Далее действует гравитация и отражения от стен.
-       Внесены изменения:
-         • При drag рисуется пунктирная линия (setLineDash);
-         • При попадании мяча в кольцо (физическая проверка столкновения по кругу) игра считается выигранной – удаляются слушатели и через секунду запускается новый уровень.
+       Управление "натяни и отпусти":
+         - Мяч изначально находится в нижней части экрана и не движется.
+         - При нажатии (если касание в пределах мяча) начинается drag.
+         - Во время drag показывается предсказательная пунктирная линия, рассчитывающая траекторию на основе вектора броска.
+         - При отпускании вычисляется вектор броска, и мяч получает скорость, после чего применяется гравитация и отражения.
+         - При попадании мяча в физическое кольцо (по круговой проверке) игра считается выигранной, начисляется счёт и через секунду запускается новый уровень.
     ============================================ */
     let dunkGameStarted = false;
     let dunkLaunched = false; // флаг: мяч запущен (начал двигаться)
     let dunkScore = 0;
     let dunkPlayer = null;
     let dunkBasket = null;
-    let dunkScored = false; // чтобы засчитывать один данк за бросок
+    let dunkScored = false; // для засчитывания одного данка за бросок
     // Параметры drag-and-release
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
@@ -455,7 +453,7 @@
       dunkScore = 0;
       dunkScored = false;
       dunkDragging = false;
-      // Инициализация мяча – располагаем его внизу экрана
+      // Инициализируем мяч внизу экрана
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
@@ -465,13 +463,13 @@
         gravity: 0.5,
         rotation: 0
       };
-      // Физическое кольцо – корзина расположена справа, примерно на 40% высоты экрана
+      // Физическое кольцо — корзина расположена справа примерно на 40% высоты экрана
       dunkBasket = {
         x: canvas.width * 0.75,
         y: canvas.height * 0.4,
         radius: 40
       };
-      // Добавляем слушатели для drag-and-release в режиме DUNK
+      // Добавляем слушатели для drag-and-release
       canvas.addEventListener("mousedown", dunkMouseDown);
       canvas.addEventListener("mousemove", dunkMouseMove);
       canvas.addEventListener("mouseup", dunkMouseUp);
@@ -491,14 +489,14 @@
     function dunkGameLoop() {
       if (!dunkGameStarted || paused) return;
       clearCanvas();
-      // Если мяч уже запущен – обновляем физику
+      // Обновление физики, если мяч запущен
       if (dunkLaunched) {
         dunkPlayer.vy += dunkPlayer.gravity;
         dunkPlayer.x += dunkPlayer.vx;
         dunkPlayer.y += dunkPlayer.vy;
         dunkPlayer.rotation += 0.1;
       }
-      // Отскок от левой и правой стен
+      // Отскок от стен
       if(dunkPlayer.x - dunkPlayer.radius < 0) {
         dunkPlayer.x = dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
@@ -507,12 +505,11 @@
         dunkPlayer.x = canvas.width - dunkPlayer.radius;
         dunkPlayer.vx = -dunkPlayer.vx;
       }
-      // Физическая проверка столкновения мяча с корзиной (расстояние между центрами)
+      // Физическая проверка попадания (расстояние между центрами)
       if (!dunkScored) {
         let dx = dunkPlayer.x - dunkBasket.x;
         let dy = dunkPlayer.y - dunkBasket.y;
         let distance = Math.sqrt(dx*dx + dy*dy);
-        // Немного корректируем радиус для более точного попадания
         if(distance < dunkBasket.radius - dunkPlayer.radius * 0.3){
           dunkScore++;
           dunkScored = true;
@@ -524,7 +521,7 @@
       }
       drawBasket();
       drawDunkBall();
-      // Если мяч уходит за пределы экрана – завершаем режим DUNK
+      // Если мяч выходит за пределы экрана – завершаем режим DUNK
       if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
         dunkGameStarted = false;
         removeDunkListeners();
@@ -533,15 +530,26 @@
         return;
       }
       scoreElement.textContent = `Dunk Score: ${dunkScore}`;
-      // Если производится drag – рисуем направляющую линию в виде пунктирной линии
+      // Отрисовка предсказательной траектории во время drag
       if(dunkDragging) {
+        // Вычисляем вектор броска, исходя из разницы между начальными и текущими координатами
+        let dx = dragStart.x - dragCurrent.x;
+        let dy = dragStart.y - dragCurrent.y;
+        let vx = dx * 0.2;
+        let vy = dy * 0.2;
         ctx.save();
         ctx.strokeStyle = "#fff";
         ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]); // пунктир
+        ctx.setLineDash([5, 5]); // пунктирная линия
         ctx.beginPath();
+        // Начинаем от текущей позиции мяча
         ctx.moveTo(dunkPlayer.x, dunkPlayer.y);
-        ctx.lineTo(dragCurrent.x, dragCurrent.y);
+        // Рассчитываем предсказанные точки траектории (по физике: x = x0 + v*t; y = y0 + v*t + 0.5*g*t^2)
+        for(let t = 0.1; t <= 1.0; t += 0.1) {
+          let predictX = dunkPlayer.x + vx * t;
+          let predictY = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
+          ctx.lineTo(predictX, predictY);
+        }
         ctx.stroke();
         ctx.restore();
       }
