@@ -498,16 +498,16 @@
     }
 
     /* ========= РЕЖИМ BRICKS (Break Bricks) ========= */
-    // Более лёгкий уровень: много маленьких кирпичей по лабиринту
+    // Параметры для кирпичей – изначально создаётся лабиринт с 80% вероятностью наличия кирпича
     let breakBricksRowCount = 8;
     let breakBricksColCount = 12;
     let breakBricksPaddle = null;
     let breakBricksBalls = []; // Массив шаров (нерп)
     let breakBricksBricks = [];
     let breakBricksBrickWidth, breakBricksBrickHeight, breakBricksBrickPadding, breakBricksBrickOffsetTop, breakBricksBrickOffsetLeft;
-    // Бафф-коин – теперь его должен поднимать только ракетка
+    // Бафф-коин – его должен собирать только ракетка
     let buffCoin = null;
-    // Инициализация кирпичей – для каждой ячейки с 80% вероятностью создаётся кирпич, что даёт лабиринтовый эффект
+    // Инициализация кирпичей
     function initBreakBricks() {
       breakBricksBrickPadding = 2;
       breakBricksBrickHeight = 10;
@@ -531,7 +531,7 @@
     function createBall(x, y, dx, dy) {
       return { x: x, y: y, radius: 10, dx: dx, dy: dy };
     }
-    // Бафф-коин – его теперь должен собирать только ракетка
+    // Бафф-коин – его должен подбирать только ракетка
     function spawnBuffCoin() {
       if(!buffCoin && Math.random() < 0.005) {
         buffCoin = {
@@ -576,7 +576,7 @@
       spawnBuffCoin();
       updateBuffCoin();
       drawBuffCoin();
-      // Если ракетка подбирает бафф-коин, увеличиваем скорость всех шаров на 3 единицы
+      // Если ракетка подбирает бафф-коин – увеличиваем скорость всех шаров (нерп) на 3 единицы
       if(checkBuffCollisionPaddle()) {
         breakBricksBalls.forEach(ball => {
           ball.dx = ball.dx > 0 ? ball.dx + 3 : ball.dx - 3;
@@ -612,7 +612,7 @@
       ctx.fillStyle = "#0095DD";
       ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
       
-      // Проверка столкновений каждого шара с кирпичами (разрушается только один кирпич)
+      // Проверка столкновений каждого шара с кирпичами – разрушается только один кирпич
       breakBricksBalls.forEach(ball => {
         for(let c = 0; c < breakBricksColCount; c++){
           for(let r = 0; r < breakBricksRowCount; r++){
@@ -638,7 +638,7 @@
         }
       });
       
-      // Если шар опускается ниже ракетки – проверяем: если попал в ракетку, отскакиваем, иначе удаляем шар
+      // Если шар уходит ниже ракетки – проверяем: если попал в ракетку, отскакиваем, иначе удаляем шар
       breakBricksBalls = breakBricksBalls.filter(ball => {
         if(ball.y + ball.dy > breakBricksPaddle.y - ball.radius) {
           if(ball.x > breakBricksPaddle.x && ball.x < breakBricksPaddle.x + breakBricksPaddle.width) {
@@ -670,7 +670,7 @@
         breakBricksPaddle.x += 7;
       }
       
-      // Проверка: если все кирпичи уничтожены – выигрываем
+      // Если все кирпичи уничтожены – выигрываем:
       let allBroken = true;
       for(let c = 0; c < breakBricksColCount; c++){
         for(let r = 0; r < breakBricksRowCount; r++){
@@ -689,13 +689,12 @@
         ctx.fillText("YOU WIN", canvas.width/2, canvas.height/2);
         ctx.restore();
         setTimeout(() => {
-          // Сбрасываем шары – новый уровень начинается с одного шара
+          // Новый уровень начинается с одного шара (нерпы)
           breakBricksBalls = [];
           breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width/2, breakBricksPaddle.y - 10, 4, -4));
-          // Меняем расклад кирпичей: теперь кирпичей будет больше и они займут почти всю карту по вертикали
-          breakBricksRowCount = 12;
-          breakBricksColCount = 12;
-          // Меняем параметры кирпичей, чтобы они были еще мельче
+          // Изменяем расклад кирпичей: увеличено число строк и столбцов – кирпичей становится больше, почти до нижней части карты
+          breakBricksRowCount = 20;
+          breakBricksColCount = 14;
           breakBricksBrickOffsetTop = 5;
           breakBricksBrickPadding = 1;
           breakBricksBrickHeight = 8;
@@ -1310,7 +1309,7 @@
       gameOverOverlay.style.display = 'none';
       if(selectedMode === "FLYING") { startFlyingMode(); }
       else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "BRICKS") { startBreakBricksMode(); }
+      else if(selectedMode === "BRICKS") { breakBricksGameLoop(); }
     });
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
