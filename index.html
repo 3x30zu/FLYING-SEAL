@@ -368,12 +368,15 @@
     let pipeWidth = 75;
     const pipeImage = new Image(); 
     pipeImage.src = 'BACKGROUND/PIPE.png';
-    // Загружаем новые изображения для режима JUNGLE
+    // Загрузка новых изображений для режима JUNGLE
     const pipeImageJungle1 = new Image();
     pipeImageJungle1.src = 'BACKGROUND/PIPE 1.png';
     const pipeImageJungle2 = new Image();
     pipeImageJungle2.src = 'BACKGROUND/PIPE 2.png';
-
+    
+    // Переменная для подсчёта труб в режиме FLYING (чтобы создавать монеты)
+    let flyingPipeCounter = 0;
+    
     const platformImage = new Image(); platformImage.src = 'BACKGROUND/platform.png';
     let collisionOffsetLeft = 10, collisionOffsetRight = 10, collisionOffsetTop = 20, collisionOffsetBottom = 20;
     const canvas = document.getElementById('gameCanvas');
@@ -779,13 +782,22 @@
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
     }
-    // Функция создания трубы. Если выбрана тема JUNGLE, случайным образом выбираем между PIPE 1 и PIPE 2,
-    // при этом вероятность появления PIPE 1 устанавливается выше (около 80%).
+    // Обновленная функция отрисовки труб: используем pipe.pipeImg
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.save();
+        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
+        ctx.scale(1, -1);
+        ctx.drawImage(pipe.pipeImg, -pipeWidth/2, 0, pipeWidth, pipe.topHeight);
+        ctx.restore();
+        ctx.drawImage(pipe.pipeImg, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+      });
+    }
+    // Функция создания трубы. Если выбрана тема JUNGLE, выбираем случайным образом между PIPE 1 и PIPE 2
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
       
-      // Определяем изображение трубы для режима JUNGLE
       let pipeImg;
       if(selectedTheme === "JUNGLE"){
         pipeImg = (Math.random() < 0.8) ? pipeImageJungle1 : pipeImageJungle2;
