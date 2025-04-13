@@ -440,8 +440,7 @@
     let currentCharacterFall = sealFall;
     let selectedTheme = "WINTER";
 
-    // Загружаем "листочек". Поскольку у вас пока нет leaf.png,
-    // используется встроенное SVG-изображение, имитирующее пиксельный лист.
+    // Загружаем "листочек". Используется встроенное SVG-изображение для пиксельного листа.
     const leafImg = new Image();
     leafImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cpolygon points='10,0 15,10 10,20 5,10' fill='%234CAF50'/%3E%3C/svg%3E";
     let leafParticles = [];
@@ -511,12 +510,11 @@
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
-    // Объекты игрока и кольца в режиме DUNK (координаты в "мировых" величинах)
+    // Объекты игрока и кольца (координаты в "мировых" величинах)
     let dunkPlayer = null;
     let dunkBasket = null;
-    // Переменная для смещения камеры (для эффекта движения вверх)
+    // Смещение камеры для вертикальной прокрутки
     let dunkCameraOffset = 0;
-    // Инициализация режима DUNK
     function startDunkMode() {
       dunkGameStarted = true;
       dunkLaunched = false;
@@ -524,7 +522,7 @@
       dunkScored = false;
       dunkDragging = false;
       dunkCameraOffset = 0;
-      // Начальная позиция игрока и первого кольца
+      // Задаём начальное положение игрока и первого кольца
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
@@ -539,7 +537,7 @@
         y: canvas.height * 0.4,
         radius: 40
       };
-      // Слушатели событий для управления перетаскиванием (мышь и сенсор)
+      // Добавляем слушатели для мыши и сенсорных событий
       canvas.addEventListener("mousedown", dunkMouseDown);
       canvas.addEventListener("mousemove", dunkMouseMove);
       canvas.addEventListener("mouseup", dunkMouseUp);
@@ -559,41 +557,46 @@
     function dunkGameLoop() {
       if (!dunkGameStarted || paused) return;
       clearCanvas();
-      // Обновляем смещение камеры так, чтобы текущее кольцо располагалось на 40% высоты экрана
+      // Обновляем смещение камеры так, чтобы текущее кольцо было на 40% высоты экрана
       dunkCameraOffset = -dunkBasket.y + canvas.height * 0.4;
       
-      // Если мяч запущен – обновляем его позицию по физике
-      if (dunkLaunched) {
+      // Сохраняем предыдущую позицию по вертикали для определения направления движения
+      let prevY = dunkPlayer.y - dunkPlayer.vy;
+      
+      if(dunkLaunched) {
         dunkPlayer.vy += dunkPlayer.gravity;
         dunkPlayer.x += dunkPlayer.vx;
         dunkPlayer.y += dunkPlayer.vy;
         dunkPlayer.rotation += 0.1;
       }
-      // Если мяч вышел за нижнюю границу экрана – игра окончена
-      if (dunkPlayer.y - dunkPlayer.radius > canvas.height - dunkCameraOffset) {
-        dunkGameStarted = false;
-        removeDunkListeners();
-        addXP(dunkScore);
-        setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
-        return;
+      
+      // Отскок от левых и правых стен
+      if(dunkPlayer.x - dunkPlayer.radius < 0) {
+        dunkPlayer.x = dunkPlayer.radius;
+        dunkPlayer.vx = Math.abs(dunkPlayer.vx);
       }
-      // Если мяч попал в кольцо (не ранее засчитанного попадания)
-      if (!dunkScored) {
-        let dx = dunkPlayer.x - dunkBasket.x;
-        let dy = dunkPlayer.y - dunkBasket.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        // Порог попадания – внутренняя область кольца
-        if(dist < dunkBasket.radius) {
+      if(dunkPlayer.x + dunkPlayer.radius > canvas.width) {
+        dunkPlayer.x = canvas.width - dunkPlayer.radius;
+        dunkPlayer.vx = -Math.abs(dunkPlayer.vx);
+      }
+      
+      // Проверка столкновения с кольцом (учитываем как кольцо-обод)
+      let dx = dunkPlayer.x - dunkBasket.x;
+      let dy = dunkPlayer.y - dunkBasket.y;
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist < dunkBasket.radius + dunkPlayer.radius) {
+        // Если персонаж входит в кольцо сверху
+        if(prevY < dunkBasket.y && dunkPlayer.y >= dunkBasket.y && Math.abs(dunkPlayer.x - dunkBasket.x) < dunkBasket.radius * 0.7) {
+          // Успешный данк: фиксируем персонажа в кольце
           dunkScored = true;
           dunkScore++;
           showReaction("Dunk! Score: " + dunkScore);
-          // "Фиксируем" мяч в кольце
           dunkPlayer.x = dunkBasket.x;
           dunkPlayer.y = dunkBasket.y;
           dunkPlayer.vx = 0;
           dunkPlayer.vy = 0;
           dunkPlayer.rotation = 0;
-          // Через небольшую задержку генерируем новое кольцо выше
+          // Через паузу генерируем новое кольцо выше
           setTimeout(() => {
             let gap = 150; // расстояние между кольцами
             dunkBasket = {
@@ -601,31 +604,50 @@
               y: dunkBasket.y - gap,
               radius: 40
             };
-            // Перемещаем мяч в новое кольцо
             dunkPlayer.x = dunkBasket.x;
             dunkPlayer.y = dunkBasket.y;
             dunkScored = false;
             dunkLaunched = false;
           }, 800);
+        } else {
+          // Иначе выполняем отскок: отражаем скорость по нормали столкновения
+          let normalX = dx / dist;
+          let normalY = dy / dist;
+          let dot = dunkPlayer.vx * normalX + dunkPlayer.vy * normalY;
+          dunkPlayer.vx = dunkPlayer.vx - 2 * dot * normalX;
+          dunkPlayer.vy = dunkPlayer.vy - 2 * dot * normalY;
+          // Небольшое затухание
+          dunkPlayer.vx *= 0.8;
+          dunkPlayer.vy *= 0.8;
         }
       }
-      // Рисуем кольцо и мяч с учетом смещения камеры (для эффекта движения вверх)
+      
+      // Если персонаж улетел ниже экрана – игра окончена
+      if(dunkPlayer.y - dunkPlayer.radius > canvas.height - dunkCameraOffset) {
+        dunkGameStarted = false;
+        removeDunkListeners();
+        addXP(dunkScore);
+        setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
+        return;
+      }
+      
       drawBasket();
       drawDunkBall();
       scoreElement.textContent = `Dunk Score: ${dunkScore}`;
-      // Если игрок перетаскивает мяч – показываем предсказание траектории
+      
+      // Если производится перетаскивание – показываем предсказанную траекторию
       if(dunkDragging) {
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
+        let dxDrag = dragStart.x - dragCurrent.x;
+        let dyDrag = dragStart.y - dragCurrent.y;
         const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dx, dy);
+        let pullDistance = Math.hypot(dxDrag, dyDrag);
         if(pullDistance > maxPull) {
           let scale = maxPull / pullDistance;
-          dx *= scale;
-          dy *= scale;
+          dxDrag *= scale;
+          dyDrag *= scale;
         }
-        let vx = dx * 0.24;
-        let vy = dy * 0.24;
+        let vx = dxDrag * 0.24;
+        let vy = dyDrag * 0.24;
         let predictedPoints = [];
         let simulationTime = 4;
         let dt = 0.1;
@@ -732,7 +754,7 @@
         dunkLaunched = true;
       }
     }
-    // Исправленная функция отрисовки кольца – от 0 до Math.PI (нижняя половина, открытая сверху)
+    // Отрисовка кольца – дуга от 0 до Math.PI (нижняя половина, открытая сверху)
     function drawBasket() {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
