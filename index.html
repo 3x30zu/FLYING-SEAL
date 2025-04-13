@@ -440,11 +440,51 @@
     let currentCharacterFall = sealFall;
     let selectedTheme = "WINTER";
 
+    // Загружаем "листочек". Поскольку у вас пока нет leaf.png,
+    // используется встроенное SVG-изображение, имитирующее пиксельный лист.
+    const leafImg = new Image();
+    leafImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cpolygon points='10,0 15,10 10,20 5,10' fill='%234CAF50'/%3E%3C/svg%3E";
+    let leafParticles = [];
+
+    // Функции для работы с листочками:
+    function spawnLeaf() {
+      let leaf = {
+        x: Math.random() * canvas.width,
+        y: -20,
+        size: Math.random() * 10 + 10,
+        speedY: Math.random() * 0.5 + 0.5,
+        speedX: Math.random() * 0.4 - 0.2,
+        rotation: Math.random() * 2 * Math.PI,
+        rotationSpeed: (Math.random() - 0.5) * 0.02
+      };
+      leafParticles.push(leaf);
+    }
+    function updateLeafParticles() {
+      for (let i = leafParticles.length - 1; i >= 0; i--) {
+        let leaf = leafParticles[i];
+        leaf.y += leaf.speedY;
+        leaf.x += leaf.speedX;
+        leaf.rotation += leaf.rotationSpeed;
+        if (leaf.y > canvas.height + leaf.size) {
+          leafParticles.splice(i, 1);
+        }
+      }
+    }
+    function drawLeafParticles() {
+      leafParticles.forEach(leaf => {
+        ctx.save();
+        ctx.translate(leaf.x, leaf.y);
+        ctx.rotate(leaf.rotation);
+        ctx.drawImage(leafImg, -leaf.size / 2, -leaf.size / 2, leaf.size, leaf.size);
+        ctx.restore();
+      });
+    }
+
     // Функция обновления темы:
     // - Для WINTER фон остается прежним.
     // - Для JUNGLE фон меняется на "JUNGLE BACKGROUND.jpeg".
     // - Персонажи остаются seal.
-    // - При теме JUNGLE все кнопки становятся зелёными (фон и граница меняются).
+    // - При теме JUNGLE все кнопки становятся зелёными.
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
@@ -457,14 +497,12 @@
       currentCharacterJump = sealJump;
       currentCharacterFall = sealFall;
       
-      // Если выбрана тема JUNGLE, обновляем стиль всех кнопок
       if(selectedTheme === "JUNGLE"){
         document.querySelectorAll("button").forEach(btn => {
           btn.style.backgroundColor = "#4CAF50";  // зелёный фон
           btn.style.borderColor = "#2E7D32";       // тёмно-зелёная граница
         });
       } else {
-        // В противном случае (WINTER) восстанавливаем стандартный стиль
         document.querySelectorAll("button").forEach(btn => {
           btn.style.backgroundColor = "#3498db";
           btn.style.borderColor = "#fff";
@@ -482,7 +520,6 @@
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
-
     function startDunkMode() {
       dunkGameStarted = true;
       dunkLaunched = false;
@@ -562,7 +599,7 @@
       if(dunkDragging) {
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2; 
+        const maxPull = canvas.width * 0.2;
         let pullDistance = Math.hypot(dx, dy);
         if(pullDistance > maxPull) {
           let scale = maxPull / pullDistance;
@@ -630,7 +667,7 @@
           dx *= scale;
           dy *= scale;
         }
-        dunkPlayer.vx = dx * 0.24; 
+        dunkPlayer.vx = dx * 0.24;
         dunkPlayer.vy = dy * 0.24;
         dunkLaunched = true;
         dunkScored = false;
@@ -648,7 +685,7 @@
         dragStart = { x: touchX, y: touchY };
         dragCurrent = { x: touchX, y: touchY };
         dunkLaunched = false;
-        dunkPlayer.vx = 0; 
+        dunkPlayer.vx = 0;
         dunkPlayer.vy = 0;
       }
     }
@@ -718,6 +755,7 @@
       pipes = [];
       particles = [];
       reactionMessages = [];
+      // В режиме FLYING отображаем также листочки, если тема JUNGLE
       scoreElement.style.display = 'block';
       coinCountElement.style.display = 'flex';
       nerpaImg = shadow && (shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall);
@@ -749,6 +787,13 @@
       shadow.y += shadow.velocity;
       spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       updateParticles();
+      if(selectedTheme === "JUNGLE"){
+        if(Math.random() < 0.02) {
+          spawnLeaf();
+        }
+        updateLeafParticles();
+        drawLeafParticles();
+      }
       if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
         createPipe();
       }
@@ -799,7 +844,6 @@
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
     }
-    // Функция отрисовки труб: теперь используем свойство pipeImg из каждого объекта трубы
     function drawPipes() {
       pipes.forEach(pipe => {
         ctx.save();
@@ -810,18 +854,15 @@
         ctx.drawImage(pipe.pipeImg, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
-    // Функция создания трубы. Если тема JUNGLE, выбираем случайно: 60% для PIPE 1 и 40% для PIPE 2.
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
-      
       let pipeImg;
       if(selectedTheme === "JUNGLE"){
         pipeImg = (Math.random() < 0.6) ? pipeImageJungle1 : pipeImageJungle2;
       } else {
         pipeImg = pipeImage;
       }
-      
       let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
       let color = design ? design.colors[0] : "#fff";
       pipes.push({
