@@ -512,9 +512,9 @@
       breakBricksBrickOffsetTop = 30;
       breakBricksBrickOffsetLeft = 10;
       breakBricksBricks = [];
-      for(let c=0; c<breakBricksColCount; c++){
+      for(let c = 0; c < breakBricksColCount; c++){
         breakBricksBricks[c] = [];
-        for(let r=0; r<breakBricksRowCount; r++){
+        for(let r = 0; r < breakBricksRowCount; r++){
           breakBricksBricks[c][r] = { x: 0, y: 0, status: 1 };
         }
       }
@@ -522,18 +522,19 @@
     function startBreakBricksMode() {
       breakBricksGameStarted = true;
       selectedMode = "BRICKS";
-      // Инициализация платформы (ракетки)
+      // Отображаем кнопку паузы, как в других режимах
+      platformerPauseBtn.style.display = 'block';
+      // Инициализируем платформу (ракетку) – расположена выше нижнего края
       breakBricksPaddle = {
         height: 10,
         width: canvas.width * 0.2,
-        // Располагаем платформу выше нижнего края
         x: (canvas.width - canvas.width * 0.2) / 2,
         y: canvas.height - 100
       };
-      // Используем seal fall как мяч (нерпа) с увеличенной скоростью
+      // Спавним нерпу (мяч) прямо на платформе
       breakBricksBall = {
-        x: canvas.width/2,
-        y: canvas.height - 30,
+        x: breakBricksPaddle.x + breakBricksPaddle.width / 2,
+        y: breakBricksPaddle.y - 10, // радиус мяча равен 10, чтобы он находился непосредственно над ракеткой
         radius: 10,
         dx: 3,
         dy: -3
@@ -544,15 +545,20 @@
     function breakBricksGameLoop() {
       if (!breakBricksGameStarted || paused) return;
       clearCanvas();
-      // Отрисовка кирпичей
-      for(let c=0; c<breakBricksColCount; c++){
-        for(let r=0; r<breakBricksRowCount; r++){
+      // Отрисовка кирпичей с градиентной заливкой
+      for(let c = 0; c < breakBricksColCount; c++){
+        for(let r = 0; r < breakBricksRowCount; r++){
           if(breakBricksBricks[c][r].status == 1) {
             let brickX = c * (breakBricksBrickWidth + breakBricksBrickPadding) + breakBricksBrickOffsetLeft;
             let brickY = r * (breakBricksBrickHeight + breakBricksBrickPadding) + breakBricksBrickOffsetTop;
             breakBricksBricks[c][r].x = brickX;
             breakBricksBricks[c][r].y = brickY;
-            ctx.fillStyle = "#0095DD";
+            // Задаём градиент на основе номера строки
+            let hue = Math.floor(360 / breakBricksRowCount * r);
+            let grad = ctx.createLinearGradient(brickX, brickY, brickX + breakBricksBrickWidth, brickY + breakBricksBrickHeight);
+            grad.addColorStop(0, `hsl(${hue}, 80%, 40%)`);
+            grad.addColorStop(1, `hsl(${hue}, 80%, 60%)`);
+            ctx.fillStyle = grad;
             ctx.fillRect(brickX, brickY, breakBricksBrickWidth, breakBricksBrickHeight);
           }
         }
@@ -560,19 +566,19 @@
       // Отрисовка мяча (нерпы)
       ctx.save();
       ctx.translate(breakBricksBall.x, breakBricksBall.y);
-      ctx.drawImage(currentCharacterFall, -breakBricksBall.radius, -breakBricksBall.radius, breakBricksBall.radius*2, breakBricksBall.radius*2);
+      ctx.drawImage(currentCharacterFall, -breakBricksBall.radius, -breakBricksBall.radius, breakBricksBall.radius * 2, breakBricksBall.radius * 2);
       ctx.restore();
-      // Отрисовка платформы (ракетки) на новой позиции
+      // Отрисовка платформы (ракетки)
       ctx.fillStyle = "#0095DD";
       ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
       
       // Проверка столкновений мяча с кирпичами
-      for(let c=0; c<breakBricksColCount; c++){
-        for(let r=0; r<breakBricksRowCount; r++){
+      for(let c = 0; c < breakBricksColCount; c++){
+        for(let r = 0; r < breakBricksRowCount; r++){
           let b = breakBricksBricks[c][r];
           if(b.status == 1) {
-            if(breakBricksBall.x > b.x && breakBricksBall.x < b.x+breakBricksBrickWidth &&
-               breakBricksBall.y > b.y && breakBricksBall.y < b.y+breakBricksBrickHeight) {
+            if(breakBricksBall.x > b.x && breakBricksBall.x < b.x + breakBricksBrickWidth &&
+               breakBricksBall.y > b.y && breakBricksBall.y < b.y + breakBricksBrickHeight) {
               breakBricksBall.dy = -breakBricksBall.dy;
               b.status = 0;
             }
@@ -590,7 +596,7 @@
         if(breakBricksBall.x > breakBricksPaddle.x && breakBricksBall.x < breakBricksPaddle.x + breakBricksPaddle.width) {
           breakBricksBall.dy = -breakBricksBall.dy;
         } else {
-          // проигрыш: мяч улетел за нижнюю границу платформы
+          // проигрыш: мяч улетел за нижнюю границу (не попал в ракетку)
           breakBricksGameStarted = false;
           gameOverOverlay.style.display = 'block';
           return;
@@ -611,8 +617,8 @@
       
       // Проверка: если все кирпичи разрушены – выигрыш уровня
       let allBroken = true;
-      for(let c=0; c<breakBricksColCount; c++){
-        for(let r=0; r<breakBricksRowCount; r++){
+      for(let c = 0; c < breakBricksColCount; c++){
+        for(let r = 0; r < breakBricksRowCount; r++){
           if(breakBricksBricks[c][r].status == 1) {
             allBroken = false;
             break;
