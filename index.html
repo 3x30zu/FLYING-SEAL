@@ -498,20 +498,20 @@
     }
 
     /* ========= РЕЖИМ BRICKS (Break Bricks) ========= */
-    let breakBricksGameStarted = false;
+    // Делаем уровень легче: меньше рядов и меньшие кирпичи
+    let breakBricksRowCount = 3; 
+    let breakBricksColCount = 8;
     let breakBricksPaddle = null;
     let breakBricksBall = null;
     let breakBricksBricks = [];
-    let breakBricksRowCount = 5;
-    let breakBricksColCount = 8;
     let breakBricksBrickWidth, breakBricksBrickHeight, breakBricksBrickPadding, breakBricksBrickOffsetTop, breakBricksBrickOffsetLeft;
-    // При инициализации кирпичей каждому присваивается случайный hue для фиксированного цвета
+    // При инициализации кирпичей каждому присваивается случайный hue для цвета
     function initBreakBricks() {
-      breakBricksBrickWidth = canvas.width / breakBricksColCount - 10;
-      breakBricksBrickHeight = 20;
-      breakBricksBrickPadding = 10;
-      breakBricksBrickOffsetTop = 30;
-      breakBricksBrickOffsetLeft = 10;
+      breakBricksBrickPadding = 5;
+      breakBricksBrickHeight = 15; // меньше по высоте
+      breakBricksBrickWidth = canvas.width / breakBricksColCount - 8; // кирпичи уже по ширине
+      breakBricksBrickOffsetTop = 20;
+      breakBricksBrickOffsetLeft = 5;
       breakBricksBricks = [];
       for(let c = 0; c < breakBricksColCount; c++){
         breakBricksBricks[c] = [];
@@ -520,45 +520,57 @@
         }
       }
     }
-    // Функция для управления ракеткой пальцем – обновляет позицию на основе касания
+    // Функция, очищающая соседние кирпичи (3x3) при ударе
+    function clearCluster(col, row) {
+      for(let c = col - 1; c <= col + 1; c++){
+        for(let r = row - 1; r <= row + 1; r++){
+          if(c >= 0 && c < breakBricksColCount && r >= 0 && r < breakBricksRowCount){
+            if(breakBricksBricks[c][r].status === 1){
+              breakBricksBricks[c][r].status = 0;
+            }
+          }
+        }
+      }
+    }
+    // Обработчик для касания, позволяющий водить ракетку пальцем
     function updatePaddlePositionTouch(e) {
       e.preventDefault();
       if(selectedMode === "BRICKS" && breakBricksPaddle) {
         let touch = e.touches[0];
         let rect = canvas.getBoundingClientRect();
         let touchX = touch.clientX - rect.left;
-        breakBricksPaddle.x = touchX - breakBricksPaddle.width / 2;
+        breakBricksPaddle.x = touchX - breakBricksPaddle.width/2;
         if(breakBricksPaddle.x < 0) breakBricksPaddle.x = 0;
         if(breakBricksPaddle.x > canvas.width - breakBricksPaddle.width) breakBricksPaddle.x = canvas.width - breakBricksPaddle.width;
       }
     }
-    // Для корректного завершения игры в режиме BRICKS удаляем обработчик касания
+    // Для корректного завершения игры удаляем обработчик касания
     function endBreakBricks() {
       breakBricksGameStarted = false;
       canvas.removeEventListener("touchmove", updatePaddlePositionTouch);
     }
+    let breakBricksGameStarted = false;
     function startBreakBricksMode() {
       breakBricksGameStarted = true;
       selectedMode = "BRICKS";
-      // Отображаем кнопку паузы, как в других режимах
+      // Показываем кнопку паузы
       platformerPauseBtn.style.display = 'block';
-      // Инициализируем платформу (ракетку) – расположена выше нижнего края
+      // Инициализируем ракетку, расположенную выше нижнего края
       breakBricksPaddle = {
         height: 10,
         width: canvas.width * 0.2,
         x: (canvas.width - canvas.width * 0.2) / 2,
         y: canvas.height - 100
       };
-      // Спавним нерпу (мяч) прямо на платформе
+      // Спавним нерпу (мяч) прямо на ракетке
       breakBricksBall = {
-        x: breakBricksPaddle.x + breakBricksPaddle.width / 2,
-        y: breakBricksPaddle.y - 10,
+        x: breakBricksPaddle.x + breakBricksPaddle.width/2,
+        y: breakBricksPaddle.y - 10, // учитывая радиус мяча
         radius: 10,
-        dx: 3,
-        dy: -3
+        dx: 4,  // повышенная скорость
+        dy: -4
       };
       initBreakBricks();
-      // Добавляем обработчик для касания, чтобы можно было водить ракетку
       canvas.addEventListener("touchmove", updatePaddlePositionTouch, {passive:false});
       breakBricksGameLoop();
     }
@@ -568,7 +580,7 @@
       // Отрисовка кирпичей с градиентной заливкой
       for(let c = 0; c < breakBricksColCount; c++){
         for(let r = 0; r < breakBricksRowCount; r++){
-          if(breakBricksBricks[c][r].status == 1) {
+          if(breakBricksBricks[c][r].status === 1) {
             let brickX = c * (breakBricksBrickWidth + breakBricksBrickPadding) + breakBricksBrickOffsetLeft;
             let brickY = r * (breakBricksBrickHeight + breakBricksBrickPadding) + breakBricksBrickOffsetTop;
             breakBricksBricks[c][r].x = brickX;
@@ -587,7 +599,7 @@
       ctx.translate(breakBricksBall.x, breakBricksBall.y);
       ctx.drawImage(currentCharacterFall, -breakBricksBall.radius, -breakBricksBall.radius, breakBricksBall.radius * 2, breakBricksBall.radius * 2);
       ctx.restore();
-      // Отрисовка платформы (ракетки)
+      // Отрисовка ракетки
       ctx.fillStyle = "#0095DD";
       ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
       
@@ -595,17 +607,17 @@
       for(let c = 0; c < breakBricksColCount; c++){
         for(let r = 0; r < breakBricksRowCount; r++){
           let b = breakBricksBricks[c][r];
-          if(b.status == 1) {
+          if(b.status === 1) {
             if(breakBricksBall.x > b.x && breakBricksBall.x < b.x + breakBricksBrickWidth &&
                breakBricksBall.y > b.y && breakBricksBall.y < b.y + breakBricksBrickHeight) {
               breakBricksBall.dy = -breakBricksBall.dy;
-              b.status = 0;
+              clearCluster(c, r);
             }
           }
         }
       }
       
-      // Столкновение с краями экрана
+      // Отскок от краёв
       if(breakBricksBall.x + breakBricksBall.dx > canvas.width - breakBricksBall.radius || breakBricksBall.x + breakBricksBall.dx < breakBricksBall.radius){
         breakBricksBall.dx = -breakBricksBall.dx;
       }
@@ -615,7 +627,6 @@
         if(breakBricksBall.x > breakBricksPaddle.x && breakBricksBall.x < breakBricksPaddle.x + breakBricksPaddle.width) {
           breakBricksBall.dy = -breakBricksBall.dy;
         } else {
-          // Если мяч не попал в ракетку – игра заканчивается
           endBreakBricks();
           gameOverOverlay.style.display = 'block';
           return;
@@ -626,7 +637,7 @@
       breakBricksBall.x += breakBricksBall.dx;
       breakBricksBall.y += breakBricksBall.dy;
       
-      // Управление ракеткой с помощью клавиш для ПК
+      // Управление ракеткой клавишами (ПК)
       if(keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
         breakBricksPaddle.x -= 7;
       }
@@ -634,11 +645,11 @@
         breakBricksPaddle.x += 7;
       }
       
-      // Проверка: если все кирпичи разрушены – выигрыш уровня
+      // Если все кирпичи разрушены – уровень пройден, выдаём 5 монет и переинициализируем уровень
       let allBroken = true;
       for(let c = 0; c < breakBricksColCount; c++){
         for(let r = 0; r < breakBricksRowCount; r++){
-          if(breakBricksBricks[c][r].status == 1) {
+          if(breakBricksBricks[c][r].status === 1) {
             allBroken = false;
             break;
           }
@@ -649,7 +660,6 @@
         totalCoins += 5;
         localStorage.setItem("totalCoins", totalCoins);
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
-        // Немного увеличиваем скорость для повышения сложности
         breakBricksBall.dx *= 1.05;
         breakBricksBall.dy *= 1.05;
         initBreakBricks();
@@ -1234,7 +1244,7 @@
       selectedMode = "PLATFORMER";
       startPlatformerLevel();
     });
-    // Режим DIVE заменён на новый режим BRICKS (Break Bricks)
+    // Режим DIVE заменён на режим BRICKS (Break Bricks)
     dunkModeBtn.textContent = "BRICKS";
     dunkModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
