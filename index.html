@@ -732,15 +732,15 @@
         dunkLaunched = true;
       }
     }
+    // Исправленная функция отрисовки кольца – от 0 до Math.PI (нижняя половина, открытая сверху)
     function drawBasket() {
       ctx.save();
-      ctx.imageSmoothingEnabled = false; // для пиксельного стиля
+      ctx.imageSmoothingEnabled = false;
       let drawY = dunkBasket.y + dunkCameraOffset;
       ctx.strokeStyle = "#FF4500";
       ctx.lineWidth = 4;
       ctx.beginPath();
-      // Рисуем полуокружность в стиле пиксель-арт
-      ctx.arc(dunkBasket.x, drawY, dunkBasket.radius, Math.PI, 2*Math.PI, false);
+      ctx.arc(dunkBasket.x, drawY, dunkBasket.radius, 0, Math.PI, false);
       ctx.stroke();
       ctx.restore();
     }
