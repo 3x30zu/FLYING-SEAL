@@ -119,8 +119,9 @@
     #themeSelectModal button {
       padding: 10px 20px; font-size: 3vw; margin: 10px;
       letter-spacing: 2px; text-transform: uppercase;
-      color: #fff; background: #3498db; border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff; cursor: pointer; transition: all 0.1s;
+      color: #fff; background: #3498db;
+      border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer; transition: all 0.1s;
     }
     #modeSelectModal {
       display: none; position: absolute;
@@ -132,9 +133,9 @@
     #modeSelectModal button {
       padding: 10px 20px; font-size: 3vw; margin: 10px;
       letter-spacing: 2px; text-transform: uppercase;
-      color: #fff; background: #3498db; border: 4px solid #fff;
-      box-shadow: 4px 4px 0 #00ffff; cursor: pointer;
-      transition: all 0.1s;
+      color: #fff; background: #3498db;
+      border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
+      cursor: pointer; transition: all 0.1s;
     }
     #hardModeDescription {
       position: absolute; top: 20%; left: 50%;
@@ -374,7 +375,7 @@
     const pipeImageJungle2 = new Image();
     pipeImageJungle2.src = 'BACKGROUND/PIPE 2.png';
     
-    // Переменная для подсчёта труб в режиме FLYING (чтобы создавать монеты)
+    // Переменная для подсчёта труб в режиме FLYING (для создания монет)
     let flyingPipeCounter = 0;
     
     const platformImage = new Image(); platformImage.src = 'BACKGROUND/platform.png';
@@ -439,9 +440,11 @@
     let currentCharacterFall = sealFall;
     let selectedTheme = "WINTER";
 
-    // Функция обновления темы: для WINTER фон остается прежним,
-    // а для JUNGLE фон меняется на "JUNGLE BACKGROUND.jpeg".
-    // Персонажи остаются seal.
+    // Функция обновления темы:
+    // - Для WINTER фон остается прежним.
+    // - Для JUNGLE фон меняется на "JUNGLE BACKGROUND.jpeg".
+    // - Персонажи остаются seal.
+    // - При теме JUNGLE все кнопки становятся зелёными (фон и граница меняются).
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
@@ -453,6 +456,20 @@
       document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
       currentCharacterJump = sealJump;
       currentCharacterFall = sealFall;
+      
+      // Если выбрана тема JUNGLE, обновляем стиль всех кнопок
+      if(selectedTheme === "JUNGLE"){
+        document.querySelectorAll("button").forEach(btn => {
+          btn.style.backgroundColor = "#4CAF50";  // зелёный фон
+          btn.style.borderColor = "#2E7D32";       // тёмно-зелёная граница
+        });
+      } else {
+        // В противном случае (WINTER) восстанавливаем стандартный стиль
+        document.querySelectorAll("button").forEach(btn => {
+          btn.style.backgroundColor = "#3498db";
+          btn.style.borderColor = "#fff";
+        });
+      }
     }
 
     /* ========= DUNK (SLINGSHOT) ========= */
@@ -782,7 +799,7 @@
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
     }
-    // Обновленная функция отрисовки труб: используем pipe.pipeImg
+    // Функция отрисовки труб: теперь используем свойство pipeImg из каждого объекта трубы
     function drawPipes() {
       pipes.forEach(pipe => {
         ctx.save();
@@ -793,14 +810,14 @@
         ctx.drawImage(pipe.pipeImg, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
     }
-    // Функция создания трубы. Если выбрана тема JUNGLE, выбираем случайным образом между PIPE 1 и PIPE 2
+    // Функция создания трубы. Если тема JUNGLE, выбираем случайно: 60% для PIPE 1 и 40% для PIPE 2.
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
       
       let pipeImg;
       if(selectedTheme === "JUNGLE"){
-        pipeImg = (Math.random() < 0.8) ? pipeImageJungle1 : pipeImageJungle2;
+        pipeImg = (Math.random() < 0.6) ? pipeImageJungle1 : pipeImageJungle2;
       } else {
         pipeImg = pipeImage;
       }
