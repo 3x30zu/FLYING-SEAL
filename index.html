@@ -522,19 +522,21 @@
     function startBreakBricksMode() {
       breakBricksGameStarted = true;
       selectedMode = "BRICKS";
-      // Инициализируем платформу (ракетку)
+      // Инициализация платформы (ракетки)
       breakBricksPaddle = {
         height: 10,
         width: canvas.width * 0.2,
-        x: (canvas.width - canvas.width * 0.2) / 2
+        // Располагаем платформу выше нижнего края
+        x: (canvas.width - canvas.width * 0.2) / 2,
+        y: canvas.height - 100
       };
-      // Используем seal fall как мяч (нерпа)
+      // Используем seal fall как мяч (нерпа) с увеличенной скоростью
       breakBricksBall = {
         x: canvas.width/2,
         y: canvas.height - 30,
         radius: 10,
-        dx: 2,
-        dy: -2
+        dx: 3,
+        dy: -3
       };
       initBreakBricks();
       breakBricksGameLoop();
@@ -555,14 +557,14 @@
           }
         }
       }
-      // Отрисовка мяча (нерпа)
+      // Отрисовка мяча (нерпы)
       ctx.save();
       ctx.translate(breakBricksBall.x, breakBricksBall.y);
       ctx.drawImage(currentCharacterFall, -breakBricksBall.radius, -breakBricksBall.radius, breakBricksBall.radius*2, breakBricksBall.radius*2);
       ctx.restore();
-      // Отрисовка ракетки (пользователь)
+      // Отрисовка платформы (ракетки) на новой позиции
       ctx.fillStyle = "#0095DD";
-      ctx.fillRect(breakBricksPaddle.x, canvas.height - breakBricksPaddle.height, breakBricksPaddle.width, breakBricksPaddle.height);
+      ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
       
       // Проверка столкновений мяча с кирпичами
       for(let c=0; c<breakBricksColCount; c++){
@@ -584,11 +586,11 @@
       }
       if(breakBricksBall.y + breakBricksBall.dy < breakBricksBall.radius){
         breakBricksBall.dy = -breakBricksBall.dy;
-      } else if (breakBricksBall.y + breakBricksBall.dy > canvas.height - breakBricksPaddle.height - breakBricksBall.radius) {
+      } else if (breakBricksBall.y + breakBricksBall.dy > breakBricksPaddle.y - breakBricksBall.radius) {
         if(breakBricksBall.x > breakBricksPaddle.x && breakBricksBall.x < breakBricksPaddle.x + breakBricksPaddle.width) {
           breakBricksBall.dy = -breakBricksBall.dy;
         } else {
-          // проигрыш: мяч улетел за нижнюю границу
+          // проигрыш: мяч улетел за нижнюю границу платформы
           breakBricksGameStarted = false;
           gameOverOverlay.style.display = 'block';
           return;
@@ -599,7 +601,7 @@
       breakBricksBall.x += breakBricksBall.dx;
       breakBricksBall.y += breakBricksBall.dy;
       
-      // Управление ракеткой с помощью стрелок
+      // Управление платформой с помощью стрелок
       if(keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
         breakBricksPaddle.x -= 7;
       }
@@ -622,7 +624,7 @@
         totalCoins += 5;
         localStorage.setItem("totalCoins", totalCoins);
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
-        // Немного увеличиваем скорость мяча для повышения сложности (но не слишком резко)
+        // Немного увеличиваем скорость мяча для повышения сложности
         breakBricksBall.dx *= 1.05;
         breakBricksBall.dy *= 1.05;
         initBreakBricks();
