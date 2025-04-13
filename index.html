@@ -70,7 +70,6 @@
     }
     #shop {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      /* Фон магазина обновляется функцией updateTheme() */
       background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
                   url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
       color: white; display: none; flex-direction: column;
@@ -297,13 +296,14 @@
   </div>
 
   <script>
+    // ------------------------------- Общие переменные и функции --------------------------------
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('platformerControls').style.display = 'none';
     });
 
-    /* ====== Профиль ====== */
     let userNickname = localStorage.getItem("userNickname") || "Guest";
     let userAvatar = localStorage.getItem("userAvatar") || "red";
+
     function updateProfileDisplay() {
       document.getElementById("nicknameDisplay").textContent = userNickname;
       let avatarImg;
@@ -320,6 +320,7 @@
         else img.classList.remove("selected");
       });
     }
+
     document.getElementById("editNickname").addEventListener("click", () => {
       let newNick = prompt("Enter your new nickname:", userNickname);
       if(newNick !== null && newNick.trim() !== ""){
@@ -328,6 +329,7 @@
         updateProfileDisplay();
       }
     });
+
     document.querySelectorAll("#avatarSelection img").forEach(img => {
       img.addEventListener("click", () => {
         userAvatar = img.getAttribute("data-avatar");
@@ -335,16 +337,17 @@
         updateProfileDisplay();
       });
     });
+
     document.getElementById("profileBtn").addEventListener("click", () => {
       document.getElementById("profileModal").style.display = "block";
       updateProfileDisplay();
       updateLevelInfoDisplay();
     });
+
     document.getElementById("closeProfileModal").addEventListener("click", () => {
       document.getElementById("profileModal").style.display = "none";
     });
 
-    /* ====== Система уровней ====== */
     let userLevel = parseInt(localStorage.getItem("userLevel") || "0");
     let userXP = parseInt(localStorage.getItem("userXP") || "0");
     const xpThreshold = 100;
@@ -369,13 +372,12 @@
     let pipeWidth = 75;
     const pipeImage = new Image(); 
     pipeImage.src = 'BACKGROUND/PIPE.png';
-    // Загрузка новых изображений для режима JUNGLE
+    // Для режима JUNGLE загружаем две трубы:
     const pipeImageJungle1 = new Image();
     pipeImageJungle1.src = 'BACKGROUND/PIPE 1.png';
     const pipeImageJungle2 = new Image();
     pipeImageJungle2.src = 'BACKGROUND/PIPE 2.png';
     
-    // Переменная для подсчёта труб в режиме FLYING (для создания монет)
     let flyingPipeCounter = 0;
     
     const platformImage = new Image(); platformImage.src = 'BACKGROUND/platform.png';
@@ -440,13 +442,10 @@
     let currentCharacterFall = sealFall;
     let selectedTheme = "WINTER";
 
-    // Загружаем "листочек". Поскольку у вас пока нет leaf.png,
-    // используется встроенное SVG-изображение, имитирующее пиксельный лист.
+    // Загружаем "листочек" через встроенное SVG (пиксельный стиль)
     const leafImg = new Image();
     leafImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cpolygon points='10,0 15,10 10,20 5,10' fill='%234CAF50'/%3E%3C/svg%3E";
     let leafParticles = [];
-
-    // Функции для работы с листочками:
     function spawnLeaf() {
       let leaf = {
         x: Math.random() * canvas.width,
@@ -475,273 +474,125 @@
         ctx.save();
         ctx.translate(leaf.x, leaf.y);
         ctx.rotate(leaf.rotation);
-        ctx.drawImage(leafImg, -leaf.size / 2, -leaf.size / 2, leaf.size, leaf.size);
+        ctx.drawImage(leafImg, -leaf.size/2, -leaf.size/2, leaf.size, leaf.size);
         ctx.restore();
       });
     }
 
-    // Функция обновления темы:
-    // - Для WINTER фон остается прежним.
-    // - Для JUNGLE фон меняется на "JUNGLE BACKGROUND.jpeg".
-    // - Персонажи остаются seal.
-    // - При теме JUNGLE все кнопки становятся зелёными.
-    function updateTheme() {
-      let backgroundUrl;
-      if(selectedTheme === "WINTER") {
-        backgroundUrl = "BACKGROUND/photo_2025-03-12_12-26-18.gif";
-      } else if(selectedTheme === "JUNGLE") {
-        backgroundUrl = "BACKGROUND/JUNGLE BACKGROUND.jpeg";
-      }
-      document.getElementById("gameCanvas").style.background = `url('${backgroundUrl}') center/cover no-repeat`;
-      document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
-      currentCharacterJump = sealJump;
-      currentCharacterFall = sealFall;
-      
-      if(selectedTheme === "JUNGLE"){
-        document.querySelectorAll("button").forEach(btn => {
-          btn.style.backgroundColor = "#4CAF50";  // зелёный фон
-          btn.style.borderColor = "#2E7D32";       // тёмно-зелёная граница
-        });
-      } else {
-        document.querySelectorAll("button").forEach(btn => {
-          btn.style.backgroundColor = "#3498db";
-          btn.style.borderColor = "#fff";
-        });
-      }
-    }
-
-    /* ========= DUNK (SLINGSHOT) ========= */
-    let dunkGameStarted = false;
-    let dunkLaunched = false;
+    // Новый режим DUNK (DUNK SHOT) – бесконечный режим с кольцами, где игрок падает и попадает в кольцо,
+    // после чего генерируется новое кольцо сверху, а камера двигается вверх.
     let dunkScore = 0;
-    let dunkPlayer = null;
-    let dunkBasket = null;
-    let dunkScored = false;
-    let dunkDragging = false;
-    let dragStart = { x: 0, y: 0 };
-    let dragCurrent = { x: 0, y: 0 };
+    let dunkPlayer = { x: 0, y: 0, width: 50, height: 50, vx: 0, vy: 0 };
+    let currentRing = null; // текущее кольцо
+    let gravity = 0.5;
+    let ringRadius = 40;
+    let ringXMin = ringRadius;
+    let ringXMax = canvas ? canvas.width - ringRadius : 800;  // если canvas не инициализирован, берем 800
+    let cameraOffset = 0;
+    function spawnInitialRing() {
+      // Создадим кольцо в центре экрана по вертикали
+      currentRing = { x: canvas.width / 2, y: canvas.height / 2, radius: ringRadius };
+    }
+    function spawnNewRing() {
+      // Новое кольцо генерируется выше предыдущего на случайном расстоянии
+      let newY = currentRing.y - (Math.random() * 100 + 150);
+      let newX = Math.random() * (canvas.width - 2 * ringRadius) + ringRadius;
+      currentRing = { x: newX, y: newY, radius: ringRadius };
+    }
     function startDunkMode() {
-      dunkGameStarted = true;
-      dunkLaunched = false;
+      // Инициализация режима DUNK
+      // Сбросим камеру и счет
+      cameraOffset = 0;
       dunkScore = 0;
-      dunkScored = false;
-      dunkDragging = false;
-      dunkPlayer = {
-        x: canvas.width * 0.2,
-        y: canvas.height - 200,
-        radius: canvas.width * 0.05,
-        vx: 0,
-        vy: 0,
-        gravity: 0.4,
-        rotation: 0
+      // Инициализируем игрока: пусть появляется чуть выше нижней части экрана
+      dunkPlayer = { 
+        x: canvas.width / 2 - 25, 
+        y: canvas.height - 100, 
+        width: 50, 
+        height: 50, 
+        vx: 0, 
+        vy: 0 
       };
-      dunkBasket = {
-        x: canvas.width * 0.75,
-        y: canvas.height * 0.4,
-        radius: 40
-      };
-      canvas.addEventListener("mousedown", dunkMouseDown);
-      canvas.addEventListener("mousemove", dunkMouseMove);
-      canvas.addEventListener("mouseup", dunkMouseUp);
-      canvas.addEventListener("touchstart", dunkTouchStart, {passive: false});
-      canvas.addEventListener("touchmove", dunkTouchMove, {passive: false});
-      canvas.addEventListener("touchend", dunkTouchEnd, {passive: false});
-      dunkGameLoop();
+      spawnInitialRing();
+      // Добавим обработку клавиш для горизонтального движения
+      window.addEventListener("keydown", dunkKeyDown);
+      window.addEventListener("keyup", dunkKeyUp);
+      dunkModeLoop();
     }
-    function removeDunkListeners() {
-      canvas.removeEventListener("mousedown", dunkMouseDown);
-      canvas.removeEventListener("mousemove", dunkMouseMove);
-      canvas.removeEventListener("mouseup", dunkMouseUp);
-      canvas.removeEventListener("touchstart", dunkTouchStart);
-      canvas.removeEventListener("touchmove", dunkTouchMove);
-      canvas.removeEventListener("touchend", dunkTouchEnd);
+    let dunkKeys = {};
+    function dunkKeyDown(e) {
+      dunkKeys[e.code] = true;
     }
-    function dunkGameLoop() {
-      if (!dunkGameStarted || paused) return;
+    function dunkKeyUp(e) {
+      dunkKeys[e.code] = false;
+    }
+    function dunkModeLoop() {
+      if (paused) return;
       clearCanvas();
-      if (dunkLaunched) {
-        dunkPlayer.vy += dunkPlayer.gravity;
-        dunkPlayer.x += dunkPlayer.vx;
-        dunkPlayer.y += dunkPlayer.vy;
-        dunkPlayer.rotation += 0.1;
+      // Обновляем позиции игрока
+      // Горизонтальное управление:
+      if (dunkKeys["ArrowLeft"]) {
+        dunkPlayer.vx = -3;
+      } else if (dunkKeys["ArrowRight"]) {
+        dunkPlayer.vx = 3;
+      } else {
+        dunkPlayer.vx = 0;
       }
-      if(dunkPlayer.x - dunkPlayer.radius < 0) {
-        dunkPlayer.x = dunkPlayer.radius;
-        dunkPlayer.vx = -dunkPlayer.vx;
+      dunkPlayer.x += dunkPlayer.vx;
+      // Применяем гравитацию
+      dunkPlayer.vy += gravity;
+      dunkPlayer.y += dunkPlayer.vy;
+      // Проверяем столкновение игрока с кольцом (имитируем, что игрок падает в кольцо)
+      // Если нижняя граница игрока находится в пределах кольца (с небольшим допуском)
+      if (dunkPlayer.y + dunkPlayer.height >= currentRing.y - currentRing.radius &&
+          dunkPlayer.y + dunkPlayer.height <= currentRing.y + currentRing.radius &&
+          dunkPlayer.x + dunkPlayer.width/2 >= currentRing.x - currentRing.radius &&
+          dunkPlayer.x + dunkPlayer.width/2 <= currentRing.x + currentRing.radius) {
+        // Засчитываем "данк"
+        dunkScore++;
+        // Сброс вертикальной скорости для "прилегания" к кольцу
+        dunkPlayer.vy = 0;
+        // Генерируем новое кольцо выше
+        spawnNewRing();
+        // Сдвигаем камеру: увеличиваем offset на разницу, чтобы игрок остался на экране
+        cameraOffset += 150;
       }
-      if(dunkPlayer.x + dunkPlayer.radius > canvas.width) {
-        dunkPlayer.x = canvas.width - dunkPlayer.radius;
-        dunkPlayer.vx = -dunkPlayer.vx;
-      }
-      if (!dunkScored) {
-        let dx = dunkPlayer.x - dunkBasket.x;
-        let dy = dunkPlayer.y - dunkBasket.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        if(dist < dunkBasket.radius - dunkPlayer.radius * 0.3) {
-          dunkScore++;
-          dunkScored = true;
-          showReaction("Dunk! Score: " + dunkScore);
-          removeDunkListeners();
-          setTimeout(() => { addXP(dunkScore); startDunkMode(); }, 1000);
-          return;
-        }
-      }
-      drawBasket();
-      drawDunkBall();
-      if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x + dunkPlayer.radius < 0 || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
-        dunkGameStarted = false;
-        removeDunkListeners();
-        addXP(dunkScore);
-        setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
+      // Применяем эффект скроллинга: сдвигаем всё вверх
+      ctx.save();
+      ctx.translate(0, cameraOffset);
+      // Рисуем кольцо
+      drawRing();
+      // Рисуем игрока
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(dunkPlayer.x, dunkPlayer.y, dunkPlayer.width, dunkPlayer.height);
+      ctx.restore();
+      // Отрисовываем другие объекты (например, счет)
+      scoreElement.textContent = `Dunk Score: ${dunkScore}`;
+      // Если игрок улетел за пределы экрана сверху или снизу, конец игры
+      if (dunkPlayer.y - cameraOffset > canvas.height || dunkPlayer.y - cameraOffset + dunkPlayer.height < 0) {
+        gameOverOverlay.style.display = 'block';
+        window.removeEventListener("keydown", dunkKeyDown);
+        window.removeEventListener("keyup", dunkKeyUp);
         return;
       }
-      scoreElement.textContent = `Dunk Score: ${dunkScore}`;
-      if(dunkDragging) {
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dx, dy);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dx *= scale;
-          dy *= scale;
-        }
-        let vx = dx * 0.24;
-        let vy = dy * 0.24;
-        let predictedPoints = [];
-        let simulationTime = 4;
-        let dt = 0.1;
-        for(let t = 0; t < simulationTime; t += dt) {
-          let px = dunkPlayer.x + vx * t;
-          let py = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
-          predictedPoints.push({ x: px, y: py });
-          if(py > canvas.height || px < 0 || px > canvas.width) {
-            break;
-          }
-        }
-        ctx.save();
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        if(predictedPoints.length > 0) {
-          ctx.moveTo(predictedPoints[0].x, predictedPoints[0].y);
-          for(let i = 1; i < predictedPoints.length; i++){
-            ctx.lineTo(predictedPoints[i].x, predictedPoints[i].y);
-          }
-        }
-        ctx.stroke();
-        ctx.restore();
-      }
-      requestAnimationFrame(dunkGameLoop);
+      requestAnimationFrame(dunkModeLoop);
     }
-    function dunkMouseDown(e) {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      let dist = Math.hypot(mouseX - dunkPlayer.x, mouseY - dunkPlayer.y);
-      if(dist <= dunkPlayer.radius) {
-        dunkDragging = true;
-        dragStart = { x: mouseX, y: mouseY };
-        dragCurrent = { x: mouseX, y: mouseY };
-        dunkLaunched = false;
-        dunkPlayer.vx = 0;
-        dunkPlayer.vy = 0;
-      }
-    }
-    function dunkMouseMove(e) {
-      if(dunkDragging) {
-        const rect = canvas.getBoundingClientRect();
-        dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      }
-    }
-    function dunkMouseUp(e) {
-      if(dunkDragging) {
-        dunkDragging = false;
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dx, dy);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dx *= scale;
-          dy *= scale;
-        }
-        dunkPlayer.vx = dx * 0.24;
-        dunkPlayer.vy = dy * 0.24;
-        dunkLaunched = true;
-        dunkScored = false;
-      }
-    }
-    function dunkTouchStart(e) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
-      let dist = Math.hypot(touchX - dunkPlayer.x, touchY - dunkPlayer.y);
-      if(dist <= dunkPlayer.radius) {
-        dunkDragging = true;
-        dragStart = { x: touchX, y: touchY };
-        dragCurrent = { x: touchX, y: touchY };
-        dunkLaunched = false;
-        dunkPlayer.vx = 0;
-        dunkPlayer.vy = 0;
-      }
-    }
-    function dunkTouchMove(e) {
-      if(dunkDragging) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        dragCurrent = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-      }
-    }
-    function dunkTouchEnd(e) {
-      if(dunkDragging) {
-        e.preventDefault();
-        dunkDragging = false;
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dx, dy);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dx *= scale;
-          dy *= scale;
-        }
-        dunkPlayer.vx = dx * 0.24;
-        dunkPlayer.vy = dy * 0.24;
-        dunkLaunched = true;
-        dunkScored = false;
-      }
-    }
-    function drawBasket() {
+    function drawRing() {
+      // Отрисовка кольца в пиксельном стиле (имитируем игру Dunk Shot)
       ctx.save();
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = "#FF4500";
+      ctx.strokeStyle = "#FFD700";
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
+      ctx.arc(currentRing.x, currentRing.y, currentRing.radius, 0, Math.PI * 2);
       ctx.stroke();
+      // Добавим небольшие пиксельные детали (например, две перекладины)
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(
-        dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1),
-        dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1)
-      );
-      ctx.lineTo(
-        dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1),
-        dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50
-      );
+      ctx.moveTo(currentRing.x - currentRing.radius, currentRing.y);
+      ctx.lineTo(currentRing.x + currentRing.radius, currentRing.y);
+      ctx.moveTo(currentRing.x, currentRing.y - currentRing.radius);
+      ctx.lineTo(currentRing.x, currentRing.y + currentRing.radius);
       ctx.stroke();
-      ctx.restore();
-    }
-    function drawDunkBall() {
-      ctx.save();
-      ctx.translate(dunkPlayer.x, dunkPlayer.y);
-      ctx.rotate(dunkPlayer.rotation);
-      let ballSize = dunkPlayer.radius * 2;
-      let img = dunkPlayer.vy < 0 ? currentCharacterJump : currentCharacterFall;
-      ctx.drawImage(img, -dunkPlayer.radius, -dunkPlayer.radius, ballSize, ballSize);
       ctx.restore();
     }
 
@@ -755,7 +606,6 @@
       pipes = [];
       particles = [];
       reactionMessages = [];
-      // В режиме FLYING отображаем также листочки, если тема JUNGLE
       scoreElement.style.display = 'block';
       coinCountElement.style.display = 'flex';
       nerpaImg = shadow && (shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall);
@@ -1002,294 +852,1145 @@
     }
     updateLeaderboard();
 
-    function renderShopItems() {
-      shopItemsDiv.innerHTML = "";
-      if (typeof trailsConfig !== 'undefined') {
-        let trailsHeader = document.createElement("h3");
-        trailsHeader.textContent = "Trails";
-        shopItemsDiv.appendChild(trailsHeader);
-        let trailsGrid = document.createElement("div");
-        trailsGrid.className = "shop-grid";
-        for (let id in trailsConfig) {
-          let trail = trailsConfig[id];
-          let div = document.createElement("div");
-          div.className = "shop-item";
-          div.innerHTML = `<strong>${trail.name}</strong><br>
-                           Price: ${trail.price} coins<br>`;
-          if (purchasedTrails.includes(trail.id)) {
-            if (currentTrailId === trail.id) { div.innerHTML += `<em>Selected</em>`; }
-            else {
-              let selectBtn = document.createElement("button");
-              selectBtn.textContent = "Select";
-              selectBtn.addEventListener("click", () => { 
-                currentTrailId = trail.id; 
-                localStorage.setItem("selectedTrail", currentTrailId); 
-                renderShopItems(); 
-              });
-              div.appendChild(selectBtn);
-            }
-          } else {
-            let buyBtn = document.createElement("button");
-            buyBtn.textContent = "Buy";
-            buyBtn.addEventListener("click", () => {
-              if (totalCoins >= trail.price) {
-                totalCoins -= trail.price;
-                localStorage.setItem("totalCoins", totalCoins);
-                shopBalance.textContent = `Total Coins: ${totalCoins}`;
-                purchasedTrails.push(trail.id);
-                localStorage.setItem("purchasedTrails", JSON.stringify(purchasedTrails));
-                renderShopItems();
-              } else { alert("Not enough coins!"); }
-            });
-            div.appendChild(buyBtn);
-          }
-          trailsGrid.appendChild(div);
-        }
-        shopItemsDiv.appendChild(trailsGrid);
-      }
-      let pipesHeader = document.createElement("h3");
-      pipesHeader.textContent = "Pipe Designs";
-      shopItemsDiv.appendChild(pipesHeader);
-      let pipesGrid = document.createElement("div");
-      pipesGrid.className = "shop-grid";
-      for (let id in pipeDesigns) {
-        let design = pipeDesigns[id];
-        let div = document.createElement("div");
-        div.className = "shop-item";
-        div.innerHTML = `<strong>${design.name}</strong><br>
-                         Price: ${design.price} coins<br>
-                         <img src="${design.preview}" alt="${design.name}"><br>`;
-        if (purchasedPipeDesigns.includes(design.id)) {
-          if (currentPipeDesign === design.id) { div.innerHTML += `<em>Selected</em>`; }
-          else {
-            let selectBtn = document.createElement("button");
-            selectBtn.textContent = "Select";
-            selectBtn.addEventListener("click", () => {
-              currentPipeDesign = design.id;
-              localStorage.setItem("selectedPipeDesign", currentPipeDesign);
-              renderShopItems();
-            });
-            div.appendChild(selectBtn);
-          }
-        } else {
-          let buyBtn = document.createElement("button");
-          buyBtn.textContent = "Buy";
-          buyBtn.addEventListener("click", () => {
-            if (totalCoins >= design.price) {
-              totalCoins -= design.price;
-              localStorage.setItem("totalCoins", totalCoins);
-              shopBalance.textContent = `Total Coins: ${totalCoins}`;
-              purchasedPipeDesigns.push(design.id);
-              localStorage.setItem("purchasedPipeDesigns", JSON.stringify(purchasedPipeDesigns));
-              renderShopItems();
-            } else { alert("Not enough coins!"); }
-          });
-          div.appendChild(buyBtn);
-        }
-        pipesGrid.appendChild(div);
-      }
-      shopItemsDiv.appendChild(pipesGrid);
+    /* ================= Режим DUNK (Dunk Shot) ================= */
+    // В этом режиме игрок падает вниз, пытаясь "влететь" в кольцо.
+    // Если попадание успешно, генерируется новое кольцо выше, а камера смещается вверх.
+    let dunkModeActive = false;
+    let cameraOffset = 0;
+    function spawnInitialRing() {
+      currentRing = { x: canvas.width / 2, y: canvas.height / 2, radius: ringRadius };
     }
-
-    /* ====== PLATFORMER MODE ====== */
-    let platformerGameStarted = false;
-    let door, player;
-    let keysDown = {};
-    let currentPlatforms = [];
-    const platformW = 150, platformH = 40, groundHeight = 80, platformHitboxOffset = 10;
-    let hasTouchedPlatform = false;
-    function generatePlatforms() {
-      let platforms = [];
-      const platformCount = 10;
-      platforms.push({
-        x: 0,
-        y: canvas.height - groundHeight,
-        width: canvas.width,
-        height: groundHeight,
-        isGround: true,
-        disappearStartTime: null
-      });
-      const gap = (canvas.height - 150) / (platformCount - 1);
-      for (let i = 1; i < platformCount; i++) {
-        let y = canvas.height - groundHeight - i * gap;
-        let x = Math.random() * (canvas.width - platformW);
-        platforms.push({
-          x: x,
-          y: y,
-          width: platformW,
-          height: platformH,
-          isGround: false,
-          disappearStartTime: null
-        });
-      }
-      return platforms;
+    let currentRing = null;
+    let ringRadius = 40;
+    function spawnNewRing() {
+      let newY = currentRing.y - (Math.random() * 100 + 150);
+      let newX = Math.random() * (canvas.width - 2 * ringRadius) + ringRadius;
+      currentRing = { x: newX, y: newY, radius: ringRadius };
     }
-    function startPlatformerLevel() {
-      platformerGameStarted = true;
-      paused = false;
-      hasTouchedPlatform = false;
-      score = 0;
-      currentPlatforms = generatePlatforms();
-      currentPlatforms.sort((a, b) => a.y - b.y);
-      let highestPlatform = currentPlatforms[0];
-      let doorX = Math.random() * (canvas.width - 50);
-      let doorY = highestPlatform.y - 80;
-      door = { x: doorX, y: doorY, width: 50, height: 70 };
-      player = {
-        x: canvas.width * 0.1,
-        y: canvas.height - 150,
-        width: 50,
-        height: 50,
-        vx: 0,
-        vy: 0,
-        speed: 3,
-        jumpForce: -12,
-        onGround: false
+    function startDunkMode() {
+      dunkModeActive = true;
+      cameraOffset = 0;
+      dunkScore = 0;
+      // Инициализируем игрока в нижней части экрана
+      dunkPlayer = { 
+        x: canvas.width / 2 - 25, 
+        y: canvas.height - 100, 
+        width: 50, 
+        height: 50, 
+        vx: 0, 
+        vy: 0 
       };
-      platformerLoop(currentPlatforms);
+      // Устанавливаем гравитацию и сбрасываем вертикальную скорость
+      dunkPlayer.vy = 0;
+      gravity = 0.5;
+      spawnInitialRing();
+      window.addEventListener("keydown", dunkKeyDown);
+      window.addEventListener("keyup", dunkKeyUp);
+      dunkModeLoop();
     }
-    function platformerLoop(platforms) {
-      if (!platformerGameStarted || paused) return;
+    let dunkKeys = {};
+    function dunkKeyDown(e) {
+      dunkKeys[e.code] = true;
+    }
+    function dunkKeyUp(e) {
+      dunkKeys[e.code] = false;
+    }
+    function dunkModeLoop() {
+      if (!dunkModeActive || paused) return;
       clearCanvas();
-      if (keysDown["ArrowLeft"]) { player.vx = -player.speed; }
-      else if (keysDown["ArrowRight"]) { player.vx = player.speed; }
-      else { player.vx = 0; }
-      if (keysDown["ArrowUp"] && player.onGround) {
-        player.vy = player.jumpForce;
-        player.onGround = false;
+      
+      // Управление игроком по горизонтали
+      if (dunkKeys["ArrowLeft"]) {
+        dunkPlayer.vx = -3;
+      } else if (dunkKeys["ArrowRight"]) {
+        dunkPlayer.vx = 3;
+      } else {
+        dunkPlayer.vx = 0;
       }
-      player.vy += 0.5;
-      player.x += player.vx;
-      player.y += player.vy;
-      player.onGround = false;
-      for (let i = 0; i < platforms.length; i++) {
-        let plat = platforms[i];
-        let left = plat.x + platformHitboxOffset;
-        let right = plat.x + plat.width - platformHitboxOffset;
-        let top = plat.y;
-        let bottom = plat.y + plat.height;
-        if (
-          player.x < right &&
-          player.x + player.width > left &&
-          player.y < bottom &&
-          player.y + player.height > top
-        ) {
-          if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
-            if (!plat.isGround) {
-              hasTouchedPlatform = true;
-              if (plat.disappearStartTime === null) {
-                plat.disappearStartTime = performance.now();
-              }
-            }
-            player.y = plat.y - player.height;
-            player.vy = 0;
-            player.onGround = true;
-            if (plat.isGround && hasTouchedPlatform) {
-              platformerGameStarted = false;
-              alert("Game Over");
-              endPlatformer();
-              return;
-            }
-          }
-        }
+      dunkPlayer.x += dunkPlayer.vx;
+      // Применяем гравитацию
+      dunkPlayer.vy += gravity;
+      dunkPlayer.y += dunkPlayer.vy;
+      
+      // Проверяем столкновение: если нижняя часть игрока попадает в область кольца, считаем попадание
+      if (dunkPlayer.y + dunkPlayer.height >= currentRing.y - currentRing.radius &&
+          dunkPlayer.y + dunkPlayer.height <= currentRing.y + currentRing.radius &&
+          dunkPlayer.x + dunkPlayer.width/2 >= currentRing.x - currentRing.radius &&
+          dunkPlayer.x + dunkPlayer.width/2 <= currentRing.x + currentRing.radius) {
+        dunkScore++;
+        // Перемещаем игрока на кольцо (для визуального эффекта)
+        dunkPlayer.y = currentRing.y - currentRing.radius - dunkPlayer.height;
+        dunkPlayer.vy = 0;
+        spawnNewRing();
+        // Сдвигаем камеру вверх
+        cameraOffset += 150;
       }
-      if (player.y > canvas.height) {
-        platformerGameStarted = false;
-        alert("Game Over");
-        endPlatformer();
+      // Применяем эффект скроллинга: сдвигаем всё вверх на cameraOffset
+      ctx.save();
+      ctx.translate(0, cameraOffset);
+      // Отрисовываем кольцо
+      drawRing();
+      // Отрисовываем игрока
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(dunkPlayer.x, dunkPlayer.y, dunkPlayer.width, dunkPlayer.height);
+      ctx.restore();
+      scoreElement.textContent = `Dunk Score: ${dunkScore}`;
+      
+      // Если игрок опустился ниже или поднялся за экран, завершаем игру
+      if (dunkPlayer.y - cameraOffset > canvas.height || dunkPlayer.y - cameraOffset + dunkPlayer.height < 0) {
+        gameOverOverlay.style.display = 'block';
+        window.removeEventListener("keydown", dunkKeyDown);
+        window.removeEventListener("keyup", dunkKeyUp);
         return;
       }
-      ctx.save();
-      ctx.translate(player.x + player.width/2, player.y + player.height/2);
-      let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
-      ctx.rotate(pAngle);
-      let currentSprite = player.vy < 0 ? currentCharacterJump : currentCharacterFall;
-      ctx.drawImage(currentSprite, -player.width/2, -player.height/2, player.width, player.height);
-      ctx.restore();
-      for (let i = platforms.length - 1; i >= 0; i--) {
-        let plat = platforms[i];
-        if (!plat.isGround && plat.disappearStartTime !== null) {
-          let elapsed = performance.now() - plat.disappearStartTime;
-          if (elapsed < 1000) { plat.opacity = 1 - elapsed / 1000; }
-          else { platforms.splice(i, 1); continue; }
-        } else {
-          plat.opacity = 1;
-        }
-      }
-      platforms.forEach(plat => drawPlatform(plat));
-      drawDoor(door.x, door.y, door.width, door.height);
-      if (
-        player.x < door.x + door.width &&
-        player.x + player.width > door.x &&
-        player.y < door.y + door.height &&
-        player.y + player.height > door.y
-      ) {
-        totalCoins += 10;
-        localStorage.setItem("totalCoins", totalCoins);
-        shopBalance.textContent = `Total Coins: ${totalCoins}`;
-        platformerGameStarted = false;
-        ctx.fillStyle = "#fff";
-        ctx.font = "20px 'Press Start 2P'";
-        ctx.textAlign = "center";
-        ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
-        setTimeout(() => { platformerLevel++; startPlatformerLevel(); }, 1500);
-        return;
-      }
-      requestAnimationFrame(() => platformerLoop(platforms));
+      requestAnimationFrame(dunkModeLoop);
     }
-    function endPlatformer() {
-      removeAllCoins();
-      menu.style.display = 'flex';
-      platformerPauseBtn.style.display = 'none';
-      platformerControls.style.display = 'none';
-      showProfileButton();
-      clearCanvas();
-      currentPlatforms = [];
-    }
-    function drawPlatform(plat) {
+    function drawRing() {
       ctx.save();
-      ctx.globalAlpha = plat.opacity || 1;
-      if (plat.isGround) {
-        ctx.fillStyle = "#87CEFA";
-        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-      }
-      else {
-        ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
-      }
+      // Рисуем кольцо в пиксельном стиле
+      ctx.strokeStyle = "#FFD700";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(currentRing.x, currentRing.y, currentRing.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(currentRing.x - currentRing.radius, currentRing.y);
+      ctx.lineTo(currentRing.x + currentRing.radius, currentRing.y);
+      ctx.moveTo(currentRing.x, currentRing.y - currentRing.radius);
+      ctx.lineTo(currentRing.x, currentRing.y + currentRing.radius);
+      ctx.stroke();
       ctx.restore();
     }
-    function drawDoor(x, y, width, height) {
-      ctx.fillStyle = "#663300";
-      ctx.fillRect(x, y, width, height);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x, y, width, height);
-    }
-    window.addEventListener("keydown", (e) => { 
-      if (selectedMode !== "PLATFORMER") keysDown[e.code] = true; 
-    });
-    window.addEventListener("keyup", (e) => { 
-      if (selectedMode !== "PLATFORMER") keysDown[e.code] = false; 
-    });
-    document.getElementById("btnLeft").addEventListener("mousedown", () => { keysDown["ArrowLeft"] = true; });
-    document.getElementById("btnLeft").addEventListener("mouseup", () => { keysDown["ArrowLeft"] = false; });
-    document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = true; });
-    document.getElementById("btnLeft").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = false; });
-    document.getElementById("btnUp").addEventListener("mousedown", () => { keysDown["ArrowUp"] = true; });
-    document.getElementById("btnUp").addEventListener("mouseup", () => { keysDown["ArrowUp"] = false; });
-    document.getElementById("btnUp").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowUp"] = true; });
-    document.getElementById("btnUp").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowUp"] = false; });
-    document.getElementById("btnRight").addEventListener("mousedown", () => { keysDown["ArrowRight"] = true; });
-    document.getElementById("btnRight").addEventListener("mouseup", () => { keysDown["ArrowRight"] = false; });
-    document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
-    document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
 
-    /* ====== Главное меню и пауза ====== */
+    /* ================= Остальные режимы остаются без изменений ================= */
+    let shadow = null;
+    function startFlyingMode() {
+      gameStarted = true;
+      score = 0;
+      coinCount = 0;
+      coins = [];
+      pipes = [];
+      particles = [];
+      reactionMessages = [];
+      scoreElement.style.display = 'block';
+      coinCountElement.style.display = 'flex';
+      nerpaImg = shadow && (shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall);
+      shadow = {
+        x: canvas.width * 0.1,
+        y: canvas.height * 0.5,
+        width: canvas.width * 0.1,
+        height: canvas.width * 0.1,
+        velocity: 0,
+        gravity: 0.35,
+        jump: -6
+      };
+      canvas.addEventListener("mousedown", flyJump);
+      canvas.addEventListener("touchstart", flyJumpTouch);
+      flyingGameLoop();
+    }
+    function flyJump(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyJumpTouch(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyingGameLoop() {
+      if (!gameStarted || paused) return;
+      clearCanvas();
+      shadow.velocity += shadow.gravity;
+      shadow.y += shadow.velocity;
+      spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      updateParticles();
+      if(selectedTheme === "JUNGLE"){
+        if(Math.random() < 0.02) {
+          spawnLeaf();
+        }
+        updateLeafParticles();
+        drawLeafParticles();
+      }
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
+        createPipe();
+      }
+      for (let pipe of pipes) {
+        pipe.x -= pipeSpeed;
+        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
+          score++;
+          pipe.passed = true;
+          if (score % 10 === 0) { showReaction('Score ' + score); }
+        }
+        if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+          clearCanvas();
+          gameStarted = false;
+          removeAllCoins();
+          scoreElement.style.display = 'none';
+          coinCountElement.style.display = 'none';
+          addXP(score);
+          setTimeout(() => {
+            saveScore(usernameGame, score);
+            gameOverOverlay.style.display = 'block';
+          }, 1000);
+          return;
+        }
+      }
+      coins.forEach(coin => {
+        coin.x -= pipeSpeed;
+        if (!coin.collected && checkCoinCollision(coin)) {
+          coin.collected = true;
+          coinCount++;
+          totalCoins++;
+          localStorage.setItem("totalCoins", totalCoins);
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        }
+      });
+      updateCoins();
+      drawParticles();
+      updateShadowImage();
+      ctx.save();
+      ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.rotate(angle);
+      let img = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
+      ctx.drawImage(img, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
+      ctx.restore();
+      drawPipes();
+      scoreElement.textContent = `Score: ${score}`;
+      document.getElementById('coinText').textContent = coinCount;
+      drawReactions();
+      requestAnimationFrame(flyingGameLoop);
+    }
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.save();
+        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
+        ctx.scale(1, -1);
+        ctx.drawImage(pipe.pipeImg, -pipeWidth/2, 0, pipeWidth, pipe.topHeight);
+        ctx.restore();
+        ctx.drawImage(pipe.pipeImg, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+      });
+    }
+    function createPipe() {
+      let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
+      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+      let pipeImg;
+      if(selectedTheme === "JUNGLE"){
+        pipeImg = (Math.random() < 0.6) ? pipeImageJungle1 : pipeImageJungle2;
+      } else {
+        pipeImg = pipeImage;
+      }
+      let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
+      let color = design ? design.colors[0] : "#fff";
+      pipes.push({
+        x: canvas.width,
+        topHeight: gapPosition,
+        bottomY: gapPosition + gap,
+        passed: false,
+        color: color,
+        design: design,
+        pipeImg: pipeImg
+      });
+      if(selectedMode === "FLYING") {
+        flyingPipeCounter++;
+        if (flyingPipeCounter % 5 === 0) {
+          createCoin(gapPosition, gap);
+        }
+      }
+    }
+    function checkCollision(pipe) {
+      let topPipeLeft = pipe.x + collisionOffsetLeft;
+      let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let topPipeBottom = pipe.topHeight - collisionOffsetTop;
+      let bottomPipeLeft = pipe.x + collisionOffsetLeft;
+      let bottomPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let bottomPipeTop = pipe.bottomY + collisionOffsetBottom;
+      let playerLeft = shadow.x;
+      let playerRight = shadow.x + shadow.width;
+      let playerTop = shadow.y;
+      let playerBottom = shadow.y + shadow.height;
+      let collidesTop =
+        playerRight > topPipeLeft &&
+        playerLeft < topPipeRight &&
+        playerTop < topPipeBottom;
+      let collidesBottom =
+        playerRight > bottomPipeLeft &&
+        playerLeft < bottomPipeRight &&
+        playerBottom > bottomPipeTop;
+      return collidesTop || collidesBottom;
+    }
+    function createCoin(gapPosition, gapSize) {
+      let coin = {
+        x: canvas.width + pipeWidth / 2,
+        y: gapPosition + gapSize / 2,
+        radius: canvas.width * 0.03,
+        collected: false
+      };
+      let coinEl = document.createElement('img');
+      coinEl.src = 'BACKGROUND/goldcoin.gif';
+      coinEl.style.position = 'absolute';
+      coinEl.style.pointerEvents = 'none';
+      coinEl.style.left = (coin.x - coin.radius) + "px";
+      coinEl.style.top = (coin.y - coin.radius) + "px";
+      coinEl.style.width = (coin.radius * 2) + "px";
+      coinEl.style.height = (coin.radius * 2) + "px";
+      document.getElementById('coinContainer').appendChild(coinEl);
+      coin.el = coinEl;
+      coins.push(coin);
+    }
+    function updateCoins() {
+      coins.forEach((coin, index) => {
+        if (!coin.collected) {
+          coin.el.style.left = (coin.x - coin.radius) + "px";
+          coin.el.style.top = (coin.y - coin.radius) + "px";
+        } else {
+          coin.el.remove();
+          coins.splice(index, 1);
+        }
+      });
+    }
+    function removeAllCoins() {
+      coins.forEach(coin => { if (coin.el) { coin.el.remove(); } });
+      coins = [];
+    }
+    function checkCoinCollision(coin) {
+      let cx = coin.x, cy = coin.y;
+      let rx = shadow.x, ry = shadow.y;
+      let rw = shadow.width, rh = shadow.height;
+      let nearestX = Math.max(rx, Math.min(cx, rx + rw));
+      let nearestY = Math.max(ry, Math.min(cy, ry + rh));
+      let dx = cx - nearestX;
+      let dy = cy - nearestY;
+      return (dx * dx + dy * dy) < (coin.radius * coin.radius);
+    }
+    function spawnParticle(x, y) {
+      particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
+    }
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.alpha -= p.decay;
+        p.x -= 0.5;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+    function showReaction(message) {
+      reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
+    }
+    function drawReactions() {
+      reactionMessages.forEach((msg, index) => {
+        ctx.save();
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.globalAlpha = msg.timer / 120;
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(msg.text, msg.x, msg.y);
+        ctx.restore();
+        msg.timer--;
+        if (msg.timer <= 0) {
+          reactionMessages.splice(index, 1);
+        }
+      });
+    }
+    function saveScore(name, points) {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      scores.push({ name, points });
+      scores.sort((a, b) => b.points - a.points);
+      scores = scores.slice(0, 5);
+      localStorage.setItem("scores", JSON.stringify(scores));
+      updateLeaderboard();
+    }
+    function updateLeaderboard() {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
+    }
+    updateLeaderboard();
+
+    /* ================= Остальные режимы остаются без изменений ================= */
+    let shadow = null;
+    function startFlyingMode() {
+      gameStarted = true;
+      score = 0;
+      coinCount = 0;
+      coins = [];
+      pipes = [];
+      particles = [];
+      reactionMessages = [];
+      scoreElement.style.display = 'block';
+      coinCountElement.style.display = 'flex';
+      nerpaImg = shadow && (shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall);
+      shadow = {
+        x: canvas.width * 0.1,
+        y: canvas.height * 0.5,
+        width: canvas.width * 0.1,
+        height: canvas.width * 0.1,
+        velocity: 0,
+        gravity: 0.35,
+        jump: -6
+      };
+      canvas.addEventListener("mousedown", flyJump);
+      canvas.addEventListener("touchstart", flyJumpTouch);
+      flyingGameLoop();
+    }
+    function flyJump(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyJumpTouch(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyingGameLoop() {
+      if (!gameStarted || paused) return;
+      clearCanvas();
+      shadow.velocity += shadow.gravity;
+      shadow.y += shadow.velocity;
+      spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      updateParticles();
+      if(selectedTheme === "JUNGLE"){
+        if(Math.random() < 0.02) {
+          spawnLeaf();
+        }
+        updateLeafParticles();
+        drawLeafParticles();
+      }
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
+        createPipe();
+      }
+      for (let pipe of pipes) {
+        pipe.x -= pipeSpeed;
+        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
+          score++;
+          pipe.passed = true;
+          if (score % 10 === 0) { showReaction('Score ' + score); }
+        }
+        if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+          clearCanvas();
+          gameStarted = false;
+          removeAllCoins();
+          scoreElement.style.display = 'none';
+          coinCountElement.style.display = 'none';
+          addXP(score);
+          setTimeout(() => {
+            saveScore(usernameGame, score);
+            gameOverOverlay.style.display = 'block';
+          }, 1000);
+          return;
+        }
+      }
+      coins.forEach(coin => {
+        coin.x -= pipeSpeed;
+        if (!coin.collected && checkCoinCollision(coin)) {
+          coin.collected = true;
+          coinCount++;
+          totalCoins++;
+          localStorage.setItem("totalCoins", totalCoins);
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        }
+      });
+      updateCoins();
+      drawParticles();
+      updateShadowImage();
+      ctx.save();
+      ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.rotate(angle);
+      let img = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
+      ctx.drawImage(img, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
+      ctx.restore();
+      drawPipes();
+      scoreElement.textContent = `Score: ${score}`;
+      document.getElementById('coinText').textContent = coinCount;
+      drawReactions();
+      requestAnimationFrame(flyingGameLoop);
+    }
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.save();
+        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
+        ctx.scale(1, -1);
+        ctx.drawImage(pipe.pipeImg, -pipeWidth/2, 0, pipeWidth, pipe.topHeight);
+        ctx.restore();
+        ctx.drawImage(pipe.pipeImg, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+      });
+    }
+    function createPipe() {
+      let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
+      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+      let pipeImg;
+      if(selectedTheme === "JUNGLE"){
+        pipeImg = (Math.random() < 0.6) ? pipeImageJungle1 : pipeImageJungle2;
+      } else {
+        pipeImg = pipeImage;
+      }
+      let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
+      let color = design ? design.colors[0] : "#fff";
+      pipes.push({
+        x: canvas.width,
+        topHeight: gapPosition,
+        bottomY: gapPosition + gap,
+        passed: false,
+        color: color,
+        design: design,
+        pipeImg: pipeImg
+      });
+      if(selectedMode === "FLYING") {
+        flyingPipeCounter++;
+        if (flyingPipeCounter % 5 === 0) {
+          createCoin(gapPosition, gap);
+        }
+      }
+    }
+    function checkCollision(pipe) {
+      let topPipeLeft = pipe.x + collisionOffsetLeft;
+      let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let topPipeBottom = pipe.topHeight - collisionOffsetTop;
+      let bottomPipeLeft = pipe.x + collisionOffsetLeft;
+      let bottomPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let bottomPipeTop = pipe.bottomY + collisionOffsetBottom;
+      let playerLeft = shadow.x;
+      let playerRight = shadow.x + shadow.width;
+      let playerTop = shadow.y;
+      let playerBottom = shadow.y + shadow.height;
+      let collidesTop =
+        playerRight > topPipeLeft &&
+        playerLeft < topPipeRight &&
+        playerTop < topPipeBottom;
+      let collidesBottom =
+        playerRight > bottomPipeLeft &&
+        playerLeft < bottomPipeRight &&
+        playerBottom > bottomPipeTop;
+      return collidesTop || collidesBottom;
+    }
+    function createCoin(gapPosition, gapSize) {
+      let coin = {
+        x: canvas.width + pipeWidth / 2,
+        y: gapPosition + gapSize / 2,
+        radius: canvas.width * 0.03,
+        collected: false
+      };
+      let coinEl = document.createElement('img');
+      coinEl.src = 'BACKGROUND/goldcoin.gif';
+      coinEl.style.position = 'absolute';
+      coinEl.style.pointerEvents = 'none';
+      coinEl.style.left = (coin.x - coin.radius) + "px";
+      coinEl.style.top = (coin.y - coin.radius) + "px";
+      coinEl.style.width = (coin.radius * 2) + "px";
+      coinEl.style.height = (coin.radius * 2) + "px";
+      document.getElementById('coinContainer').appendChild(coinEl);
+      coin.el = coinEl;
+      coins.push(coin);
+    }
+    function updateCoins() {
+      coins.forEach((coin, index) => {
+        if (!coin.collected) {
+          coin.el.style.left = (coin.x - coin.radius) + "px";
+          coin.el.style.top = (coin.y - coin.radius) + "px";
+        } else {
+          coin.el.remove();
+          coins.splice(index, 1);
+        }
+      });
+    }
+    function removeAllCoins() {
+      coins.forEach(coin => { if (coin.el) { coin.el.remove(); } });
+      coins = [];
+    }
+    function checkCoinCollision(coin) {
+      let cx = coin.x, cy = coin.y;
+      let rx = shadow.x, ry = shadow.y;
+      let rw = shadow.width, rh = shadow.height;
+      let nearestX = Math.max(rx, Math.min(cx, rx + rw));
+      let nearestY = Math.max(ry, Math.min(cy, ry + rh));
+      let dx = cx - nearestX;
+      let dy = cy - nearestY;
+      return (dx * dx + dy * dy) < (coin.radius * coin.radius);
+    }
+    function spawnParticle(x, y) {
+      particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
+    }
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.alpha -= p.decay;
+        p.x -= 0.5;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+    function showReaction(message) {
+      reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
+    }
+    function drawReactions() {
+      reactionMessages.forEach((msg, index) => {
+        ctx.save();
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.globalAlpha = msg.timer / 120;
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(msg.text, msg.x, msg.y);
+        ctx.restore();
+        msg.timer--;
+        if (msg.timer <= 0) {
+          reactionMessages.splice(index, 1);
+        }
+      });
+    }
+    function saveScore(name, points) {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      scores.push({ name, points });
+      scores.sort((a, b) => b.points - a.points);
+      scores = scores.slice(0, 5);
+      localStorage.setItem("scores", JSON.stringify(scores));
+      updateLeaderboard();
+    }
+    function updateLeaderboard() {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
+    }
+    updateLeaderboard();
+
+    /* ================= Остальные режимы остаются без изменений ================= */
+    let shadow = null;
+    function startFlyingMode() {
+      gameStarted = true;
+      score = 0;
+      coinCount = 0;
+      coins = [];
+      pipes = [];
+      particles = [];
+      reactionMessages = [];
+      scoreElement.style.display = 'block';
+      coinCountElement.style.display = 'flex';
+      nerpaImg = shadow && (shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall);
+      shadow = {
+        x: canvas.width * 0.1,
+        y: canvas.height * 0.5,
+        width: canvas.width * 0.1,
+        height: canvas.width * 0.1,
+        velocity: 0,
+        gravity: 0.35,
+        jump: -6
+      };
+      canvas.addEventListener("mousedown", flyJump);
+      canvas.addEventListener("touchstart", flyJumpTouch);
+      flyingGameLoop();
+    }
+    function flyJump(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyJumpTouch(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyingGameLoop() {
+      if (!gameStarted || paused) return;
+      clearCanvas();
+      shadow.velocity += shadow.gravity;
+      shadow.y += shadow.velocity;
+      spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      updateParticles();
+      if(selectedTheme === "JUNGLE"){
+        if(Math.random() < 0.02) {
+          spawnLeaf();
+        }
+        updateLeafParticles();
+        drawLeafParticles();
+      }
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
+        createPipe();
+      }
+      for (let pipe of pipes) {
+        pipe.x -= pipeSpeed;
+        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
+          score++;
+          pipe.passed = true;
+          if (score % 10 === 0) { showReaction('Score ' + score); }
+        }
+        if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+          clearCanvas();
+          gameStarted = false;
+          removeAllCoins();
+          scoreElement.style.display = 'none';
+          coinCountElement.style.display = 'none';
+          addXP(score);
+          setTimeout(() => {
+            saveScore(usernameGame, score);
+            gameOverOverlay.style.display = 'block';
+          }, 1000);
+          return;
+        }
+      }
+      coins.forEach(coin => {
+        coin.x -= pipeSpeed;
+        if (!coin.collected && checkCoinCollision(coin)) {
+          coin.collected = true;
+          coinCount++;
+          totalCoins++;
+          localStorage.setItem("totalCoins", totalCoins);
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        }
+      });
+      updateCoins();
+      drawParticles();
+      updateShadowImage();
+      ctx.save();
+      ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.rotate(angle);
+      let img = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
+      ctx.drawImage(img, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
+      ctx.restore();
+      drawPipes();
+      scoreElement.textContent = `Score: ${score}`;
+      document.getElementById('coinText').textContent = coinCount;
+      drawReactions();
+      requestAnimationFrame(flyingGameLoop);
+    }
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.save();
+        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
+        ctx.scale(1, -1);
+        ctx.drawImage(pipe.pipeImg, -pipeWidth/2, 0, pipeWidth, pipe.topHeight);
+        ctx.restore();
+        ctx.drawImage(pipe.pipeImg, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+      });
+    }
+    function createPipe() {
+      let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
+      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+      let pipeImg;
+      if(selectedTheme === "JUNGLE"){
+        pipeImg = (Math.random() < 0.6) ? pipeImageJungle1 : pipeImageJungle2;
+      } else {
+        pipeImg = pipeImage;
+      }
+      let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
+      let color = design ? design.colors[0] : "#fff";
+      pipes.push({
+        x: canvas.width,
+        topHeight: gapPosition,
+        bottomY: gapPosition + gap,
+        passed: false,
+        color: color,
+        design: design,
+        pipeImg: pipeImg
+      });
+      if(selectedMode === "FLYING") {
+        flyingPipeCounter++;
+        if (flyingPipeCounter % 5 === 0) {
+          createCoin(gapPosition, gap);
+        }
+      }
+    }
+    function checkCollision(pipe) {
+      let topPipeLeft = pipe.x + collisionOffsetLeft;
+      let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let topPipeBottom = pipe.topHeight - collisionOffsetTop;
+      let bottomPipeLeft = pipe.x + collisionOffsetLeft;
+      let bottomPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let bottomPipeTop = pipe.bottomY + collisionOffsetBottom;
+      let playerLeft = shadow.x;
+      let playerRight = shadow.x + shadow.width;
+      let playerTop = shadow.y;
+      let playerBottom = shadow.y + shadow.height;
+      let collidesTop =
+        playerRight > topPipeLeft &&
+        playerLeft < topPipeRight &&
+        playerTop < topPipeBottom;
+      let collidesBottom =
+        playerRight > bottomPipeLeft &&
+        playerLeft < bottomPipeRight &&
+        playerBottom > bottomPipeTop;
+      return collidesTop || collidesBottom;
+    }
+    function createCoin(gapPosition, gapSize) {
+      let coin = {
+        x: canvas.width + pipeWidth / 2,
+        y: gapPosition + gapSize / 2,
+        radius: canvas.width * 0.03,
+        collected: false
+      };
+      let coinEl = document.createElement('img');
+      coinEl.src = 'BACKGROUND/goldcoin.gif';
+      coinEl.style.position = 'absolute';
+      coinEl.style.pointerEvents = 'none';
+      coinEl.style.left = (coin.x - coin.radius) + "px";
+      coinEl.style.top = (coin.y - coin.radius) + "px";
+      coinEl.style.width = (coin.radius * 2) + "px";
+      coinEl.style.height = (coin.radius * 2) + "px";
+      document.getElementById('coinContainer').appendChild(coinEl);
+      coin.el = coinEl;
+      coins.push(coin);
+    }
+    function updateCoins() {
+      coins.forEach((coin, index) => {
+        if (!coin.collected) {
+          coin.el.style.left = (coin.x - coin.radius) + "px";
+          coin.el.style.top = (coin.y - coin.radius) + "px";
+        } else {
+          coin.el.remove();
+          coins.splice(index, 1);
+        }
+      });
+    }
+    function removeAllCoins() {
+      coins.forEach(coin => { if (coin.el) { coin.el.remove(); } });
+      coins = [];
+    }
+    function checkCoinCollision(coin) {
+      let cx = coin.x, cy = coin.y;
+      let rx = shadow.x, ry = shadow.y;
+      let rw = shadow.width, rh = shadow.height;
+      let nearestX = Math.max(rx, Math.min(cx, rx + rw));
+      let nearestY = Math.max(ry, Math.min(cy, ry + rh));
+      let dx = cx - nearestX;
+      let dy = cy - nearestY;
+      return (dx * dx + dy * dy) < (coin.radius * coin.radius);
+    }
+    function spawnParticle(x, y) {
+      particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
+    }
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.alpha -= p.decay;
+        p.x -= 0.5;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+    function showReaction(message) {
+      reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
+    }
+    function drawReactions() {
+      reactionMessages.forEach((msg, index) => {
+        ctx.save();
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.globalAlpha = msg.timer / 120;
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(msg.text, msg.x, msg.y);
+        ctx.restore();
+        msg.timer--;
+        if (msg.timer <= 0) {
+          reactionMessages.splice(index, 1);
+        }
+      });
+    }
+    function saveScore(name, points) {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      scores.push({ name, points });
+      scores.sort((a, b) => b.points - a.points);
+      scores = scores.slice(0, 5);
+      localStorage.setItem("scores", JSON.stringify(scores));
+      updateLeaderboard();
+    }
+    function updateLeaderboard() {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
+    }
+    updateLeaderboard();
+
+    /* ================= Остальные режимы остаются без изменений ================= */
+    let shadow = null;
+    function startFlyingMode() {
+      gameStarted = true;
+      score = 0;
+      coinCount = 0;
+      coins = [];
+      pipes = [];
+      particles = [];
+      reactionMessages = [];
+      scoreElement.style.display = 'block';
+      coinCountElement.style.display = 'flex';
+      nerpaImg = shadow && (shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall);
+      shadow = {
+        x: canvas.width * 0.1,
+        y: canvas.height * 0.5,
+        width: canvas.width * 0.1,
+        height: canvas.width * 0.1,
+        velocity: 0,
+        gravity: 0.35,
+        jump: -6
+      };
+      canvas.addEventListener("mousedown", flyJump);
+      canvas.addEventListener("touchstart", flyJumpTouch);
+      flyingGameLoop();
+    }
+    function flyJump(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyJumpTouch(e) {
+      e.preventDefault();
+      shadow.velocity = shadow.jump;
+    }
+    function flyingGameLoop() {
+      if (!gameStarted || paused) return;
+      clearCanvas();
+      shadow.velocity += shadow.gravity;
+      shadow.y += shadow.velocity;
+      spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      updateParticles();
+      if(selectedTheme === "JUNGLE"){
+        if(Math.random() < 0.02) {
+          spawnLeaf();
+        }
+        updateLeafParticles();
+        drawLeafParticles();
+      }
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - (canvas.width * 0.5)) {
+        createPipe();
+      }
+      for (let pipe of pipes) {
+        pipe.x -= pipeSpeed;
+        if (!pipe.passed && pipe.x + pipeWidth < shadow.x) {
+          score++;
+          pipe.passed = true;
+          if (score % 10 === 0) { showReaction('Score ' + score); }
+        }
+        if (checkCollision(pipe) || shadow.y < 0 || shadow.y + shadow.height > canvas.height) {
+          clearCanvas();
+          gameStarted = false;
+          removeAllCoins();
+          scoreElement.style.display = 'none';
+          coinCountElement.style.display = 'none';
+          addXP(score);
+          setTimeout(() => {
+            saveScore(usernameGame, score);
+            gameOverOverlay.style.display = 'block';
+          }, 1000);
+          return;
+        }
+      }
+      coins.forEach(coin => {
+        coin.x -= pipeSpeed;
+        if (!coin.collected && checkCoinCollision(coin)) {
+          coin.collected = true;
+          coinCount++;
+          totalCoins++;
+          localStorage.setItem("totalCoins", totalCoins);
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        }
+      });
+      updateCoins();
+      drawParticles();
+      updateShadowImage();
+      ctx.save();
+      ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.rotate(angle);
+      let img = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
+      ctx.drawImage(img, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
+      ctx.restore();
+      drawPipes();
+      scoreElement.textContent = `Score: ${score}`;
+      document.getElementById('coinText').textContent = coinCount;
+      drawReactions();
+      requestAnimationFrame(flyingGameLoop);
+    }
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.save();
+        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
+        ctx.scale(1, -1);
+        ctx.drawImage(pipe.pipeImg, -pipeWidth/2, 0, pipeWidth, pipe.topHeight);
+        ctx.restore();
+        ctx.drawImage(pipe.pipeImg, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
+      });
+    }
+    function createPipe() {
+      let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
+      const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+      let pipeImg;
+      if(selectedTheme === "JUNGLE"){
+        pipeImg = (Math.random() < 0.6) ? pipeImageJungle1 : pipeImageJungle2;
+      } else {
+        pipeImg = pipeImage;
+      }
+      let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
+      let color = design ? design.colors[0] : "#fff";
+      pipes.push({
+        x: canvas.width,
+        topHeight: gapPosition,
+        bottomY: gapPosition + gap,
+        passed: false,
+        color: color,
+        design: design,
+        pipeImg: pipeImg
+      });
+      if(selectedMode === "FLYING") {
+        flyingPipeCounter++;
+        if (flyingPipeCounter % 5 === 0) {
+          createCoin(gapPosition, gap);
+        }
+      }
+    }
+    function checkCollision(pipe) {
+      let topPipeLeft = pipe.x + collisionOffsetLeft;
+      let topPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let topPipeBottom = pipe.topHeight - collisionOffsetTop;
+      let bottomPipeLeft = pipe.x + collisionOffsetLeft;
+      let bottomPipeRight = pipe.x + pipeWidth - collisionOffsetRight;
+      let bottomPipeTop = pipe.bottomY + collisionOffsetBottom;
+      let playerLeft = shadow.x;
+      let playerRight = shadow.x + shadow.width;
+      let playerTop = shadow.y;
+      let playerBottom = shadow.y + shadow.height;
+      let collidesTop =
+        playerRight > topPipeLeft &&
+        playerLeft < topPipeRight &&
+        playerTop < topPipeBottom;
+      let collidesBottom =
+        playerRight > bottomPipeLeft &&
+        playerLeft < bottomPipeRight &&
+        playerBottom > bottomPipeTop;
+      return collidesTop || collidesBottom;
+    }
+    function createCoin(gapPosition, gapSize) {
+      let coin = {
+        x: canvas.width + pipeWidth / 2,
+        y: gapPosition + gapSize / 2,
+        radius: canvas.width * 0.03,
+        collected: false
+      };
+      let coinEl = document.createElement('img');
+      coinEl.src = 'BACKGROUND/goldcoin.gif';
+      coinEl.style.position = 'absolute';
+      coinEl.style.pointerEvents = 'none';
+      coinEl.style.left = (coin.x - coin.radius) + "px";
+      coinEl.style.top = (coin.y - coin.radius) + "px";
+      coinEl.style.width = (coin.radius * 2) + "px";
+      coinEl.style.height = (coin.radius * 2) + "px";
+      document.getElementById('coinContainer').appendChild(coinEl);
+      coin.el = coinEl;
+      coins.push(coin);
+    }
+    function updateCoins() {
+      coins.forEach((coin, index) => {
+        if (!coin.collected) {
+          coin.el.style.left = (coin.x - coin.radius) + "px";
+          coin.el.style.top = (coin.y - coin.radius) + "px";
+        } else {
+          coin.el.remove();
+          coins.splice(index, 1);
+        }
+      });
+    }
+    function removeAllCoins() {
+      coins.forEach(coin => { if (coin.el) { coin.el.remove(); } });
+      coins = [];
+    }
+    function checkCoinCollision(coin) {
+      let cx = coin.x, cy = coin.y;
+      let rx = shadow.x, ry = shadow.y;
+      let rw = shadow.width, rh = shadow.height;
+      let nearestX = Math.max(rx, Math.min(cx, rx + rw));
+      let nearestY = Math.max(ry, Math.min(cy, ry + rh));
+      let dx = cx - nearestX;
+      let dy = cy - nearestY;
+      return (dx * dx + dy * dy) < (coin.radius * coin.radius);
+    }
+    function spawnParticle(x, y) {
+      particles.push({ x: x, y: y, size: Math.random() * 4 + 4, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
+    }
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.alpha -= p.decay;
+        p.x -= 0.5;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+    function showReaction(message) {
+      reactionMessages.push({ text: message, timer: 120, x: canvas.width / 2, y: canvas.height / 2 });
+    }
+    function drawReactions() {
+      reactionMessages.forEach((msg, index) => {
+        ctx.save();
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.globalAlpha = msg.timer / 120;
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.fillText(msg.text, msg.x, msg.y);
+        ctx.restore();
+        msg.timer--;
+        if (msg.timer <= 0) {
+          reactionMessages.splice(index, 1);
+        }
+      });
+    }
+    function saveScore(name, points) {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      scores.push({ name, points });
+      scores.sort((a, b) => b.points - a.points);
+      scores = scores.slice(0, 5);
+      localStorage.setItem("scores", JSON.stringify(scores));
+      updateLeaderboard();
+    }
+    function updateLeaderboard() {
+      let scores = JSON.parse(localStorage.getItem("scores") || "[]");
+      topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
+    }
+    updateLeaderboard();
+
+    /* ================= События главного меню ================= */
     startBtn.addEventListener('click', () => {
-      // При нажатии на PLAY сначала показываем окно выбора темы
       themeSelectModal.style.display = 'flex';
     });
-    // Обработчики выбора темы
     document.getElementById("winterThemeBtn").addEventListener("click", () => {
       selectedTheme = "WINTER";
       updateTheme();
@@ -1366,7 +2067,8 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      dunkGameStarted = false;
+      dunkModeActive = false;
+      dunkModeActive = false;
       paused = false;
       clearCanvas();
       currentPlatforms = [];
@@ -1389,7 +2091,7 @@
       pauseMenu.style.display = 'none';
       if (selectedMode === "FLYING") { flyingGameLoop(); }
       else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
-      else if(selectedMode === "DUNK") { dunkGameLoop(); }
+      else if(selectedMode === "DUNK") { dunkModeLoop(); }
     });
     const exitBtn = document.getElementById('exitBtn');
     exitBtn.addEventListener('click', () => {
@@ -1401,7 +2103,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      dunkGameStarted = false;
+      dunkModeActive = false;
       clearCanvas();
       currentPlatforms = [];
       pipes = [];
