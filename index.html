@@ -254,8 +254,8 @@
     <h2>Select Mode</h2>
     <button id="flyingModeBtn">FLYING</button>
     <button id="platformerModeBtn">PLATFORMER</button>
-    <!-- Режим DUNK теперь заменён на новый режим DIVE (Seal Dive Challenge) -->
-    <button id="dunkModeBtn">DIVE</button>
+    <!-- Режим DIVE заменён на новый режим BRICKS (Break Bricks) -->
+    <button id="dunkModeBtn">BRICKS</button>
   </div>
 
   <div id="hardModeDescription">
@@ -497,264 +497,138 @@
       }
     }
 
-    /* ========= Режим DIVE (Seal Dive Challenge) ========= */
-    let diveGameStarted = false;
-    let diveLaunched = false;
-    let diveCoinCount = 0;
-    let diveDragging = false;
-    let dragStart = { x: 0, y: 0 };
-    let dragCurrent = { x: 0, y: 0 };
-    let diveSeal = null;
-    // Определяем уровень воды – когда seal достигнет этой отметки, можно выполнять прыжок
-    let waterLevel = canvas.height * 0.9;
-    function startDiveChallengeMode() {
-      diveGameStarted = true;
-      diveLaunched = false;
-      diveCoinCount = 0;
-      waterLevel = canvas.height * 0.9;
-      // Изначально seal стартует сверху, с небольшой начальной скоростью падения
-      diveSeal = {
-        x: canvas.width * 0.5,
-        y: 50,
-        radius: canvas.width * 0.05,
-        vx: 0,
-        vy: 3,
-        gravity: 0.2,
-        rotation: 0
+    /* ========= НОВЫЙ РЕЖИМ: BREAK BRICKS (копия Break Bricks) ========= */
+    let breakBricksGameStarted = false;
+    let breakBricksPaddle = null;
+    let breakBricksBall = null;
+    let breakBricksBricks = [];
+    let breakBricksRowCount = 5;
+    let breakBricksColCount = 8;
+    let breakBricksBrickWidth, breakBricksBrickHeight, breakBricksBrickPadding, breakBricksBrickOffsetTop, breakBricksBrickOffsetLeft;
+    function initBreakBricks() {
+      breakBricksBrickWidth = canvas.width / breakBricksColCount - 10;
+      breakBricksBrickHeight = 20;
+      breakBricksBrickPadding = 10;
+      breakBricksBrickOffsetTop = 30;
+      breakBricksBrickOffsetLeft = 10;
+      breakBricksBricks = [];
+      for(let c=0; c<breakBricksColCount; c++){
+        breakBricksBricks[c] = [];
+        for(let r=0; r<breakBricksRowCount; r++){
+          breakBricksBricks[c][r] = { x: 0, y: 0, status: 1 };
+        }
+      }
+    }
+    function startBreakBricksMode() {
+      breakBricksGameStarted = true;
+      selectedMode = "BRICKS";
+      // Инициализируем платформу (ракетку)
+      breakBricksPaddle = {
+        height: 10,
+        width: canvas.width * 0.2,
+        x: (canvas.width - canvas.width * 0.2) / 2
       };
-      // Удаляем возможные старые слушатели
-      addDiveListeners();
-      diveGameLoop();
+      // Используем seal fall как мяч (нерпа)
+      breakBricksBall = {
+        x: canvas.width/2,
+        y: canvas.height - 30,
+        radius: 10,
+        dx: 2,
+        dy: -2
+      };
+      initBreakBricks();
+      breakBricksGameLoop();
     }
-    function addDiveListeners() {
-      canvas.addEventListener("mousedown", diveMouseDown);
-      canvas.addEventListener("mousemove", diveMouseMove);
-      canvas.addEventListener("mouseup", diveMouseUp);
-      canvas.addEventListener("touchstart", diveTouchStart, {passive: false});
-      canvas.addEventListener("touchmove", diveTouchMove, {passive: false});
-      canvas.addEventListener("touchend", diveTouchEnd, {passive: false});
-    }
-    function removeDiveListeners() {
-      canvas.removeEventListener("mousedown", diveMouseDown);
-      canvas.removeEventListener("mousemove", diveMouseMove);
-      canvas.removeEventListener("mouseup", diveMouseUp);
-      canvas.removeEventListener("touchstart", diveTouchStart);
-      canvas.removeEventListener("touchmove", diveTouchMove);
-      canvas.removeEventListener("touchend", diveTouchEnd);
-    }
-    function diveGameLoop() {
-      if (!diveGameStarted || paused) return;
+    function breakBricksGameLoop() {
+      if (!breakBricksGameStarted || paused) return;
       clearCanvas();
-      // Если режим прыжка уже запущен, продолжаем обновлять траекторию
-      if (diveLaunched) {
-        // Гравитация всё ещё действует, но уже с отрицательным импульсом
-        diveSeal.vy += diveSeal.gravity;
-      } else {
-        // Режим падения – Seal ускоряется вниз
-        diveSeal.vy += diveSeal.gravity;
-      }
-      diveSeal.x += diveSeal.vx;
-      diveSeal.y += diveSeal.vy;
-      diveSeal.rotation += 0.1;
-      
-      // Простая проверка столкновения с краями экрана (отражение по горизонтали)
-      if(diveSeal.x - diveSeal.radius < 0) {
-        diveSeal.x = diveSeal.radius;
-        diveSeal.vx = Math.abs(diveSeal.vx);
-      }
-      if(diveSeal.x + diveSeal.radius > canvas.width) {
-        diveSeal.x = canvas.width - diveSeal.radius;
-        diveSeal.vx = -Math.abs(diveSeal.vx);
-      }
-      
-      // Спавним монеты случайным образом во время падения
-      if(Math.random() < 0.01) {
-        spawnDiveCoin();
-      }
-      updateDiveCoins();
-      
-      // Если Seal достиг уровня воды (waterLevel), то можно инициировать прыжковую фазу
-      if (!diveLaunched && diveSeal.y >= waterLevel && !diveDragging) {
-        // Можно дать небольшой автозапуск прыжка, если игрок не реагирует – но здесь ждём действия
-      }
-      
-      // Если Seal улетел за экран (верх или низ), завершаем раунд
-      if(diveSeal.y - diveSeal.radius > canvas.height || diveSeal.y + diveSeal.radius < 0) {
-        diveGameStarted = false;
-        removeDiveListeners();
-        addXP(diveCoinCount);
-        setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
-        return;
-      }
-      
-      // Отрисовка предсказанной траектории во время перетаскивания
-      if(diveDragging) {
-        let dxDrag = dragStart.x - dragCurrent.x;
-        let dyDrag = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dxDrag, dyDrag);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dxDrag *= scale;
-          dyDrag *= scale;
-        }
-        let vx = dxDrag * 0.3;
-        let vy = dyDrag * 0.3;
-        let predictedPoints = [];
-        let simulationTime = 4;
-        let dt = 0.1;
-        for(let t = 0; t < simulationTime; t += dt) {
-          let px = diveSeal.x + vx * t;
-          let py = diveSeal.y + vy * t + 0.5 * diveSeal.gravity * t * t;
-          predictedPoints.push({ x: px, y: py });
-          if(py > canvas.height || py < 0 || px < 0 || px > canvas.width) break;
-        }
-        ctx.save();
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        if(predictedPoints.length > 0) {
-          ctx.moveTo(predictedPoints[0].x, predictedPoints[0].y);
-          for(let i = 1; i < predictedPoints.length; i++){
-            ctx.lineTo(predictedPoints[i].x, predictedPoints[i].y);
+      // Отрисовка кирпичей
+      for(let c=0; c<breakBricksColCount; c++){
+        for(let r=0; r<breakBricksRowCount; r++){
+          if(breakBricksBricks[c][r].status == 1) {
+            let brickX = c * (breakBricksBrickWidth + breakBricksBrickPadding) + breakBricksBrickOffsetLeft;
+            let brickY = r * (breakBricksBrickHeight + breakBricksBrickPadding) + breakBricksBrickOffsetTop;
+            breakBricksBricks[c][r].x = brickX;
+            breakBricksBricks[c][r].y = brickY;
+            ctx.fillStyle = "#0095DD";
+            ctx.fillRect(brickX, brickY, breakBricksBrickWidth, breakBricksBrickHeight);
           }
         }
-        ctx.stroke();
-        ctx.restore();
       }
-      
-      // Рисуем Seal
+      // Отрисовка мяча (нерпа)
       ctx.save();
-      ctx.translate(diveSeal.x, diveSeal.y);
-      ctx.rotate(diveSeal.rotation);
-      let ballSize = diveSeal.radius * 2;
-      let img = diveSeal.vy < 0 ? currentCharacterJump : currentCharacterFall;
-      ctx.drawImage(img, -diveSeal.radius, -diveSeal.radius, ballSize, ballSize);
+      ctx.translate(breakBricksBall.x, breakBricksBall.y);
+      ctx.drawImage(currentCharacterFall, -breakBricksBall.radius, -breakBricksBall.radius, breakBricksBall.radius*2, breakBricksBall.radius*2);
       ctx.restore();
+      // Отрисовка ракетки (пользователь)
+      ctx.fillStyle = "#0095DD";
+      ctx.fillRect(breakBricksPaddle.x, canvas.height - breakBricksPaddle.height, breakBricksPaddle.width, breakBricksPaddle.height);
       
-      // Отображение счёта
-      scoreElement.textContent = `Dive Coins: ${diveCoinCount}`;
-      
-      requestAnimationFrame(diveGameLoop);
-    }
-    function diveMouseDown(e) {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      let dist = Math.hypot(mouseX - diveSeal.x, mouseY - diveSeal.y);
-      // Разрешаем запуск прыжка, если Seal уже у воды
-      if(dist <= diveSeal.radius && diveSeal.y >= waterLevel) {
-        diveDragging = true;
-        dragStart = { x: mouseX, y: mouseY };
-        dragCurrent = { x: mouseX, y: mouseY };
-        // Перед прыжком зануляем скорости
-        diveSeal.vx = 0;
-        diveSeal.vy = 0;
-      }
-    }
-    function diveMouseMove(e) {
-      if(diveDragging) {
-        const rect = canvas.getBoundingClientRect();
-        dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      }
-    }
-    function diveMouseUp(e) {
-      if(diveDragging) {
-        diveDragging = false;
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dx, dy);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dx *= scale;
-          dy *= scale;
-        }
-        diveSeal.vx = dx * 0.3;
-        diveSeal.vy = dy * 0.3;
-        diveLaunched = true;
-      }
-    }
-    function diveTouchStart(e) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
-      let dist = Math.hypot(touchX - diveSeal.x, touchY - diveSeal.y);
-      if(dist <= diveSeal.radius && diveSeal.y >= waterLevel) {
-        diveDragging = true;
-        dragStart = { x: touchX, y: touchY };
-        dragCurrent = { x: touchX, y: touchY };
-        diveSeal.vx = 0;
-        diveSeal.vy = 0;
-      }
-    }
-    function diveTouchMove(e) {
-      if(diveDragging) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        dragCurrent = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-      }
-    }
-    function diveTouchEnd(e) {
-      if(diveDragging) {
-        e.preventDefault();
-        diveDragging = false;
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dx, dy);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dx *= scale;
-          dy *= scale;
-        }
-        diveSeal.vx = dx * 0.3;
-        diveSeal.vy = dy * 0.3;
-        diveLaunched = true;
-      }
-    }
-    // Функции для создания и управления монетами в режиме DIVE
-    function spawnDiveCoin() {
-      let coin = {
-        x: Math.random() * (canvas.width - 40) + 20,
-        y: diveSeal.y + Math.random() * 200,
-        radius: canvas.width * 0.03,
-        collected: false
-      };
-      let coinEl = document.createElement('img');
-      coinEl.src = 'BACKGROUND/goldcoin.gif';
-      coinEl.style.position = 'absolute';
-      coinEl.style.pointerEvents = 'none';
-      coinEl.style.left = (coin.x - coin.radius) + "px";
-      coinEl.style.top = (coin.y - coin.radius) + "px";
-      coinEl.style.width = (coin.radius * 2) + "px";
-      coinEl.style.height = (coin.radius * 2) + "px";
-      document.getElementById('coinContainer').appendChild(coinEl);
-      coin.el = coinEl;
-      coins.push(coin);
-    }
-    function updateDiveCoins() {
-      coins.forEach((coin, index) => {
-        if (!coin.collected) {
-          coin.el.style.left = (coin.x - coin.radius) + "px";
-          coin.el.style.top = (coin.y - coin.radius) + "px";
-          // Проверяем столкновение с Seal
-          let dx = diveSeal.x - coin.x;
-          let dy = diveSeal.y - coin.y;
-          if (dx*dx + dy*dy < (diveSeal.radius + coin.radius) ** 2) {
-            coin.collected = true;
-            coin.el.remove();
-            diveCoinCount++;
+      // Проверка столкновений мяча с кирпичами
+      for(let c=0; c<breakBricksColCount; c++){
+        for(let r=0; r<breakBricksRowCount; r++){
+          let b = breakBricksBricks[c][r];
+          if(b.status == 1) {
+            if(breakBricksBall.x > b.x && breakBricksBall.x < b.x+breakBricksBrickWidth &&
+               breakBricksBall.y > b.y && breakBricksBall.y < b.y+breakBricksBrickHeight) {
+              breakBricksBall.dy = -breakBricksBall.dy;
+              b.status = 0;
+            }
           }
-        } else {
-          coin.el.remove();
-          coins.splice(index, 1);
         }
-      });
+      }
+      
+      // Столкновение с краями экрана
+      if(breakBricksBall.x + breakBricksBall.dx > canvas.width - breakBricksBall.radius || breakBricksBall.x + breakBricksBall.dx < breakBricksBall.radius){
+        breakBricksBall.dx = -breakBricksBall.dx;
+      }
+      if(breakBricksBall.y + breakBricksBall.dy < breakBricksBall.radius){
+        breakBricksBall.dy = -breakBricksBall.dy;
+      } else if (breakBricksBall.y + breakBricksBall.dy > canvas.height - breakBricksPaddle.height - breakBricksBall.radius) {
+        if(breakBricksBall.x > breakBricksPaddle.x && breakBricksBall.x < breakBricksPaddle.x + breakBricksPaddle.width) {
+          breakBricksBall.dy = -breakBricksBall.dy;
+        } else {
+          // проигрыш: мяч улетел за нижнюю границу
+          breakBricksGameStarted = false;
+          gameOverOverlay.style.display = 'block';
+          return;
+        }
+      }
+      
+      // Движение мяча
+      breakBricksBall.x += breakBricksBall.dx;
+      breakBricksBall.y += breakBricksBall.dy;
+      
+      // Управление ракеткой с помощью стрелок
+      if(keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
+        breakBricksPaddle.x -= 7;
+      }
+      if(keysDown["ArrowRight"] && breakBricksPaddle.x < canvas.width - breakBricksPaddle.width) {
+        breakBricksPaddle.x += 7;
+      }
+      
+      // Проверка: если все кирпичи разрушены – выигрыш уровня
+      let allBroken = true;
+      for(let c=0; c<breakBricksColCount; c++){
+        for(let r=0; r<breakBricksRowCount; r++){
+          if(breakBricksBricks[c][r].status == 1) {
+            allBroken = false;
+            break;
+          }
+        }
+        if(!allBroken) break;
+      }
+      if(allBroken) {
+        totalCoins += 5;
+        localStorage.setItem("totalCoins", totalCoins);
+        shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        // Немного увеличиваем скорость мяча для повышения сложности (но не слишком резко)
+        breakBricksBall.dx *= 1.05;
+        breakBricksBall.dy *= 1.05;
+        initBreakBricks();
+      }
+      
+      requestAnimationFrame(breakBricksGameLoop);
     }
 
     /* ========= FLYING MODE ========= */
@@ -1333,14 +1207,15 @@
       selectedMode = "PLATFORMER";
       startPlatformerLevel();
     });
+    // Режим DIVE заменён на новый режим BRICKS (Break Bricks)
+    dunkModeBtn.textContent = "BRICKS";
     dunkModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
       hideProfileButton();
-      // Режим DUNK теперь запускается как режим DIVE (Seal Dive Challenge)
-      selectedMode = "DIVE";
-      startDiveChallengeMode();
+      selectedMode = "BRICKS";
+      startBreakBricksMode();
     });
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
@@ -1365,7 +1240,7 @@
       gameOverOverlay.style.display = 'none';
       if(selectedMode === "FLYING") { startFlyingMode(); }
       else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "DIVE") { startDiveChallengeMode(); }
+      else if(selectedMode === "BRICKS") { breakBricksGameStarted && breakBricksGameLoop(); }
     });
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
@@ -1375,7 +1250,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      diveGameStarted = false;
+      breakBricksGameStarted = false;
       paused = false;
       clearCanvas();
       currentPlatforms = [];
@@ -1398,7 +1273,7 @@
       pauseMenu.style.display = 'none';
       if (selectedMode === "FLYING") { flyingGameLoop(); }
       else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
-      else if(selectedMode === "DIVE") { diveGameLoop(); }
+      else if(selectedMode === "BRICKS") { breakBricksGameLoop(); }
     });
     const exitBtn = document.getElementById('exitBtn');
     exitBtn.addEventListener('click', () => {
@@ -1410,7 +1285,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      diveGameStarted = false;
+      breakBricksGameStarted = false;
       clearCanvas();
       currentPlatforms = [];
       pipes = [];
