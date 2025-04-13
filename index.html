@@ -70,7 +70,7 @@
     }
     #shop {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      /* Фон магазина динамически обновляется функцией updateTheme() */
+      /* Фон магазина обновляется функцией updateTheme() */
       background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
                   url('BACKGROUND/photo_2025-03-12_12-26-18.gif') center/cover no-repeat;
       color: white; display: none; flex-direction: column;
@@ -108,7 +108,7 @@
       background: rgba(0,0,0,0.8); color: white; text-align: center;
       padding: 20px; z-index: 30; width: 80%; max-width: 400px;
     }
-    /* Новый модальный диалог для выбора темы */
+    /* Модальное окно выбора темы */
     #themeSelectModal {
       display: none; 
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -244,7 +244,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно для выбора темы (WINTER / JUNGLE) -->
+  <!-- Модальное окно выбора темы -->
   <div id="themeSelectModal">
     <h2>Select Theme</h2>
     <button id="winterThemeBtn">WINTER</button>
@@ -422,41 +422,31 @@
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
     let particles = [], coins = [], reactionMessages = [];
 
-    /* ====== Добавляем загрузку изображений персонажей ====== */
+    /* ====== Загрузка изображений персонажей (для обоих режимов используем seal) ====== */
     const sealJump = new Image(); sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image(); sealFall.src = 'BACKGROUND/seal fall.png';
-    const gorillaJump = new Image(); gorillaJump.src = 'BACKGROUND/gorilla jump.png';
-    const gorillaFall = new Image(); gorillaFall.src = 'BACKGROUND/gorilla fall.png';
-
-    // Глобальные переменные для текущего набора персонажа
+    // Глобальные переменные для текущего персонажа
     let currentCharacterJump = sealJump;
     let currentCharacterFall = sealFall;
     // Переменная выбранной темы (по умолчанию WINTER)
     let selectedTheme = "WINTER";
 
-    // Функция обновления темы: фон и персонажи
+    // Функция обновления темы: фон и персонажи (для JUNGLE меняем только фон)
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
         backgroundUrl = "BACKGROUND/photo_2025-03-12_12-26-18.gif";
-        currentCharacterJump = sealJump;
-        currentCharacterFall = sealFall;
       } else if(selectedTheme === "JUNGLE") {
-        // Предположим, что изображение фона для JUNGLE находится здесь (расширение можно изменить по необходимости)
         backgroundUrl = "BACKGROUND/JUNGLE BACKGROUND.jpeg";
-        currentCharacterJump = gorillaJump;
-        currentCharacterFall = gorillaFall;
       }
       document.getElementById("gameCanvas").style.background = `url('${backgroundUrl}') center/cover no-repeat`;
       document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
+      // Персонажи остаются seal независимо от выбранной темы
+      currentCharacterJump = sealJump;
+      currentCharacterFall = sealFall;
     }
 
-    /* ========= DUNK (SLINGSHOT) =========
-       Основные изменения:
-         - gravity: 0.4 (чтобы можно было долетать до кольца).
-         - maxPull: 0.2 (увеличено с 0.15).
-         - Сила броска (в vx, vy): умножаем dx, dy на 0.24 (было 0.2).
-    */
+    /* ========= DUNK (SLINGSHOT) ========= */
     let dunkGameStarted = false;
     let dunkLaunched = false;
     let dunkScore = 0;
@@ -473,7 +463,6 @@
       dunkScore = 0;
       dunkScored = false;
       dunkDragging = false;
-      // Увеличили гравитацию до 0.4
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
@@ -688,7 +677,6 @@
       ctx.translate(dunkPlayer.x, dunkPlayer.y);
       ctx.rotate(dunkPlayer.rotation);
       let ballSize = dunkPlayer.radius * 2;
-      // Выбираем изображение в зависимости от движения (при прыжке – currentCharacterJump, иначе currentCharacterFall)
       let img = dunkPlayer.vy < 0 ? currentCharacterJump : currentCharacterFall;
       ctx.drawImage(img, -dunkPlayer.radius, -dunkPlayer.radius, ballSize, ballSize);
       ctx.restore();
@@ -706,7 +694,6 @@
       reactionMessages = [];
       scoreElement.style.display = 'block';
       coinCountElement.style.display = 'flex';
-      // В зависимости от выбранной темы подставляем соответствующее изображение для прыжка
       nerpaImg = shadow && (shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall);
       shadow = {
         x: canvas.width * 0.1,
@@ -777,7 +764,6 @@
       ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
       let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
       ctx.rotate(angle);
-      // Используем текущее изображение в зависимости от направления
       let img = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
       ctx.drawImage(img, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
       ctx.restore();
@@ -1139,7 +1125,6 @@
       ctx.translate(player.x + player.width/2, player.y + player.height/2);
       let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
       ctx.rotate(pAngle);
-      // Выбираем спрайт в зависимости от направления (WINTER: seal, JUNGLE: gorilla)
       let currentSprite = player.vy < 0 ? currentCharacterJump : currentCharacterFall;
       ctx.drawImage(currentSprite, -player.width/2, -player.height/2, player.width, player.height);
       ctx.restore();
@@ -1226,7 +1211,7 @@
       // При нажатии на PLAY сначала показываем окно выбора темы
       themeSelectModal.style.display = 'flex';
     });
-    // Обработчики для выбора темы
+    // Обработчики выбора темы
     document.getElementById("winterThemeBtn").addEventListener("click", () => {
       selectedTheme = "WINTER";
       updateTheme();
@@ -1349,7 +1334,6 @@
     function hideProfileButton() { document.getElementById('profileBtn').style.display = 'none'; }
     function showProfileButton() { document.getElementById('profileBtn').style.display = 'block'; }
     function updateShadowImage() {
-      // Используем выбранные изображения персонажей в зависимости от направления движения
       nerpaImg = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
     }
     function resizeCanvas() {
