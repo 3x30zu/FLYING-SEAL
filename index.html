@@ -366,7 +366,14 @@
     let pipes = [];
     let pipeSpeed = 2;
     let pipeWidth = 75;
-    const pipeImage = new Image(); pipeImage.src = 'BACKGROUND/PIPE.png';
+    const pipeImage = new Image(); 
+    pipeImage.src = 'BACKGROUND/PIPE.png';
+    // Загружаем новые изображения для режима JUNGLE
+    const pipeImageJungle1 = new Image();
+    pipeImageJungle1.src = 'BACKGROUND/PIPE 1.png';
+    const pipeImageJungle2 = new Image();
+    pipeImageJungle2.src = 'BACKGROUND/PIPE 2.png';
+
     const platformImage = new Image(); platformImage.src = 'BACKGROUND/platform.png';
     let collisionOffsetLeft = 10, collisionOffsetRight = 10, collisionOffsetTop = 20, collisionOffsetBottom = 20;
     const canvas = document.getElementById('gameCanvas');
@@ -422,16 +429,16 @@
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
     let particles = [], coins = [], reactionMessages = [];
 
-    /* ====== Загрузка изображений персонажей (для обоих режимов используем seal) ====== */
+    /* ====== Загрузка изображений персонажей (используем seal для обоих режимов) ====== */
     const sealJump = new Image(); sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image(); sealFall.src = 'BACKGROUND/seal fall.png';
-    // Глобальные переменные для текущего персонажа
     let currentCharacterJump = sealJump;
     let currentCharacterFall = sealFall;
-    // Переменная выбранной темы (по умолчанию WINTER)
     let selectedTheme = "WINTER";
 
-    // Функция обновления темы: фон и персонажи (для JUNGLE меняем только фон)
+    // Функция обновления темы: для WINTER фон остается прежним,
+    // а для JUNGLE фон меняется на "JUNGLE BACKGROUND.jpeg".
+    // Персонажи остаются seal.
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
@@ -441,7 +448,6 @@
       }
       document.getElementById("gameCanvas").style.background = `url('${backgroundUrl}') center/cover no-repeat`;
       document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
-      // Персонажи остаются seal независимо от выбранной темы
       currentCharacterJump = sealJump;
       currentCharacterFall = sealFall;
     }
@@ -773,19 +779,20 @@
       drawReactions();
       requestAnimationFrame(flyingGameLoop);
     }
-    function drawPipes() {
-      pipes.forEach(pipe => {
-        ctx.save();
-        ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
-        ctx.scale(1, -1);
-        ctx.drawImage(pipeImage, -pipeWidth / 2, 0, pipeWidth, pipe.topHeight);
-        ctx.restore();
-        ctx.drawImage(pipeImage, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
-      });
-    }
+    // Функция создания трубы. Если выбрана тема JUNGLE, случайным образом выбираем между PIPE 1 и PIPE 2,
+    // при этом вероятность появления PIPE 1 устанавливается выше (около 80%).
     function createPipe() {
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
+      
+      // Определяем изображение трубы для режима JUNGLE
+      let pipeImg;
+      if(selectedTheme === "JUNGLE"){
+        pipeImg = (Math.random() < 0.8) ? pipeImageJungle1 : pipeImageJungle2;
+      } else {
+        pipeImg = pipeImage;
+      }
+      
       let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
       let color = design ? design.colors[0] : "#fff";
       pipes.push({
@@ -794,7 +801,8 @@
         bottomY: gapPosition + gap,
         passed: false,
         color: color,
-        design: design
+        design: design,
+        pipeImg: pipeImg
       });
       if(selectedMode === "FLYING") {
         flyingPipeCounter++;
@@ -1233,7 +1241,7 @@
       hideProfileButton();
       platformerControls.style.display = 'none';
       selectedMode = "FLYING";
-      flyingPipeCounter = 0;
+      flyingPipeCounter++;
       startFlyingMode();
     });
     platformerModeBtn.addEventListener('click', () => {
