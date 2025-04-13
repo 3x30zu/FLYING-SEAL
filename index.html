@@ -707,6 +707,34 @@
       requestAnimationFrame(breakBricksGameLoop);
     }
 
+    // Функция окончания режима BRICKS (можно добавить сброс или показ меню)
+    function endBreakBricks() {
+      // Здесь можно добавить действия по окончанию режима, например, показать меню
+      // Для простоты просто останавливаем игру
+      paused = true;
+    }
+
+    // Новая функция инициализации режима BRICKS
+    function startBreakBricksMode() {
+      paused = false;
+      // Инициализируем ракетку внизу экрана
+      breakBricksPaddle = {
+        x: canvas.width / 2 - 50,
+        y: canvas.height - 30,
+        width: 100,
+        height: 10
+      };
+      // Создаем первый шар (нерпу)
+      breakBricksBalls = [];
+      breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width / 2, breakBricksPaddle.y - 10, 4, -4));
+      // Задаем начальные параметры кирпичной сетки (можно изменить по желанию)
+      breakBricksRowCount = 8;
+      breakBricksColCount = 12;
+      initBreakBricks();
+      // Запускаем игровой цикл режима BRICKS
+      breakBricksGameLoop();
+    }
+
     /* ========= FLYING MODE ========= */
     let shadow = null;
     function startFlyingMode() {
@@ -1309,7 +1337,7 @@
       gameOverOverlay.style.display = 'none';
       if(selectedMode === "FLYING") { startFlyingMode(); }
       else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "BRICKS") { breakBricksGameLoop(); }
+      else if(selectedMode === "BRICKS") { startBreakBricksMode(); }
     });
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
@@ -1319,7 +1347,6 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      breakBricksGameStarted = false;
       paused = false;
       clearCanvas();
       currentPlatforms = [];
@@ -1354,7 +1381,6 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      breakBricksGameStarted = false;
       clearCanvas();
       currentPlatforms = [];
       pipes = [];
