@@ -445,8 +445,6 @@
     const leafImg = new Image();
     leafImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cpolygon points='10,0 15,10 10,20 5,10' fill='%234CAF50'/%3E%3C/svg%3E";
     let leafParticles = [];
-
-    // Функции для работы с листочками:
     function spawnLeaf() {
       let leaf = {
         x: Math.random() * canvas.width,
@@ -479,12 +477,6 @@
         ctx.restore();
       });
     }
-
-    // Функция обновления темы:
-    // - Для WINTER фон остается прежним.
-    // - Для JUNGLE фон меняется на "JUNGLE BACKGROUND.jpeg".
-    // - Персонажи остаются seal.
-    // - При теме JUNGLE все кнопки становятся зелёными.
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
@@ -499,8 +491,8 @@
       
       if(selectedTheme === "JUNGLE"){
         document.querySelectorAll("button").forEach(btn => {
-          btn.style.backgroundColor = "#4CAF50";  // зелёный фон
-          btn.style.borderColor = "#2E7D32";       // тёмно-зелёная граница
+          btn.style.backgroundColor = "#4CAF50";
+          btn.style.borderColor = "#2E7D32";
         });
       } else {
         document.querySelectorAll("button").forEach(btn => {
@@ -510,22 +502,29 @@
       }
     }
 
-    /* ========= DUNK (SLINGSHOT) ========= */
+    /* ========= DUNK MODE ========= */
+    // Глобальные переменные для режима DUNK
     let dunkGameStarted = false;
     let dunkLaunched = false;
     let dunkScore = 0;
-    let dunkPlayer = null;
-    let dunkBasket = null;
     let dunkScored = false;
     let dunkDragging = false;
     let dragStart = { x: 0, y: 0 };
     let dragCurrent = { x: 0, y: 0 };
+    // Объекты игрока и кольца в режиме DUNK (координаты в "мировых" величинах)
+    let dunkPlayer = null;
+    let dunkBasket = null;
+    // Переменная для смещения камеры (для эффекта движения вверх)
+    let dunkCameraOffset = 0;
+    // Инициализация режима DUNK
     function startDunkMode() {
       dunkGameStarted = true;
       dunkLaunched = false;
       dunkScore = 0;
       dunkScored = false;
       dunkDragging = false;
+      dunkCameraOffset = 0;
+      // Начальная позиция игрока и первого кольца
       dunkPlayer = {
         x: canvas.width * 0.2,
         y: canvas.height - 200,
@@ -536,10 +535,11 @@
         rotation: 0
       };
       dunkBasket = {
-        x: canvas.width * 0.75,
+        x: canvas.width * (0.3 + 0.4 * Math.random()),
         y: canvas.height * 0.4,
         radius: 40
       };
+      // Слушатели событий для управления перетаскиванием (мышь и сенсор)
       canvas.addEventListener("mousedown", dunkMouseDown);
       canvas.addEventListener("mousemove", dunkMouseMove);
       canvas.addEventListener("mouseup", dunkMouseUp);
@@ -559,43 +559,61 @@
     function dunkGameLoop() {
       if (!dunkGameStarted || paused) return;
       clearCanvas();
+      // Обновляем смещение камеры так, чтобы текущее кольцо располагалось на 40% высоты экрана
+      dunkCameraOffset = -dunkBasket.y + canvas.height * 0.4;
+      
+      // Если мяч запущен – обновляем его позицию по физике
       if (dunkLaunched) {
         dunkPlayer.vy += dunkPlayer.gravity;
         dunkPlayer.x += dunkPlayer.vx;
         dunkPlayer.y += dunkPlayer.vy;
         dunkPlayer.rotation += 0.1;
       }
-      if(dunkPlayer.x - dunkPlayer.radius < 0) {
-        dunkPlayer.x = dunkPlayer.radius;
-        dunkPlayer.vx = -dunkPlayer.vx;
-      }
-      if(dunkPlayer.x + dunkPlayer.radius > canvas.width) {
-        dunkPlayer.x = canvas.width - dunkPlayer.radius;
-        dunkPlayer.vx = -dunkPlayer.vx;
-      }
-      if (!dunkScored) {
-        let dx = dunkPlayer.x - dunkBasket.x;
-        let dy = dunkPlayer.y - dunkBasket.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        if(dist < dunkBasket.radius - dunkPlayer.radius * 0.3) {
-          dunkScore++;
-          dunkScored = true;
-          showReaction("Dunk! Score: " + dunkScore);
-          removeDunkListeners();
-          setTimeout(() => { addXP(dunkScore); startDunkMode(); }, 1000);
-          return;
-        }
-      }
-      drawBasket();
-      drawDunkBall();
-      if(dunkPlayer.y - dunkPlayer.radius > canvas.height || dunkPlayer.x + dunkPlayer.radius < 0 || dunkPlayer.x - dunkPlayer.radius > canvas.width) {
+      // Если мяч вышел за нижнюю границу экрана – игра окончена
+      if (dunkPlayer.y - dunkPlayer.radius > canvas.height - dunkCameraOffset) {
         dunkGameStarted = false;
         removeDunkListeners();
         addXP(dunkScore);
         setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
         return;
       }
+      // Если мяч попал в кольцо (не ранее засчитанного попадания)
+      if (!dunkScored) {
+        let dx = dunkPlayer.x - dunkBasket.x;
+        let dy = dunkPlayer.y - dunkBasket.y;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        // Порог попадания – внутренняя область кольца
+        if(dist < dunkBasket.radius) {
+          dunkScored = true;
+          dunkScore++;
+          showReaction("Dunk! Score: " + dunkScore);
+          // "Фиксируем" мяч в кольце
+          dunkPlayer.x = dunkBasket.x;
+          dunkPlayer.y = dunkBasket.y;
+          dunkPlayer.vx = 0;
+          dunkPlayer.vy = 0;
+          dunkPlayer.rotation = 0;
+          // Через небольшую задержку генерируем новое кольцо выше
+          setTimeout(() => {
+            let gap = 150; // расстояние между кольцами
+            dunkBasket = {
+              x: canvas.width * (0.3 + 0.4 * Math.random()),
+              y: dunkBasket.y - gap,
+              radius: 40
+            };
+            // Перемещаем мяч в новое кольцо
+            dunkPlayer.x = dunkBasket.x;
+            dunkPlayer.y = dunkBasket.y;
+            dunkScored = false;
+            dunkLaunched = false;
+          }, 800);
+        }
+      }
+      // Рисуем кольцо и мяч с учетом смещения камеры (для эффекта движения вверх)
+      drawBasket();
+      drawDunkBall();
       scoreElement.textContent = `Dunk Score: ${dunkScore}`;
+      // Если игрок перетаскивает мяч – показываем предсказание траектории
       if(dunkDragging) {
         let dx = dragStart.x - dragCurrent.x;
         let dy = dragStart.y - dragCurrent.y;
@@ -614,7 +632,7 @@
         for(let t = 0; t < simulationTime; t += dt) {
           let px = dunkPlayer.x + vx * t;
           let py = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
-          predictedPoints.push({ x: px, y: py });
+          predictedPoints.push({ x: px, y: py + dunkCameraOffset });
           if(py > canvas.height || px < 0 || px > canvas.width) {
             break;
           }
@@ -638,7 +656,7 @@
     function dunkMouseDown(e) {
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      const mouseY = e.clientY - rect.top - dunkCameraOffset;
       let dist = Math.hypot(mouseX - dunkPlayer.x, mouseY - dunkPlayer.y);
       if(dist <= dunkPlayer.radius) {
         dunkDragging = true;
@@ -652,7 +670,7 @@
     function dunkMouseMove(e) {
       if(dunkDragging) {
         const rect = canvas.getBoundingClientRect();
-        dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top - dunkCameraOffset };
       }
     }
     function dunkMouseUp(e) {
@@ -670,7 +688,6 @@
         dunkPlayer.vx = dx * 0.24;
         dunkPlayer.vy = dy * 0.24;
         dunkLaunched = true;
-        dunkScored = false;
       }
     }
     function dunkTouchStart(e) {
@@ -678,7 +695,7 @@
       const touch = e.touches[0];
       const rect = canvas.getBoundingClientRect();
       const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
+      const touchY = touch.clientY - rect.top - dunkCameraOffset;
       let dist = Math.hypot(touchX - dunkPlayer.x, touchY - dunkPlayer.y);
       if(dist <= dunkPlayer.radius) {
         dunkDragging = true;
@@ -694,7 +711,7 @@
         e.preventDefault();
         const touch = e.touches[0];
         const rect = canvas.getBoundingClientRect();
-        dragCurrent = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+        dragCurrent = { x: touch.clientX - rect.left, y: touch.clientY - rect.top - dunkCameraOffset };
       }
     }
     function dunkTouchEnd(e) {
@@ -713,31 +730,25 @@
         dunkPlayer.vx = dx * 0.24;
         dunkPlayer.vy = dy * 0.24;
         dunkLaunched = true;
-        dunkScored = false;
       }
     }
     function drawBasket() {
       ctx.save();
-      ctx.lineWidth = 5;
+      ctx.imageSmoothingEnabled = false; // для пиксельного стиля
+      let drawY = dunkBasket.y + dunkCameraOffset;
       ctx.strokeStyle = "#FF4500";
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.arc(dunkBasket.x, dunkBasket.y, dunkBasket.radius, Math.PI * 0.1, Math.PI * 0.9, false);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(
-        dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1),
-        dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1)
-      );
-      ctx.lineTo(
-        dunkBasket.x + dunkBasket.radius * Math.cos(Math.PI * 0.1),
-        dunkBasket.y - dunkBasket.radius * Math.sin(Math.PI * 0.1) - 50
-      );
+      // Рисуем полуокружность в стиле пиксель-арт
+      ctx.arc(dunkBasket.x, drawY, dunkBasket.radius, Math.PI, 2*Math.PI, false);
       ctx.stroke();
       ctx.restore();
     }
     function drawDunkBall() {
       ctx.save();
-      ctx.translate(dunkPlayer.x, dunkPlayer.y);
+      let drawX = dunkPlayer.x;
+      let drawY = dunkPlayer.y + dunkCameraOffset;
+      ctx.translate(drawX, drawY);
       ctx.rotate(dunkPlayer.rotation);
       let ballSize = dunkPlayer.radius * 2;
       let img = dunkPlayer.vy < 0 ? currentCharacterJump : currentCharacterFall;
@@ -755,10 +766,8 @@
       pipes = [];
       particles = [];
       reactionMessages = [];
-      // В режиме FLYING отображаем также листочки, если тема JUNGLE
       scoreElement.style.display = 'block';
       coinCountElement.style.display = 'flex';
-      nerpaImg = shadow && (shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall);
       shadow = {
         x: canvas.width * 0.1,
         y: canvas.height * 0.5,
@@ -1286,10 +1295,8 @@
 
     /* ====== Главное меню и пауза ====== */
     startBtn.addEventListener('click', () => {
-      // При нажатии на PLAY сначала показываем окно выбора темы
       themeSelectModal.style.display = 'flex';
     });
-    // Обработчики выбора темы
     document.getElementById("winterThemeBtn").addEventListener("click", () => {
       selectedTheme = "WINTER";
       updateTheme();
@@ -1337,8 +1344,8 @@
       window.open('https://t.me/FlyingSealCoin', '_blank');
     });
     shopBtn.addEventListener('click', () => {
-      menu.style.display = 'none';
       shop.style.display = 'flex';
+      menu.style.display = 'none';
       renderShopItems();
     });
     shopBackBtn.addEventListener('click', () => {
@@ -1412,7 +1419,7 @@
     function hideProfileButton() { document.getElementById('profileBtn').style.display = 'none'; }
     function showProfileButton() { document.getElementById('profileBtn').style.display = 'block'; }
     function updateShadowImage() {
-      nerpaImg = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
+      shadowImg = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
     }
     function resizeCanvas() {
       canvas.width = window.innerWidth;
