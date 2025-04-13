@@ -250,11 +250,12 @@
     <button id="jungleThemeBtn">JUNGLE</button>
   </div>
 
+  <!-- Модальное окно выбора режима -->
   <div id="modeSelectModal">
     <h2>Select Mode</h2>
     <button id="flyingModeBtn">FLYING</button>
     <button id="platformerModeBtn">PLATFORMER</button>
-    <button id="dunkModeBtn">DUNK</button>
+    <button id="seaFarmModeBtn">SEA FARM</button>
   </div>
 
   <div id="hardModeDescription">
@@ -397,7 +398,7 @@
     const modeSelectModal = document.getElementById('modeSelectModal');
     const flyingModeBtn = document.getElementById('flyingModeBtn');
     const platformerModeBtn = document.getElementById('platformerModeBtn');
-    const dunkModeBtn = document.getElementById('dunkModeBtn');
+    const seaFarmModeBtn = document.getElementById('seaFarmModeBtn');
     const platformerPauseBtn = document.getElementById('platformerPauseBtn');
     const pauseMenu = document.getElementById("pauseMenu");
     const platformerControls = document.getElementById("platformerControls");
@@ -494,270 +495,6 @@
           btn.style.borderColor = "#fff";
         });
       }
-    }
-
-    /* ========= DUNK MODE ========= */
-    let dunkGameStarted = false;
-    let dunkLaunched = false;
-    let dunkScore = 0;
-    let dunkScored = false;
-    let dunkDragging = false;
-    let dragStart = { x: 0, y: 0 };
-    let dragCurrent = { x: 0, y: 0 };
-    let dunkPlayer = null;
-    let dunkBasket = null;
-    let dunkCameraOffset = 0;
-    function startDunkMode() {
-      dunkGameStarted = true;
-      dunkLaunched = false;
-      dunkScore = 0;
-      dunkScored = false;
-      dunkDragging = false;
-      dunkCameraOffset = 0;
-      dunkPlayer = {
-        x: canvas.width * 0.2,
-        y: canvas.height - 200,
-        radius: canvas.width * 0.05,
-        vx: 0,
-        vy: 0,
-        gravity: 0.4,
-        rotation: 0
-      };
-      dunkBasket = {
-        x: canvas.width * (0.3 + 0.4 * Math.random()),
-        y: canvas.height * 0.4,
-        radius: 40
-      };
-      canvas.addEventListener("mousedown", dunkMouseDown);
-      canvas.addEventListener("mousemove", dunkMouseMove);
-      canvas.addEventListener("mouseup", dunkMouseUp);
-      canvas.addEventListener("touchstart", dunkTouchStart, {passive: false});
-      canvas.addEventListener("touchmove", dunkTouchMove, {passive: false});
-      canvas.addEventListener("touchend", dunkTouchEnd, {passive: false});
-      dunkGameLoop();
-    }
-    function removeDunkListeners() {
-      canvas.removeEventListener("mousedown", dunkMouseDown);
-      canvas.removeEventListener("mousemove", dunkMouseMove);
-      canvas.removeEventListener("mouseup", dunkMouseUp);
-      canvas.removeEventListener("touchstart", dunkTouchStart);
-      canvas.removeEventListener("touchmove", dunkTouchMove);
-      canvas.removeEventListener("touchend", dunkTouchEnd);
-    }
-    function dunkGameLoop() {
-      if (!dunkGameStarted || paused) return;
-      clearCanvas();
-      dunkCameraOffset = -dunkBasket.y + canvas.height * 0.4;
-      
-      // Сохраняем предыдущую вертикальную позицию (для упрощённой проверки попадания)
-      let prevY = dunkPlayer.y - dunkPlayer.vy;
-      if(dunkLaunched) {
-        dunkPlayer.vy += dunkPlayer.gravity;
-        dunkPlayer.x += dunkPlayer.vx;
-        dunkPlayer.y += dunkPlayer.vy;
-        dunkPlayer.rotation += 0.1;
-      }
-      
-      // Отскок от стен
-      if(dunkPlayer.x - dunkPlayer.radius < 0) {
-        dunkPlayer.x = dunkPlayer.radius;
-        dunkPlayer.vx = Math.abs(dunkPlayer.vx);
-      }
-      if(dunkPlayer.x + dunkPlayer.radius > canvas.width) {
-        dunkPlayer.x = canvas.width - dunkPlayer.radius;
-        dunkPlayer.vx = -Math.abs(dunkPlayer.vx);
-      }
-      
-      // Если персонаж приближается к кольцу
-      if(dunkPlayer.y >= dunkBasket.y && Math.abs(dunkPlayer.x - dunkBasket.x) < dunkBasket.radius * 0.5) {
-        // Простая проверка: если персонаж сверху и почти по центру кольца – фиксируем данк
-        dunkScored = true;
-        dunkScore++;
-        showReaction("Dunk! Score: " + dunkScore);
-        dunkPlayer.x = dunkBasket.x;
-        dunkPlayer.y = dunkBasket.y;
-        dunkPlayer.vx = 0;
-        dunkPlayer.vy = 0;
-        dunkPlayer.rotation = 0;
-        setTimeout(() => {
-          let gap = 150;
-          dunkBasket = {
-            x: canvas.width * (0.3 + 0.4 * Math.random()),
-            y: dunkBasket.y - gap,
-            radius: 40
-          };
-          dunkPlayer.x = dunkBasket.x;
-          dunkPlayer.y = dunkBasket.y;
-          dunkScored = false;
-          dunkLaunched = false;
-        }, 800);
-      } else {
-        // Если персонаж столкнулся с "ободом" кольца, применяем отскок
-        let dx = dunkPlayer.x - dunkBasket.x;
-        let dy = dunkPlayer.y - dunkBasket.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-        if(dist < dunkBasket.radius + dunkPlayer.radius) {
-          let normalX = dx / dist;
-          let normalY = dy / dist;
-          let dot = dunkPlayer.vx * normalX + dunkPlayer.vy * normalY;
-          dunkPlayer.vx = dunkPlayer.vx - 2 * dot * normalX;
-          dunkPlayer.vy = dunkPlayer.vy - 2 * dot * normalY;
-          dunkPlayer.vx *= 0.8;
-          dunkPlayer.vy *= 0.8;
-        }
-      }
-      
-      if(dunkPlayer.y - dunkPlayer.radius > canvas.height - dunkCameraOffset) {
-        dunkGameStarted = false;
-        removeDunkListeners();
-        addXP(dunkScore);
-        setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
-        return;
-      }
-      
-      drawBasket();
-      drawDunkBall();
-      scoreElement.textContent = `Dunk Score: ${dunkScore}`;
-      
-      if(dunkDragging) {
-        let dxDrag = dragStart.x - dragCurrent.x;
-        let dyDrag = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dxDrag, dyDrag);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dxDrag *= scale;
-          dyDrag *= scale;
-        }
-        let vx = dxDrag * 0.24;
-        let vy = dyDrag * 0.24;
-        let predictedPoints = [];
-        let simulationTime = 4;
-        let dt = 0.1;
-        for(let t = 0; t < simulationTime; t += dt) {
-          let px = dunkPlayer.x + vx * t;
-          let py = dunkPlayer.y + vy * t + 0.5 * dunkPlayer.gravity * t * t;
-          predictedPoints.push({ x: px, y: py + dunkCameraOffset });
-          if(py > canvas.height || px < 0 || px > canvas.width) break;
-        }
-        ctx.save();
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        if(predictedPoints.length > 0) {
-          ctx.moveTo(predictedPoints[0].x, predictedPoints[0].y);
-          for(let i = 1; i < predictedPoints.length; i++){
-            ctx.lineTo(predictedPoints[i].x, predictedPoints[i].y);
-          }
-        }
-        ctx.stroke();
-        ctx.restore();
-      }
-      
-      requestAnimationFrame(dunkGameLoop);
-    }
-    function dunkMouseDown(e) {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top - dunkCameraOffset;
-      let dist = Math.hypot(mouseX - dunkPlayer.x, mouseY - dunkPlayer.y);
-      if(dist <= dunkPlayer.radius) {
-        dunkDragging = true;
-        dragStart = { x: mouseX, y: mouseY };
-        dragCurrent = { x: mouseX, y: mouseY };
-        dunkLaunched = false;
-        dunkPlayer.vx = 0;
-        dunkPlayer.vy = 0;
-      }
-    }
-    function dunkMouseMove(e) {
-      if(dunkDragging) {
-        const rect = canvas.getBoundingClientRect();
-        dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top - dunkCameraOffset };
-      }
-    }
-    function dunkMouseUp(e) {
-      if(dunkDragging) {
-        dunkDragging = false;
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dx, dy);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dx *= scale;
-          dy *= scale;
-        }
-        dunkPlayer.vx = dx * 0.24;
-        dunkPlayer.vy = dy * 0.24;
-        dunkLaunched = true;
-      }
-    }
-    function dunkTouchStart(e) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top - dunkCameraOffset;
-      let dist = Math.hypot(touchX - dunkPlayer.x, touchY - dunkPlayer.y);
-      if(dist <= dunkPlayer.radius) {
-        dunkDragging = true;
-        dragStart = { x: touchX, y: touchY };
-        dragCurrent = { x: touchX, y: touchY };
-        dunkLaunched = false;
-        dunkPlayer.vx = 0;
-        dunkPlayer.vy = 0;
-      }
-    }
-    function dunkTouchMove(e) {
-      if(dunkDragging) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        dragCurrent = { x: touch.clientX - rect.left, y: touch.clientY - rect.top - dunkCameraOffset };
-      }
-    }
-    function dunkTouchEnd(e) {
-      if(dunkDragging) {
-        e.preventDefault();
-        dunkDragging = false;
-        let dx = dragStart.x - dragCurrent.x;
-        let dy = dragStart.y - dragCurrent.y;
-        const maxPull = canvas.width * 0.2;
-        let pullDistance = Math.hypot(dx, dy);
-        if(pullDistance > maxPull) {
-          let scale = maxPull / pullDistance;
-          dx *= scale;
-          dy *= scale;
-        }
-        dunkPlayer.vx = dx * 0.24;
-        dunkPlayer.vy = dy * 0.24;
-        dunkLaunched = true;
-      }
-    }
-    // Отрисовка кольца – дуга от 0 до Math.PI (нижняя половина, открытая сверху)
-    function drawBasket() {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      let drawY = dunkBasket.y + dunkCameraOffset;
-      ctx.strokeStyle = "#FF4500";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(dunkBasket.x, drawY, dunkBasket.radius, 0, Math.PI, false);
-      ctx.stroke();
-      ctx.restore();
-    }
-    function drawDunkBall() {
-      ctx.save();
-      let drawX = dunkPlayer.x;
-      let drawY = dunkPlayer.y + dunkCameraOffset;
-      ctx.translate(drawX, drawY);
-      ctx.rotate(dunkPlayer.rotation);
-      let ballSize = dunkPlayer.radius * 2;
-      let img = dunkPlayer.vy < 0 ? currentCharacterJump : currentCharacterFall;
-      ctx.drawImage(img, -dunkPlayer.radius, -dunkPlayer.radius, ballSize, ballSize);
-      ctx.restore();
     }
 
     /* ========= FLYING MODE ========= */
@@ -1297,6 +1034,107 @@
     document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
     document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
 
+    /* ====== Sea Farm Mode (новый режим вместо DUNK) ====== */
+    let seaFarmGameStarted = false;
+    let seaFarmScore = 0;
+    let seaFarmCoins = 0;
+    let autoFarmInterval = null;
+    function startSeaFarmMode() {
+      seaFarmGameStarted = true;
+      seaFarmScore = 0;
+      seaFarmCoins = 0;
+      clearCanvas();
+      // Выводим заголовок и инструкции
+      ctx.fillStyle = "#fff";
+      ctx.font = "20px 'Press Start 2P'";
+      ctx.textAlign = "center";
+      ctx.fillText("Sea Farm Mode", canvas.width/2, 50);
+      ctx.fillText("Click on the Seal", canvas.width/2, 80);
+      // Рисуем тюленя в центре
+      drawSealAt(canvas.width/2, canvas.height/2);
+      // Устанавливаем обработчики клика
+      canvas.addEventListener("mousedown", seaFarmClick);
+      canvas.addEventListener("touchstart", seaFarmClickTouch, {passive: false});
+      // Запускаем автоферму (увеличение монет каждую секунду)
+      autoFarmInterval = setInterval(() => {
+        if (seaFarmGameStarted) {
+          seaFarmCoins += 1;
+          updateSeaFarmUI();
+        }
+      }, 1000);
+    }
+    function seaFarmClick(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      handleSeaFarmClick(clickX, clickY);
+    }
+    function seaFarmClickTouch(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const clickX = touch.clientX - rect.left;
+      const clickY = touch.clientY - rect.top;
+      handleSeaFarmClick(clickX, clickY);
+    }
+    function handleSeaFarmClick(x, y) {
+      // Предполагаем, что тюлень рисуется по центру
+      const sealX = canvas.width/2;
+      const sealY = canvas.height/2;
+      const sealRadius = canvas.width * 0.15; // примерно размер тюленя
+      const dx = x - sealX;
+      const dy = y - sealY;
+      if (Math.hypot(dx, dy) <= sealRadius) {
+        seaFarmScore++;
+        seaFarmCoins += 5;  // бонус за клик
+        showReaction("Farmed: +5");
+        updateSeaFarmUI();
+        animateSealClick();
+      }
+    }
+    function updateSeaFarmUI() {
+      document.getElementById('score').textContent = "Clicks: " + seaFarmScore;
+      document.getElementById('coinText').textContent = seaFarmCoins;
+    }
+    function animateSealClick() {
+      clearCanvas();
+      ctx.save();
+      ctx.translate(canvas.width/2, canvas.height/2);
+      ctx.scale(1.2,1.2);
+      let ballSize = canvas.width * 0.3;
+      ctx.drawImage(currentCharacterJump, -ballSize/2, -ballSize/2, ballSize, ballSize);
+      ctx.restore();
+      setTimeout(() => {
+        clearCanvas();
+        drawSealAt(canvas.width/2, canvas.height/2);
+        updateSeaFarmUI();
+      }, 100);
+    }
+    function drawSealAt(x, y) {
+      let ballSize = canvas.width * 0.3;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.drawImage(currentCharacterFall, -ballSize/2, -ballSize/2, ballSize, ballSize);
+      ctx.restore();
+    }
+    function seaFarmGameLoop() {
+      if (!seaFarmGameStarted || paused) return;
+      clearCanvas();
+      ctx.fillStyle = "#fff";
+      ctx.font = "20px 'Press Start 2P'";
+      ctx.textAlign = "center";
+      ctx.fillText("Sea Farm Mode", canvas.width/2, 50);
+      ctx.fillText("Click on the Seal", canvas.width/2, 80);
+      drawSealAt(canvas.width/2, canvas.height/2);
+      requestAnimationFrame(seaFarmGameLoop);
+    }
+    function stopSeaFarmMode() {
+      seaFarmGameStarted = false;
+      canvas.removeEventListener("mousedown", seaFarmClick);
+      canvas.removeEventListener("touchstart", seaFarmClickTouch);
+      clearInterval(autoFarmInterval);
+    }
+
     /* ====== Главное меню и пауза ====== */
     startBtn.addEventListener('click', () => {
       themeSelectModal.style.display = 'flex';
@@ -1336,13 +1174,16 @@
       selectedMode = "PLATFORMER";
       startPlatformerLevel();
     });
-    dunkModeBtn.addEventListener('click', () => {
+    seaFarmModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
       hideProfileButton();
-      selectedMode = "DUNK";
-      startDunkMode();
+      selectedMode = "SEA_FARM";
+      document.getElementById('score').style.display = 'block';
+      coinCountElement.style.display = 'flex';
+      startSeaFarmMode();
+      seaFarmGameLoop();
     });
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
@@ -1367,7 +1208,10 @@
       gameOverOverlay.style.display = 'none';
       if(selectedMode === "FLYING") { startFlyingMode(); }
       else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "DUNK") { startDunkMode(); }
+      else if(selectedMode === "SEA_FARM") { 
+        startSeaFarmMode();
+        seaFarmGameLoop();
+      }
     });
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
@@ -1377,7 +1221,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      dunkGameStarted = false;
+      stopSeaFarmMode();
       paused = false;
       clearCanvas();
       currentPlatforms = [];
@@ -1400,7 +1244,7 @@
       pauseMenu.style.display = 'none';
       if (selectedMode === "FLYING") { flyingGameLoop(); }
       else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
-      else if(selectedMode === "DUNK") { dunkGameLoop(); }
+      else if(selectedMode === "SEA_FARM") { seaFarmGameLoop(); }
     });
     const exitBtn = document.getElementById('exitBtn');
     exitBtn.addEventListener('click', () => {
@@ -1412,7 +1256,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      dunkGameStarted = false;
+      stopSeaFarmMode();
       clearCanvas();
       currentPlatforms = [];
       pipes = [];
