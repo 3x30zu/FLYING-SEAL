@@ -250,12 +250,12 @@
     <button id="jungleThemeBtn">JUNGLE</button>
   </div>
 
-  <!-- Модальное окно выбора режима -->
   <div id="modeSelectModal">
     <h2>Select Mode</h2>
     <button id="flyingModeBtn">FLYING</button>
     <button id="platformerModeBtn">PLATFORMER</button>
-    <button id="seaFarmModeBtn">SEA FARM</button>
+    <!-- Режим DUNK теперь заменён на новый режим DIVE (Seal Dive Challenge) -->
+    <button id="dunkModeBtn">DIVE</button>
   </div>
 
   <div id="hardModeDescription">
@@ -398,7 +398,7 @@
     const modeSelectModal = document.getElementById('modeSelectModal');
     const flyingModeBtn = document.getElementById('flyingModeBtn');
     const platformerModeBtn = document.getElementById('platformerModeBtn');
-    const seaFarmModeBtn = document.getElementById('seaFarmModeBtn');
+    const dunkModeBtn = document.getElementById('dunkModeBtn');
     const platformerPauseBtn = document.getElementById('platformerPauseBtn');
     const pauseMenu = document.getElementById("pauseMenu");
     const platformerControls = document.getElementById("platformerControls");
@@ -495,6 +495,266 @@
           btn.style.borderColor = "#fff";
         });
       }
+    }
+
+    /* ========= Режим DIVE (Seal Dive Challenge) ========= */
+    let diveGameStarted = false;
+    let diveLaunched = false;
+    let diveCoinCount = 0;
+    let diveDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragCurrent = { x: 0, y: 0 };
+    let diveSeal = null;
+    // Определяем уровень воды – когда seal достигнет этой отметки, можно выполнять прыжок
+    let waterLevel = canvas.height * 0.9;
+    function startDiveChallengeMode() {
+      diveGameStarted = true;
+      diveLaunched = false;
+      diveCoinCount = 0;
+      waterLevel = canvas.height * 0.9;
+      // Изначально seal стартует сверху, с небольшой начальной скоростью падения
+      diveSeal = {
+        x: canvas.width * 0.5,
+        y: 50,
+        radius: canvas.width * 0.05,
+        vx: 0,
+        vy: 3,
+        gravity: 0.2,
+        rotation: 0
+      };
+      // Удаляем возможные старые слушатели
+      addDiveListeners();
+      diveGameLoop();
+    }
+    function addDiveListeners() {
+      canvas.addEventListener("mousedown", diveMouseDown);
+      canvas.addEventListener("mousemove", diveMouseMove);
+      canvas.addEventListener("mouseup", diveMouseUp);
+      canvas.addEventListener("touchstart", diveTouchStart, {passive: false});
+      canvas.addEventListener("touchmove", diveTouchMove, {passive: false});
+      canvas.addEventListener("touchend", diveTouchEnd, {passive: false});
+    }
+    function removeDiveListeners() {
+      canvas.removeEventListener("mousedown", diveMouseDown);
+      canvas.removeEventListener("mousemove", diveMouseMove);
+      canvas.removeEventListener("mouseup", diveMouseUp);
+      canvas.removeEventListener("touchstart", diveTouchStart);
+      canvas.removeEventListener("touchmove", diveTouchMove);
+      canvas.removeEventListener("touchend", diveTouchEnd);
+    }
+    function diveGameLoop() {
+      if (!diveGameStarted || paused) return;
+      clearCanvas();
+      // Если режим прыжка уже запущен, продолжаем обновлять траекторию
+      if (diveLaunched) {
+        // Гравитация всё ещё действует, но уже с отрицательным импульсом
+        diveSeal.vy += diveSeal.gravity;
+      } else {
+        // Режим падения – Seal ускоряется вниз
+        diveSeal.vy += diveSeal.gravity;
+      }
+      diveSeal.x += diveSeal.vx;
+      diveSeal.y += diveSeal.vy;
+      diveSeal.rotation += 0.1;
+      
+      // Простая проверка столкновения с краями экрана (отражение по горизонтали)
+      if(diveSeal.x - diveSeal.radius < 0) {
+        diveSeal.x = diveSeal.radius;
+        diveSeal.vx = Math.abs(diveSeal.vx);
+      }
+      if(diveSeal.x + diveSeal.radius > canvas.width) {
+        diveSeal.x = canvas.width - diveSeal.radius;
+        diveSeal.vx = -Math.abs(diveSeal.vx);
+      }
+      
+      // Спавним монеты случайным образом во время падения
+      if(Math.random() < 0.01) {
+        spawnDiveCoin();
+      }
+      updateDiveCoins();
+      
+      // Если Seal достиг уровня воды (waterLevel), то можно инициировать прыжковую фазу
+      if (!diveLaunched && diveSeal.y >= waterLevel && !diveDragging) {
+        // Можно дать небольшой автозапуск прыжка, если игрок не реагирует – но здесь ждём действия
+      }
+      
+      // Если Seal улетел за экран (верх или низ), завершаем раунд
+      if(diveSeal.y - diveSeal.radius > canvas.height || diveSeal.y + diveSeal.radius < 0) {
+        diveGameStarted = false;
+        removeDiveListeners();
+        addXP(diveCoinCount);
+        setTimeout(() => { gameOverOverlay.style.display = 'block'; }, 1000);
+        return;
+      }
+      
+      // Отрисовка предсказанной траектории во время перетаскивания
+      if(diveDragging) {
+        let dxDrag = dragStart.x - dragCurrent.x;
+        let dyDrag = dragStart.y - dragCurrent.y;
+        const maxPull = canvas.width * 0.2;
+        let pullDistance = Math.hypot(dxDrag, dyDrag);
+        if(pullDistance > maxPull) {
+          let scale = maxPull / pullDistance;
+          dxDrag *= scale;
+          dyDrag *= scale;
+        }
+        let vx = dxDrag * 0.3;
+        let vy = dyDrag * 0.3;
+        let predictedPoints = [];
+        let simulationTime = 4;
+        let dt = 0.1;
+        for(let t = 0; t < simulationTime; t += dt) {
+          let px = diveSeal.x + vx * t;
+          let py = diveSeal.y + vy * t + 0.5 * diveSeal.gravity * t * t;
+          predictedPoints.push({ x: px, y: py });
+          if(py > canvas.height || py < 0 || px < 0 || px > canvas.width) break;
+        }
+        ctx.save();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        if(predictedPoints.length > 0) {
+          ctx.moveTo(predictedPoints[0].x, predictedPoints[0].y);
+          for(let i = 1; i < predictedPoints.length; i++){
+            ctx.lineTo(predictedPoints[i].x, predictedPoints[i].y);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      
+      // Рисуем Seal
+      ctx.save();
+      ctx.translate(diveSeal.x, diveSeal.y);
+      ctx.rotate(diveSeal.rotation);
+      let ballSize = diveSeal.radius * 2;
+      let img = diveSeal.vy < 0 ? currentCharacterJump : currentCharacterFall;
+      ctx.drawImage(img, -diveSeal.radius, -diveSeal.radius, ballSize, ballSize);
+      ctx.restore();
+      
+      // Отображение счёта
+      scoreElement.textContent = `Dive Coins: ${diveCoinCount}`;
+      
+      requestAnimationFrame(diveGameLoop);
+    }
+    function diveMouseDown(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      let dist = Math.hypot(mouseX - diveSeal.x, mouseY - diveSeal.y);
+      // Разрешаем запуск прыжка, если Seal уже у воды
+      if(dist <= diveSeal.radius && diveSeal.y >= waterLevel) {
+        diveDragging = true;
+        dragStart = { x: mouseX, y: mouseY };
+        dragCurrent = { x: mouseX, y: mouseY };
+        // Перед прыжком зануляем скорости
+        diveSeal.vx = 0;
+        diveSeal.vy = 0;
+      }
+    }
+    function diveMouseMove(e) {
+      if(diveDragging) {
+        const rect = canvas.getBoundingClientRect();
+        dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      }
+    }
+    function diveMouseUp(e) {
+      if(diveDragging) {
+        diveDragging = false;
+        let dx = dragStart.x - dragCurrent.x;
+        let dy = dragStart.y - dragCurrent.y;
+        const maxPull = canvas.width * 0.2;
+        let pullDistance = Math.hypot(dx, dy);
+        if(pullDistance > maxPull) {
+          let scale = maxPull / pullDistance;
+          dx *= scale;
+          dy *= scale;
+        }
+        diveSeal.vx = dx * 0.3;
+        diveSeal.vy = dy * 0.3;
+        diveLaunched = true;
+      }
+    }
+    function diveTouchStart(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      const touchY = touch.clientY - rect.top;
+      let dist = Math.hypot(touchX - diveSeal.x, touchY - diveSeal.y);
+      if(dist <= diveSeal.radius && diveSeal.y >= waterLevel) {
+        diveDragging = true;
+        dragStart = { x: touchX, y: touchY };
+        dragCurrent = { x: touchX, y: touchY };
+        diveSeal.vx = 0;
+        diveSeal.vy = 0;
+      }
+    }
+    function diveTouchMove(e) {
+      if(diveDragging) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        dragCurrent = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+      }
+    }
+    function diveTouchEnd(e) {
+      if(diveDragging) {
+        e.preventDefault();
+        diveDragging = false;
+        let dx = dragStart.x - dragCurrent.x;
+        let dy = dragStart.y - dragCurrent.y;
+        const maxPull = canvas.width * 0.2;
+        let pullDistance = Math.hypot(dx, dy);
+        if(pullDistance > maxPull) {
+          let scale = maxPull / pullDistance;
+          dx *= scale;
+          dy *= scale;
+        }
+        diveSeal.vx = dx * 0.3;
+        diveSeal.vy = dy * 0.3;
+        diveLaunched = true;
+      }
+    }
+    // Функции для создания и управления монетами в режиме DIVE
+    function spawnDiveCoin() {
+      let coin = {
+        x: Math.random() * (canvas.width - 40) + 20,
+        y: diveSeal.y + Math.random() * 200,
+        radius: canvas.width * 0.03,
+        collected: false
+      };
+      let coinEl = document.createElement('img');
+      coinEl.src = 'BACKGROUND/goldcoin.gif';
+      coinEl.style.position = 'absolute';
+      coinEl.style.pointerEvents = 'none';
+      coinEl.style.left = (coin.x - coin.radius) + "px";
+      coinEl.style.top = (coin.y - coin.radius) + "px";
+      coinEl.style.width = (coin.radius * 2) + "px";
+      coinEl.style.height = (coin.radius * 2) + "px";
+      document.getElementById('coinContainer').appendChild(coinEl);
+      coin.el = coinEl;
+      coins.push(coin);
+    }
+    function updateDiveCoins() {
+      coins.forEach((coin, index) => {
+        if (!coin.collected) {
+          coin.el.style.left = (coin.x - coin.radius) + "px";
+          coin.el.style.top = (coin.y - coin.radius) + "px";
+          // Проверяем столкновение с Seal
+          let dx = diveSeal.x - coin.x;
+          let dy = diveSeal.y - coin.y;
+          if (dx*dx + dy*dy < (diveSeal.radius + coin.radius) ** 2) {
+            coin.collected = true;
+            coin.el.remove();
+            diveCoinCount++;
+          }
+        } else {
+          coin.el.remove();
+          coins.splice(index, 1);
+        }
+      });
     }
 
     /* ========= FLYING MODE ========= */
@@ -1034,107 +1294,6 @@
     document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
     document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
 
-    /* ====== Sea Farm Mode (новый режим вместо DUNK) ====== */
-    let seaFarmGameStarted = false;
-    let seaFarmScore = 0;
-    let seaFarmCoins = 0;
-    let autoFarmInterval = null;
-    function startSeaFarmMode() {
-      seaFarmGameStarted = true;
-      seaFarmScore = 0;
-      seaFarmCoins = 0;
-      clearCanvas();
-      // Выводим заголовок и инструкции
-      ctx.fillStyle = "#fff";
-      ctx.font = "20px 'Press Start 2P'";
-      ctx.textAlign = "center";
-      ctx.fillText("Sea Farm Mode", canvas.width/2, 50);
-      ctx.fillText("Click on the Seal", canvas.width/2, 80);
-      // Рисуем тюленя в центре
-      drawSealAt(canvas.width/2, canvas.height/2);
-      // Устанавливаем обработчики клика
-      canvas.addEventListener("mousedown", seaFarmClick);
-      canvas.addEventListener("touchstart", seaFarmClickTouch, {passive: false});
-      // Запускаем автоферму (увеличение монет каждую секунду)
-      autoFarmInterval = setInterval(() => {
-        if (seaFarmGameStarted) {
-          seaFarmCoins += 1;
-          updateSeaFarmUI();
-        }
-      }, 1000);
-    }
-    function seaFarmClick(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-      handleSeaFarmClick(clickX, clickY);
-    }
-    function seaFarmClickTouch(e) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const clickX = touch.clientX - rect.left;
-      const clickY = touch.clientY - rect.top;
-      handleSeaFarmClick(clickX, clickY);
-    }
-    function handleSeaFarmClick(x, y) {
-      // Предполагаем, что тюлень рисуется по центру
-      const sealX = canvas.width/2;
-      const sealY = canvas.height/2;
-      const sealRadius = canvas.width * 0.15; // примерно размер тюленя
-      const dx = x - sealX;
-      const dy = y - sealY;
-      if (Math.hypot(dx, dy) <= sealRadius) {
-        seaFarmScore++;
-        seaFarmCoins += 5;  // бонус за клик
-        showReaction("Farmed: +5");
-        updateSeaFarmUI();
-        animateSealClick();
-      }
-    }
-    function updateSeaFarmUI() {
-      document.getElementById('score').textContent = "Clicks: " + seaFarmScore;
-      document.getElementById('coinText').textContent = seaFarmCoins;
-    }
-    function animateSealClick() {
-      clearCanvas();
-      ctx.save();
-      ctx.translate(canvas.width/2, canvas.height/2);
-      ctx.scale(1.2,1.2);
-      let ballSize = canvas.width * 0.3;
-      ctx.drawImage(currentCharacterJump, -ballSize/2, -ballSize/2, ballSize, ballSize);
-      ctx.restore();
-      setTimeout(() => {
-        clearCanvas();
-        drawSealAt(canvas.width/2, canvas.height/2);
-        updateSeaFarmUI();
-      }, 100);
-    }
-    function drawSealAt(x, y) {
-      let ballSize = canvas.width * 0.3;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.drawImage(currentCharacterFall, -ballSize/2, -ballSize/2, ballSize, ballSize);
-      ctx.restore();
-    }
-    function seaFarmGameLoop() {
-      if (!seaFarmGameStarted || paused) return;
-      clearCanvas();
-      ctx.fillStyle = "#fff";
-      ctx.font = "20px 'Press Start 2P'";
-      ctx.textAlign = "center";
-      ctx.fillText("Sea Farm Mode", canvas.width/2, 50);
-      ctx.fillText("Click on the Seal", canvas.width/2, 80);
-      drawSealAt(canvas.width/2, canvas.height/2);
-      requestAnimationFrame(seaFarmGameLoop);
-    }
-    function stopSeaFarmMode() {
-      seaFarmGameStarted = false;
-      canvas.removeEventListener("mousedown", seaFarmClick);
-      canvas.removeEventListener("touchstart", seaFarmClickTouch);
-      clearInterval(autoFarmInterval);
-    }
-
     /* ====== Главное меню и пауза ====== */
     startBtn.addEventListener('click', () => {
       themeSelectModal.style.display = 'flex';
@@ -1174,16 +1333,14 @@
       selectedMode = "PLATFORMER";
       startPlatformerLevel();
     });
-    seaFarmModeBtn.addEventListener('click', () => {
+    dunkModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
       menu.style.display = 'none';
       gameOverOverlay.style.display = 'none';
       hideProfileButton();
-      selectedMode = "SEA_FARM";
-      document.getElementById('score').style.display = 'block';
-      coinCountElement.style.display = 'flex';
-      startSeaFarmMode();
-      seaFarmGameLoop();
+      // Режим DUNK теперь запускается как режим DIVE (Seal Dive Challenge)
+      selectedMode = "DIVE";
+      startDiveChallengeMode();
     });
     telegramBtn.addEventListener('click', () => {
       window.open('https://t.me/FlyingSealCoin', '_blank');
@@ -1208,10 +1365,7 @@
       gameOverOverlay.style.display = 'none';
       if(selectedMode === "FLYING") { startFlyingMode(); }
       else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "SEA_FARM") { 
-        startSeaFarmMode();
-        seaFarmGameLoop();
-      }
+      else if(selectedMode === "DIVE") { startDiveChallengeMode(); }
     });
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
@@ -1221,7 +1375,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      stopSeaFarmMode();
+      diveGameStarted = false;
       paused = false;
       clearCanvas();
       currentPlatforms = [];
@@ -1244,7 +1398,7 @@
       pauseMenu.style.display = 'none';
       if (selectedMode === "FLYING") { flyingGameLoop(); }
       else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
-      else if(selectedMode === "SEA_FARM") { seaFarmGameLoop(); }
+      else if(selectedMode === "DIVE") { diveGameLoop(); }
     });
     const exitBtn = document.getElementById('exitBtn');
     exitBtn.addEventListener('click', () => {
@@ -1256,7 +1410,7 @@
       platformerControls.style.display = 'none';
       gameStarted = false;
       platformerGameStarted = false;
-      stopSeaFarmMode();
+      diveGameStarted = false;
       clearCanvas();
       currentPlatforms = [];
       pipes = [];
