@@ -497,7 +497,7 @@
       }
     }
 
-    /* ========= НОВЫЙ РЕЖИМ: BREAK BRICKS (копия Break Bricks) ========= */
+    /* ========= РЕЖИМ BRICKS (Break Bricks) ========= */
     let breakBricksGameStarted = false;
     let breakBricksPaddle = null;
     let breakBricksBall = null;
@@ -505,6 +505,7 @@
     let breakBricksRowCount = 5;
     let breakBricksColCount = 8;
     let breakBricksBrickWidth, breakBricksBrickHeight, breakBricksBrickPadding, breakBricksBrickOffsetTop, breakBricksBrickOffsetLeft;
+    // При инициализации кирпичей каждому присваивается случайный hue для фиксированного цвета
     function initBreakBricks() {
       breakBricksBrickWidth = canvas.width / breakBricksColCount - 10;
       breakBricksBrickHeight = 20;
@@ -515,9 +516,26 @@
       for(let c = 0; c < breakBricksColCount; c++){
         breakBricksBricks[c] = [];
         for(let r = 0; r < breakBricksRowCount; r++){
-          breakBricksBricks[c][r] = { x: 0, y: 0, status: 1 };
+          breakBricksBricks[c][r] = { x: 0, y: 0, status: 1, hue: Math.floor(Math.random() * 360) };
         }
       }
+    }
+    // Функция для управления ракеткой пальцем – обновляет позицию на основе касания
+    function updatePaddlePositionTouch(e) {
+      e.preventDefault();
+      if(selectedMode === "BRICKS" && breakBricksPaddle) {
+        let touch = e.touches[0];
+        let rect = canvas.getBoundingClientRect();
+        let touchX = touch.clientX - rect.left;
+        breakBricksPaddle.x = touchX - breakBricksPaddle.width / 2;
+        if(breakBricksPaddle.x < 0) breakBricksPaddle.x = 0;
+        if(breakBricksPaddle.x > canvas.width - breakBricksPaddle.width) breakBricksPaddle.x = canvas.width - breakBricksPaddle.width;
+      }
+    }
+    // Для корректного завершения игры в режиме BRICKS удаляем обработчик касания
+    function endBreakBricks() {
+      breakBricksGameStarted = false;
+      canvas.removeEventListener("touchmove", updatePaddlePositionTouch);
     }
     function startBreakBricksMode() {
       breakBricksGameStarted = true;
@@ -534,12 +552,14 @@
       // Спавним нерпу (мяч) прямо на платформе
       breakBricksBall = {
         x: breakBricksPaddle.x + breakBricksPaddle.width / 2,
-        y: breakBricksPaddle.y - 10, // радиус мяча равен 10, чтобы он находился непосредственно над ракеткой
+        y: breakBricksPaddle.y - 10,
         radius: 10,
         dx: 3,
         dy: -3
       };
       initBreakBricks();
+      // Добавляем обработчик для касания, чтобы можно было водить ракетку
+      canvas.addEventListener("touchmove", updatePaddlePositionTouch, {passive:false});
       breakBricksGameLoop();
     }
     function breakBricksGameLoop() {
@@ -553,8 +573,7 @@
             let brickY = r * (breakBricksBrickHeight + breakBricksBrickPadding) + breakBricksBrickOffsetTop;
             breakBricksBricks[c][r].x = brickX;
             breakBricksBricks[c][r].y = brickY;
-            // Задаём градиент на основе номера строки
-            let hue = Math.floor(360 / breakBricksRowCount * r);
+            let hue = breakBricksBricks[c][r].hue;
             let grad = ctx.createLinearGradient(brickX, brickY, brickX + breakBricksBrickWidth, brickY + breakBricksBrickHeight);
             grad.addColorStop(0, `hsl(${hue}, 80%, 40%)`);
             grad.addColorStop(1, `hsl(${hue}, 80%, 60%)`);
@@ -596,8 +615,8 @@
         if(breakBricksBall.x > breakBricksPaddle.x && breakBricksBall.x < breakBricksPaddle.x + breakBricksPaddle.width) {
           breakBricksBall.dy = -breakBricksBall.dy;
         } else {
-          // проигрыш: мяч улетел за нижнюю границу (не попал в ракетку)
-          breakBricksGameStarted = false;
+          // Если мяч не попал в ракетку – игра заканчивается
+          endBreakBricks();
           gameOverOverlay.style.display = 'block';
           return;
         }
@@ -607,7 +626,7 @@
       breakBricksBall.x += breakBricksBall.dx;
       breakBricksBall.y += breakBricksBall.dy;
       
-      // Управление платформой с помощью стрелок
+      // Управление ракеткой с помощью клавиш для ПК
       if(keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
         breakBricksPaddle.x -= 7;
       }
@@ -630,7 +649,7 @@
         totalCoins += 5;
         localStorage.setItem("totalCoins", totalCoins);
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
-        // Немного увеличиваем скорость мяча для повышения сложности
+        // Немного увеличиваем скорость для повышения сложности
         breakBricksBall.dx *= 1.05;
         breakBricksBall.dy *= 1.05;
         initBreakBricks();
@@ -1248,7 +1267,7 @@
       gameOverOverlay.style.display = 'none';
       if(selectedMode === "FLYING") { startFlyingMode(); }
       else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "BRICKS") { breakBricksGameStarted && breakBricksGameLoop(); }
+      else if(selectedMode === "BRICKS") { startBreakBricksMode(); }
     });
     mainMenuBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
