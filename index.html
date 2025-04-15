@@ -100,8 +100,7 @@
       display: none; flex-direction: column; justify-content: center;
       align-items: center; text-align: center; z-index: 20;
     }
-
-    /* Исправлено: была запятая вместо точки с запятой */
+    /* Исправлено: убрана лишняя запятая */
     #pauseMenu {
       display: none;
       position: absolute;
@@ -440,9 +439,14 @@
     shopBalance.textContent = `Total Coins: ${totalCoins}`;
     let particles = [], coins = [], reactionMessages = [];
 
-    /* ====== Загрузка изображений персонажей (нерпа) ====== */
+    /* ====== Загрузка изображений персонажей ====== */
+    // Для режима WINTER – нерпа
     const sealJump = new Image(); sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image(); sealFall.src = 'BACKGROUND/seal fall.png';
+    // Для режима JUNGLE – горилла
+    const gorillaJump = new Image(); gorillaJump.src = 'BACKGROUND/gorilla jump.png';
+    const gorillaFall = new Image(); gorillaFall.src = 'BACKGROUND/gorilla fall.png';
+    // По умолчанию выставляем нерпу
     let currentCharacterJump = sealJump;
     let currentCharacterFall = sealFall;
     let selectedTheme = "WINTER";
@@ -482,17 +486,20 @@
         ctx.restore();
       });
     }
+    // Обновляем тему и подставляем нужные изображения для персонажа во всех режимах
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
         backgroundUrl = "BACKGROUND/photo_2025-03-12_12-26-18.gif";
+        currentCharacterJump = sealJump;
+        currentCharacterFall = sealFall;
       } else if(selectedTheme === "JUNGLE") {
         backgroundUrl = "BACKGROUND/JUNGLE BACKGROUND.jpeg";
+        currentCharacterJump = gorillaJump;
+        currentCharacterFall = gorillaFall;
       }
       document.getElementById("gameCanvas").style.background = `url('${backgroundUrl}') center/cover no-repeat`;
       document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
-      currentCharacterJump = sealJump;
-      currentCharacterFall = sealFall;
       
       if(selectedTheme === "JUNGLE"){
         document.querySelectorAll("button").forEach(btn => {
@@ -517,7 +524,6 @@
     let breakBricksBricks = [];
     let buffCoin = null; 
 
-    // Инициализация кирпичей
     function initBreakBricks() {
       breakBricksBrickPadding = 2;
       breakBricksBrickHeight = 10;
@@ -629,7 +635,6 @@
       clearCanvas();
       spawnBuffCoin();
       updateBuffCoin();
-      // Рисуем кирпичи с неоновой обводкой
       for (let c = 0; c < breakBricksColCount; c++) {
         for (let r = 0; r < breakBricksRowCount; r++) {
           if (breakBricksBricks[c][r].status === 1) {
@@ -643,7 +648,6 @@
             grad.addColorStop(1, `hsl(${hue}, 80%, 60%)`);
             ctx.fillStyle = grad;
             ctx.fillRect(brickX, brickY, (canvas.width / breakBricksColCount) - breakBricksBrickPadding, breakBricksBrickHeight);
-
             // Неоновая обводка
             ctx.strokeStyle = "#0ff";
             ctx.lineWidth = 2;
@@ -652,19 +656,14 @@
         }
       }
       drawBuffCoin();
-      // Рисуем все мячи (нерпы)
       breakBricksBalls.forEach(ball => {
         ctx.save();
         ctx.translate(ball.x, ball.y);
         ctx.drawImage(currentCharacterFall, -ball.radius, -ball.radius, ball.radius * 2, ball.radius * 2);
         ctx.restore();
       });
-
-      // Рисуем "ракетку"
       ctx.fillStyle = "#0095DD";
       ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
-
-      // Обработка коллизии шара с кирпичами
       breakBricksBalls.forEach(ball => {
         for (let c = 0; c < breakBricksColCount; c++) {
           for (let r = 0; r < breakBricksRowCount; r++) {
@@ -679,22 +678,12 @@
           }
         }
       });
-      // Баф-монета (увеличение количества шаров)
       if (buffCoin && checkPaddleBuffCollision()) {
         let baseBall = breakBricksBalls[0];
-        breakBricksBalls.push(createBall(
-          breakBricksPaddle.x + breakBricksPaddle.width / 2,
-          breakBricksPaddle.y - 10,
-          baseBall.dx, baseBall.dy
-        ));
-        breakBricksBalls.push(createBall(
-          breakBricksPaddle.x + breakBricksPaddle.width / 2,
-          breakBricksPaddle.y - 10,
-          -baseBall.dx, baseBall.dy
-        ));
+        breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width / 2, breakBricksPaddle.y - 10, baseBall.dx, baseBall.dy));
+        breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width / 2, breakBricksPaddle.y - 10, -baseBall.dx, baseBall.dy));
         buffCoin = null;
       }
-      // Столкновения со стенами
       breakBricksBalls.forEach(ball => {
         if (ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius) {
           ball.dx = -ball.dx;
@@ -703,10 +692,8 @@
           ball.dy = -ball.dy;
         }
       });
-      // Удаляем шары, которые пролетели мимо "ракетки"
       breakBricksBalls = breakBricksBalls.filter(ball => {
         if (ball.y + ball.dy > breakBricksPaddle.y - ball.radius) {
-          // Проверяем, попали ли в ракетку
           if (ball.x > breakBricksPaddle.x && ball.x < breakBricksPaddle.x + breakBricksPaddle.width) {
             ball.dy = -ball.dy;
             return true;
@@ -716,14 +703,11 @@
         }
         return true;
       });
-      // Если не осталось шаров — Game Over
       if (breakBricksBalls.length === 0) {
         endBreakBricks();
         gameOverOverlay.style.display = 'block';
         return;
       }
-
-      // Проверяем, уничтожены ли все кирпичи
       let allBroken = true;
       for (let c = 0; c < breakBricksColCount; c++) {
         for (let r = 0; r < breakBricksRowCount; r++) {
@@ -734,7 +718,6 @@
         }
         if (!allBroken) break;
       }
-      // Если все уничтожены, показываем "GREAT!" на 3 сек
       if (allBroken) {
         clearCanvas();
         ctx.fillStyle = "#fff";
@@ -745,25 +728,17 @@
           totalCoins += 5;
           localStorage.setItem("totalCoins", totalCoins);
           shopBalance.textContent = `Total Coins: ${totalCoins}`;
-          // После выигрыша начинаем заново с одной нерпы
           initBreakBricks();
           breakBricksBalls = [];
-          breakBricksBalls.push(createBall(
-            breakBricksPaddle.x + breakBricksPaddle.width / 2,
-            breakBricksPaddle.y - 10,
-            4, -4
-          ));
+          breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width / 2, breakBricksPaddle.y - 10, 4, -4));
           breakBricksGameLoop();
         }, 3000);
         return;
       }
-
-      // Движение шаров
       breakBricksBalls.forEach(ball => {
         ball.x += ball.dx;
         ball.y += ball.dy;
       });
-      // Управление ракеткой
       if (keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
         breakBricksPaddle.x -= 7;
       }
