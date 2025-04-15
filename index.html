@@ -498,87 +498,76 @@
     }
 
     /* ========= РЕЖИМ BRICKS (Break Bricks) ========= */
-    // Добавим флаг, чтобы при выходе в меню игра останавливалась
+    // Флаг для остановки игры при возврате в главное меню
     let breakBricksGameStarted = false;
     let breakBricksBrickPadding, breakBricksBrickHeight, breakBricksBrickOffsetTop, breakBricksBrickOffsetLeft;
-    let breakBricksColCount = 6;  // теперь 6 вместо 12, в 2 раза меньше
-    let breakBricksRowCount = 8;  // вычислится динамически, но 8 – базовое (точнее, далее пересчитываем)
+    let breakBricksColCount = 6; // в 2 раза меньше колонок
+    let breakBricksRowCount = 8; // базовое число; далее пересчитывается
     let breakBricksPaddle = null;
-    let breakBricksBalls = []; // Массив шаров (нерп)
+    let breakBricksBalls = []; // массив шаров (нерп)
     let breakBricksBricks = [];
-    // Специальный баф-коин (жёлтый шарик)
-    let buffCoin = null;
+    let buffCoin = null; // баф-коин (жёлтый шарик)
 
-    // Инициализация кирпичей: паттерны + динамический расчёт строк
+    // Инициализация кирпичей: теперь кирпичи занимают область от верха до середины экрана
     function initBreakBricks() {
       breakBricksBrickPadding = 2;
       breakBricksBrickHeight = 10;
       breakBricksBrickOffsetTop = 10;
       breakBricksBrickOffsetLeft = 2;
-      // Вычисляем число рядов так, чтобы кирпичи были до нижней части экрана
-      breakBricksRowCount = Math.floor((canvas.height - breakBricksBrickOffsetTop - 20) / (breakBricksBrickHeight + breakBricksBrickPadding));
+      // Используем только половину высоты canvas для расчёта рядов
+      breakBricksRowCount = Math.floor(((canvas.height / 2) - breakBricksBrickOffsetTop - 20) / (breakBricksBrickHeight + breakBricksBrickPadding));
       breakBricksBricks = [];
-      let patternType = Math.floor(Math.random() * 3); // 0, 1 или 2
-      for(let c = 0; c < breakBricksColCount; c++){
+      let patternType = Math.floor(Math.random() * 3); // выбираем один из трёх вариантов паттерна
+      for (let c = 0; c < breakBricksColCount; c++) {
         breakBricksBricks[c] = [];
-        for(let r = 0; r < breakBricksRowCount; r++){
+        for (let r = 0; r < breakBricksRowCount; r++) {
           let shouldFill = false;
-          if(patternType === 0){
+          if (patternType === 0) {
             shouldFill = (Math.random() < 0.8);
-          } else if (patternType === 1){
+          } else if (patternType === 1) {
             shouldFill = (c % 2 === 0);
-          } else if (patternType === 2){
+          } else if (patternType === 2) {
             shouldFill = ((r + c) % 2 === 0);
           }
-          breakBricksBricks[c][r] = { 
-            x: 0, 
-            y: 0, 
-            status: (shouldFill ? 1 : 0), 
-            hue: Math.floor(Math.random() * 360) 
+          breakBricksBricks[c][r] = {
+            x: 0,
+            y: 0,
+            status: (shouldFill ? 1 : 0),
+            hue: Math.floor(Math.random() * 360)
           };
         }
       }
     }
-    // Создаем один шар (нерпу)
+    // Создание шара (нерпы)
     function createBall(x, y, dx, dy) {
-      return {
-        x: x,
-        y: y,
-        radius: 10,
-        dx: dx,
-        dy: dy
-      };
+      return { x: x, y: y, radius: 10, dx: dx, dy: dy };
     }
     // Запуск режима BRICKS
     function startBreakBricksMode() {
       breakBricksGameStarted = true;
       buffCoin = null;
-      // Показываем кнопку паузы
       platformerPauseBtn.style.display = 'block';
-      // Инициализируем ракетку
       breakBricksPaddle = {
         height: 10,
         width: canvas.width * 0.2,
         x: (canvas.width - canvas.width * 0.2) / 2,
         y: canvas.height - 100
       };
-      // Один шар (нерпа)
       breakBricksBalls = [];
       breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width / 2, breakBricksPaddle.y - 10, 4, -4));
       initBreakBricks();
-      // Добавляем управление ракеткой касанием
-      canvas.addEventListener("touchmove", updatePaddlePositionTouch, {passive:false});
+      canvas.addEventListener("touchmove", updatePaddlePositionTouch, { passive: false });
       breakBricksGameLoop();
     }
     function updatePaddlePositionTouch(e) {
       e.preventDefault();
-      if(selectedMode === "BRICKS" && breakBricksPaddle) {
+      if (selectedMode === "BRICKS" && breakBricksPaddle) {
         let touch = e.touches[0];
         let rect = canvas.getBoundingClientRect();
         let touchX = touch.clientX - rect.left;
         breakBricksPaddle.x = touchX - breakBricksPaddle.width / 2;
-        if(breakBricksPaddle.x < 0) breakBricksPaddle.x = 0;
-        if(breakBricksPaddle.x > canvas.width - breakBricksPaddle.width) breakBricksPaddle.x = canvas.width - breakBricksPaddle.width;
+        if (breakBricksPaddle.x < 0) breakBricksPaddle.x = 0;
+        if (breakBricksPaddle.x > canvas.width - breakBricksPaddle.width) breakBricksPaddle.x = canvas.width - breakBricksPaddle.width;
       }
     }
     function endBreakBricks() {
@@ -586,7 +575,7 @@
       canvas.removeEventListener("touchmove", updatePaddlePositionTouch);
     }
     function spawnBuffCoin() {
-      if(!buffCoin && Math.random() < 0.005) {
+      if (!buffCoin && Math.random() < 0.005) {
         buffCoin = {
           x: Math.random() * (canvas.width - 20) + 10,
           y: 0,
@@ -596,25 +585,25 @@
       }
     }
     function updateBuffCoin() {
-      if(buffCoin) {
+      if (buffCoin) {
         buffCoin.y += buffCoin.dy;
-        if(buffCoin.y - buffCoin.radius > canvas.height) {
+        if (buffCoin.y - buffCoin.radius > canvas.height) {
           buffCoin = null;
         }
       }
     }
     function drawBuffCoin() {
-      if(buffCoin) {
+      if (buffCoin) {
         ctx.save();
         ctx.fillStyle = "gold";
         ctx.beginPath();
-        ctx.arc(buffCoin.x, buffCoin.y, buffCoin.radius, 0, Math.PI*2);
+        ctx.arc(buffCoin.x, buffCoin.y, buffCoin.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
     }
     function checkPaddleBuffCollision() {
-      if(!buffCoin || !breakBricksPaddle) return false;
+      if (!buffCoin || !breakBricksPaddle) return false;
       let coinLeft = buffCoin.x - buffCoin.radius;
       let coinRight = buffCoin.x + buffCoin.radius;
       let coinTop = buffCoin.y - buffCoin.radius;
@@ -626,20 +615,18 @@
       return !(coinRight < paddleLeft || coinLeft > paddleRight || coinBottom < paddleTop || coinTop > paddleBottom);
     }
     function breakBricksGameLoop() {
-      // Если режим не активен – прекращаем цикл
-      if(!breakBricksGameStarted) return;
-      if(paused) {
+      if (!breakBricksGameStarted) return;
+      if (paused) {
         requestAnimationFrame(breakBricksGameLoop);
         return;
       }
       clearCanvas();
       spawnBuffCoin();
       updateBuffCoin();
-      // Рисуем кирпичи
-      for(let c = 0; c < breakBricksColCount; c++){
-        for(let r = 0; r < breakBricksRowCount; r++){
-          if(breakBricksBricks[c][r].status === 1) {
-            let brickX = c * ( (canvas.width / breakBricksColCount) - breakBricksBrickPadding) + breakBricksBrickOffsetLeft;
+      for (let c = 0; c < breakBricksColCount; c++) {
+        for (let r = 0; r < breakBricksRowCount; r++) {
+          if (breakBricksBricks[c][r].status === 1) {
+            let brickX = c * ((canvas.width / breakBricksColCount) - breakBricksBrickPadding) + breakBricksBrickOffsetLeft;
             let brickY = r * (breakBricksBrickHeight + breakBricksBrickPadding) + breakBricksBrickOffsetTop;
             breakBricksBricks[c][r].x = brickX;
             breakBricksBricks[c][r].y = brickY;
@@ -652,27 +639,22 @@
           }
         }
       }
-      // Баф-коин
       drawBuffCoin();
-      // Шары (нерпы)
       breakBricksBalls.forEach(ball => {
         ctx.save();
         ctx.translate(ball.x, ball.y);
-        ctx.drawImage(currentCharacterFall, -ball.radius, -ball.radius, ball.radius*2, ball.radius*2);
+        ctx.drawImage(currentCharacterFall, -ball.radius, -ball.radius, ball.radius * 2, ball.radius * 2);
         ctx.restore();
       });
-      // Ракетка
       ctx.fillStyle = "#0095DD";
       ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
-      
-      // Столкновения шаров и кирпичей
       breakBricksBalls.forEach(ball => {
-        for(let c = 0; c < breakBricksColCount; c++){
-          for(let r = 0; r < breakBricksRowCount; r++){
+        for (let c = 0; c < breakBricksColCount; c++) {
+          for (let r = 0; r < breakBricksRowCount; r++) {
             let b = breakBricksBricks[c][r];
-            if(b.status === 1) {
-              if(ball.x > b.x && ball.x < b.x + ((canvas.width / breakBricksColCount) - breakBricksBrickPadding) &&
-                 ball.y > b.y && ball.y < b.y + breakBricksBrickHeight) {
+            if (b.status === 1) {
+              if (ball.x > b.x && ball.x < b.x + ((canvas.width / breakBricksColCount) - breakBricksBrickPadding) &&
+                  ball.y > b.y && ball.y < b.y + breakBricksBrickHeight) {
                 ball.dy = -ball.dy;
                 b.status = 0;
               }
@@ -680,29 +662,23 @@
           }
         }
       });
-      
-      // Проверка коллизии баф-коина с ракеткой => +2 шара
-      if(buffCoin && checkPaddleBuffCollision()) {
-          let baseBall = breakBricksBalls[0];
-          breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width/2, breakBricksPaddle.y - 10, baseBall.dx, baseBall.dy));
-          breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width/2, breakBricksPaddle.y - 10, -baseBall.dx, baseBall.dy));
-          buffCoin = null;
+      if (buffCoin && checkPaddleBuffCollision()) {
+        let baseBall = breakBricksBalls[0];
+        breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width / 2, breakBricksPaddle.y - 10, baseBall.dx, baseBall.dy));
+        breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width / 2, breakBricksPaddle.y - 10, -baseBall.dx, baseBall.dy));
+        buffCoin = null;
       }
-      
-      // Отскоки от стен
       breakBricksBalls.forEach(ball => {
-        if(ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius){
+        if (ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius) {
           ball.dx = -ball.dx;
         }
-        if(ball.y + ball.dy < ball.radius){
+        if (ball.y + ball.dy < ball.radius) {
           ball.dy = -ball.dy;
         }
       });
-      
-      // Шары, упавшие ниже экрана/ракетки
       breakBricksBalls = breakBricksBalls.filter(ball => {
-        if(ball.y + ball.dy > breakBricksPaddle.y - ball.radius) {
-          if(ball.x > breakBricksPaddle.x && ball.x < breakBricksPaddle.x + breakBricksPaddle.width) {
+        if (ball.y + ball.dy > breakBricksPaddle.y - ball.radius) {
+          if (ball.x > breakBricksPaddle.x && ball.x < breakBricksPaddle.x + breakBricksPaddle.width) {
             ball.dy = -ball.dy;
             return true;
           } else {
@@ -711,50 +687,41 @@
         }
         return true;
       });
-      // Нет шаров – конец
-      if(breakBricksBalls.length === 0) {
+      if (breakBricksBalls.length === 0) {
         endBreakBricks();
         gameOverOverlay.style.display = 'block';
         return;
       }
-      
-      // Движение шаров
       breakBricksBalls.forEach(ball => {
         ball.x += ball.dx;
         ball.y += ball.dy;
       });
-      
-      // Управление ракеткой (клавиатура)
-      if(keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
+      if (keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
         breakBricksPaddle.x -= 7;
       }
-      if(keysDown["ArrowRight"] && breakBricksPaddle.x < canvas.width - breakBricksPaddle.width) {
+      if (keysDown["ArrowRight"] && breakBricksPaddle.x < canvas.width - breakBricksPaddle.width) {
         breakBricksPaddle.x += 7;
       }
-      
-      // Проверка, все ли кирпичи сбиты
       let allBroken = true;
-      for(let c = 0; c < breakBricksColCount; c++){
-        for(let r = 0; r < breakBricksRowCount; r++){
-          if(breakBricksBricks[c][r].status === 1) {
+      for (let c = 0; c < breakBricksColCount; c++) {
+        for (let r = 0; r < breakBricksRowCount; r++) {
+          if (breakBricksBricks[c][r].status === 1) {
             allBroken = false;
             break;
           }
         }
-        if(!allBroken) break;
+        if (!allBroken) break;
       }
-      if(allBroken) {
+      if (allBroken) {
         totalCoins += 5;
         localStorage.setItem("totalCoins", totalCoins);
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
-        // Ускорим шары
         breakBricksBalls.forEach(ball => {
           ball.dx *= 1.05;
           ball.dy *= 1.05;
         });
         initBreakBricks();
       }
-      
       requestAnimationFrame(breakBricksGameLoop);
     }
 
@@ -796,10 +763,10 @@
       clearCanvas();
       shadow.velocity += shadow.gravity;
       shadow.y += shadow.velocity;
-      spawnParticle(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
+      spawnParticle(shadow.x + shadow.width / 2, shadow.y + shadow.height / 2);
       updateParticles();
-      if(selectedTheme === "JUNGLE"){
-        if(Math.random() < 0.02) { spawnLeaf(); }
+      if (selectedTheme === "JUNGLE") {
+        if (Math.random() < 0.02) { spawnLeaf(); }
         updateLeafParticles();
         drawLeafParticles();
       }
@@ -841,11 +808,11 @@
       drawParticles();
       updateShadowImage();
       ctx.save();
-      ctx.translate(shadow.x + shadow.width/2, shadow.y + shadow.height/2);
-      let angle = shadow.velocity < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.translate(shadow.x + shadow.width / 2, shadow.y + shadow.height / 2);
+      let angle = shadow.velocity < 0 ? -15 * Math.PI / 180 : 15 * Math.PI / 180;
       ctx.rotate(angle);
       let img = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
-      ctx.drawImage(img, -shadow.width/2, -shadow.height/2, shadow.width, shadow.height);
+      ctx.drawImage(img, -shadow.width / 2, -shadow.height / 2, shadow.width, shadow.height);
       ctx.restore();
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
@@ -858,7 +825,7 @@
         ctx.save();
         ctx.translate(pipe.x + pipeWidth / 2, pipe.topHeight);
         ctx.scale(1, -1);
-        ctx.drawImage(pipe.pipeImg, -pipeWidth/2, 0, pipeWidth, pipe.topHeight);
+        ctx.drawImage(pipe.pipeImg, -pipeWidth / 2, 0, pipeWidth, pipe.topHeight);
         ctx.restore();
         ctx.drawImage(pipe.pipeImg, pipe.x, pipe.bottomY, pipeWidth, canvas.height - pipe.bottomY);
       });
@@ -867,7 +834,7 @@
       let gap = hardModeEnabled ? canvas.height * 0.25 : canvas.height * 0.3;
       const gapPosition = Math.random() * (canvas.height - gap - 100) + 50;
       let pipeImg;
-      if(selectedTheme === "JUNGLE"){
+      if (selectedTheme === "JUNGLE") {
         pipeImg = (Math.random() < 0.6) ? pipeImageJungle1 : pipeImageJungle2;
       } else { pipeImg = pipeImage; }
       let design = (currentPipeDesign !== "0" && pipeDesigns[currentPipeDesign]) ? pipeDesigns[currentPipeDesign] : null;
@@ -881,7 +848,7 @@
         design: design,
         pipeImg: pipeImg
       });
-      if(selectedMode === "FLYING") {
+      if (selectedMode === "FLYING") {
         flyingPipeCounter++;
         if (flyingPipeCounter % 5 === 0) { createCoin(gapPosition, gap); }
       }
@@ -1205,11 +1172,11 @@
         return;
       }
       ctx.save();
-      ctx.translate(player.x + player.width/2, player.y + player.height/2);
-      let pAngle = player.vy < 0 ? -15 * Math.PI/180 : 15 * Math.PI/180;
+      ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+      let pAngle = player.vy < 0 ? -15 * Math.PI / 180 : 15 * Math.PI / 180;
       ctx.rotate(pAngle);
       let currentSprite = player.vy < 0 ? currentCharacterJump : currentCharacterFall;
-      ctx.drawImage(currentSprite, -player.width/2, -player.height/2, player.width, player.height);
+      ctx.drawImage(currentSprite, -player.width / 2, -player.height / 2, player.width, player.height);
       ctx.restore();
       for (let i = platforms.length - 1; i >= 0; i--) {
         let plat = platforms[i];
@@ -1257,8 +1224,7 @@
       if (plat.isGround) {
         ctx.fillStyle = "#87CEFA";
         ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-      }
-      else {
+      } else {
         ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
       }
       ctx.restore();
@@ -1328,7 +1294,6 @@
       selectedMode = "PLATFORMER";
       startPlatformerLevel();
     });
-    // Режим DIVE заменён на режим BRICKS
     dunkModeBtn.textContent = "BRICKS";
     dunkModeBtn.addEventListener('click', () => {
       modeSelectModal.style.display = 'none';
@@ -1359,24 +1324,19 @@
     });
     continueBtn.addEventListener('click', () => {
       gameOverOverlay.style.display = 'none';
-      if(selectedMode === "FLYING") { startFlyingMode(); }
-      else if(selectedMode === "PLATFORMER") { startPlatformerLevel(); }
-      else if(selectedMode === "BRICKS") { startBreakBricksMode(); }
+      if (selectedMode === "FLYING") { startFlyingMode(); }
+      else if (selectedMode === "PLATFORMER") { startPlatformerLevel(); }
+      else if (selectedMode === "BRICKS") { startBreakBricksMode(); }
     });
     mainMenuBtn.addEventListener('click', () => {
-      // При нажатии в главное меню – всё останавливаем
       gameOverOverlay.style.display = 'none';
       menu.style.display = 'flex';
       showProfileButton();
       platformerPauseBtn.style.display = 'none';
       platformerControls.style.display = 'none';
-      // Остановка FLYING
       gameStarted = false;
-      // Остановка PLATFORMER
       platformerGameStarted = false;
-      // Остановка BRICKS
       breakBricksGameStarted = false;
-
       paused = false;
       clearCanvas();
       currentPlatforms = [];
@@ -1399,7 +1359,7 @@
       pauseMenu.style.display = 'none';
       if (selectedMode === "FLYING") { flyingGameLoop(); }
       else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
-      else if(selectedMode === "BRICKS") { breakBricksGameLoop(); }
+      else if (selectedMode === "BRICKS") { breakBricksGameLoop(); }
     });
     const exitBtn = document.getElementById('exitBtn');
     exitBtn.addEventListener('click', () => {
@@ -1409,13 +1369,9 @@
       showProfileButton();
       platformerPauseBtn.style.display = 'none';
       platformerControls.style.display = 'none';
-      // Остановка FLYING
       gameStarted = false;
-      // Остановка PLATFORMER
       platformerGameStarted = false;
-      // Остановка BRICKS
       breakBricksGameStarted = false;
-
       clearCanvas();
       currentPlatforms = [];
       pipes = [];
