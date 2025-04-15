@@ -38,7 +38,9 @@
     #menu h1 { font-size: 5vw; margin-bottom: 10px; animation: bounce 2s infinite; }
     #greeting { font-size: 3vw; margin-bottom: 20px; }
 
-    /* Убираем фон, границы и делаем кнопку в 2 раза меньше (примерно) */
+    /* Стили для кнопки START:
+       – фон, бордер и box-shadow убраны;
+       – изображению задаём размер 100px по ширине (увеличено на ~25% от 80px). */
     #startBtn {
       background: none !important;
       border: none !important;
@@ -48,12 +50,12 @@
       cursor: pointer;
     }
     #startBtn img {
-      width: 80px; /* подберите нужное значение, чтобы кнопка была в 2 раза меньше */
+      width: 100px; /* Увеличено на 20-30% по сравнению с прежним размером */
       height: auto;
       display: block;
     }
 
-    /* Стили для SHOP-кнопки и прочих */
+    /* Стили для остальных кнопок остаются */
     #shopBtn {
       padding: 10px 20px; font-size: 3vw; letter-spacing: 2px;
       text-transform: uppercase; color: #fff; background: #3498db;
@@ -259,7 +261,7 @@
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="greeting"></p>
-    <!-- Сразу вставляем картинку play button.png, чтобы она отображалась по умолчанию -->
+    <!-- По умолчанию вставляем изображение play button.png -->
     <button id="startBtn">
       <img src="BACKGROUND/play button.png" alt="Play">
     </button>
@@ -327,9 +329,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       // По умолчанию скрываем виртуальный джойстик:
       document.getElementById('platformerControls').style.display = 'none';
-      // Можно сразу установить тему как WINTER (или оставить выбор пользователю)
-      // selectedTheme = "WINTER";
-      // updateTheme();
     });
 
     /* ====== Профиль ====== */
@@ -516,29 +515,26 @@
       });
     }
 
-    // Обновляем тему и подставляем нужные изображения (включая кнопку) во всех режимах
+    // Обновляем тему, фон, изображения персонажей и картинку кнопки
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
         backgroundUrl = "BACKGROUND/photo_2025-03-12_12-26-18.gif";
         currentCharacterJump = sealJump;
         currentCharacterFall = sealFall;
-        // Если выбрана тема WINTER, меняем изображение кнопки
         startBtn.innerHTML = "<img src='BACKGROUND/play button.png' alt='Play'>";
       } else if(selectedTheme === "JUNGLE") {
         backgroundUrl = "BACKGROUND/JUNGLE BACKGROUND.jpeg";
         currentCharacterJump = gorillaJump;
         currentCharacterFall = gorillaFall;
-        // Если выбрана тема JUNGLE, меняем изображение кнопки
         startBtn.innerHTML = "<img src='BACKGROUND/play button 2.png' alt='Play'>";
       }
-
       document.getElementById("gameCanvas").style.background = `url('${backgroundUrl}') center/cover no-repeat`;
       document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
-
-      // Меняем фон и бордер для всех кнопок, кроме startBtn
+      
+      // Для остальных кнопок меняем фон, но пропускаем startBtn
       document.querySelectorAll("button").forEach(btn => {
-        if (btn.id === "startBtn") return; 
+        if (btn.id === "startBtn") return;
         if(selectedTheme === "JUNGLE"){
           btn.style.backgroundColor = "#4CAF50";
           btn.style.borderColor = "#2E7D32";
@@ -696,8 +692,13 @@
         ctx.drawImage(currentCharacterFall, -ball.radius, -ball.radius, ball.radius * 2, ball.radius * 2);
         ctx.restore();
       });
-      ctx.fillStyle = "#0095DD";
+      // Рисуем ракетку (в режиме BRICKS) с заливкой белым и чёрной обводкой
+      ctx.fillStyle = "#fff";
       ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
+      
       breakBricksBalls.forEach(ball => {
         for (let c = 0; c < breakBricksColCount; c++) {
           for (let r = 0; r < breakBricksRowCount; r++) {
@@ -866,10 +867,14 @@
       updateShadowImage();
       ctx.save();
       ctx.translate(shadow.x + shadow.width / 2, shadow.y + shadow.height / 2);
-      let angle = shadow.velocity < 0 ? -15 * Math.PI / 180 : 15 * Math.PI / 180;
-      ctx.rotate(angle);
+      // Для темы JUNGLE увеличиваем персонажа на 20%
+      let drawWidth = shadow.width, drawHeight = shadow.height;
+      if(selectedTheme === "JUNGLE") {
+        drawWidth *= 1.2;
+        drawHeight *= 1.2;
+      }
       let img = shadow.velocity < 0 ? currentCharacterJump : currentCharacterFall;
-      ctx.drawImage(img, -shadow.width / 2, -shadow.height / 2, shadow.width, shadow.height);
+      ctx.drawImage(img, -drawWidth/2, -drawHeight/2, drawWidth, drawHeight);
       ctx.restore();
       drawPipes();
       scoreElement.textContent = `Score: ${score}`;
