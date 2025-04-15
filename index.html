@@ -384,7 +384,13 @@
     
     let flyingPipeCounter = 0;
     
+    // Основное изображение платформ для режима PLATFORMER (используется для non-jungle)
     const platformImage = new Image(); platformImage.src = 'BACKGROUND/platform.png';
+    // В теме JUNGLE платформы заменяются на изображение бревна
+    const logImage = new Image(); logImage.src = 'BACKGROUND/log.png';
+    // Для двери во всех режимах используется door.png
+    const doorImage = new Image(); doorImage.src = 'BACKGROUND/door.png';
+    
     let collisionOffsetLeft = 10, collisionOffsetRight = 10, collisionOffsetTop = 20, collisionOffsetBottom = 20;
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -648,7 +654,6 @@
             grad.addColorStop(1, `hsl(${hue}, 80%, 60%)`);
             ctx.fillStyle = grad;
             ctx.fillRect(brickX, brickY, (canvas.width / breakBricksColCount) - breakBricksBrickPadding, breakBricksBrickHeight);
-            // Неоновая обводка
             ctx.strokeStyle = "#0ff";
             ctx.lineWidth = 2;
             ctx.strokeRect(brickX, brickY, (canvas.width / breakBricksColCount) - breakBricksBrickPadding, breakBricksBrickHeight);
@@ -1241,23 +1246,32 @@
       clearCanvas();
       currentPlatforms = [];
     }
+    // Рисование платформ: если платформа является "землёй" (ground) — заливаем цветом,
+    // а если не земля, то для темы JUNGLE используем log.png, иначе платформу рисуем стандартно.
     function drawPlatform(plat) {
       ctx.save();
       ctx.globalAlpha = plat.opacity || 1;
       if (plat.isGround) {
-        ctx.fillStyle = "#87CEFA";
-        ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+        if (selectedTheme === "JUNGLE") {
+          ctx.fillStyle = "#8B4513"; // коричневый для земли в jungle
+          ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+        } else {
+          ctx.fillStyle = "#87CEFA";
+          ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+        }
       } else {
-        ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
+        if (selectedTheme === "JUNGLE") {
+          // Используем изображение бревна
+          ctx.drawImage(logImage, plat.x, plat.y, plat.width, plat.height);
+        } else {
+          ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
+        }
       }
       ctx.restore();
     }
+    // Рисование двери: теперь вместо прямоугольника рисуем door.png
     function drawDoor(x, y, width, height) {
-      ctx.fillStyle = "#663300";
-      ctx.fillRect(x, y, width, height);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x, y, width, height);
+      ctx.drawImage(doorImage, x, y, width, height);
     }
     window.addEventListener("keydown", (e) => { 
       if (selectedMode !== "PLATFORMER") keysDown[e.code] = true; 
