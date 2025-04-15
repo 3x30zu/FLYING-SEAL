@@ -35,7 +35,14 @@
       justify-content: center; align-items: center; z-index: 10;
     }
     #menu * { text-shadow: 2px 2px 4px #000; }
-    #menu h1 { font-size: 5vw; margin-bottom: 10px; animation: bounce 2s infinite; }
+    /* Заголовок с серым прозрачным фоном */
+    #gameTitle {
+      font-size: 5vw; margin-bottom: 10px;
+      animation: bounce 2s infinite;
+      background-color: rgba(128,128,128,0.5);
+      padding: 10px 20px;
+      border-radius: 5px;
+    }
     #greeting { font-size: 3vw; margin-bottom: 20px; }
 
     /* Стили для кнопки START:
@@ -50,18 +57,40 @@
       cursor: pointer;
     }
     #startBtn img {
-      width: 100px; /* Увеличено на 20-30% по сравнению с прежним размером */
+      width: 100px;
       height: auto;
       display: block;
     }
 
-    /* Стили для остальных кнопок остаются */
+    /* Новый стиль для элемента магазина, заменяющего предыдущую кнопку shop */
     #shopBtn {
-      padding: 10px 20px; font-size: 3vw; letter-spacing: 2px;
-      text-transform: uppercase; color: #fff; background: #3498db;
-      border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
-      cursor: pointer; margin-bottom: 15px; transition: all 0.1s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      margin-bottom: 15px;
+      background: none;
+      border: none;
+      padding: 0;
     }
+    #shopBtn img {
+      width: 80px; /* можно при необходимости изменить размер */
+      height: auto;
+      display: block;
+    }
+    #shopBtn .shopCaption {
+      margin-top: 5px;
+      padding: 5px 10px;
+      background-color: rgba(128,128,128,0.5);
+      color: #fff;
+      font-size: 3vw;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border: 4px solid #fff;
+      box-shadow: 4px 4px 0 #00ffff;
+    }
+    
+    /* Остальные кнопки */
     #telegramBtn {
       margin-bottom: 15px; width: 80px; height: auto; cursor: pointer;
     }
@@ -259,13 +288,18 @@
   </div>
   
   <div id="menu">
+    <!-- Заголовок с серым прозрачным фоном -->
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="greeting"></p>
-    <!-- По умолчанию вставляем изображение play button.png -->
+    <!-- Кнопка Start с изображением -->
     <button id="startBtn">
       <img src="BACKGROUND/play button.png" alt="Play">
     </button>
-    <button id="shopBtn">SHOP</button>
+    <!-- Новый комбинированный элемент для магазина -->
+    <div id="shopBtn">
+      <img src="BACKGROUND/shop.png" alt="Shop">
+      <div class="shopCaption">SHOP</div>
+    </div>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
     <div id="leaderboard" style="display:none;">
       <h3>High Scores</h3>
@@ -867,7 +901,6 @@
       updateShadowImage();
       ctx.save();
       ctx.translate(shadow.x + shadow.width / 2, shadow.y + shadow.height / 2);
-      // Для темы JUNGLE увеличиваем персонажа на 20%
       let drawWidth = shadow.width, drawHeight = shadow.height;
       if(selectedTheme === "JUNGLE") {
         drawWidth *= 1.2;
@@ -1280,14 +1313,12 @@
       clearCanvas();
       currentPlatforms = [];
     }
-    // Рисование платформ: если платформа является "землёй" (ground) — заливаем цветом,
-    // а если не земля, то для темы JUNGLE используем log.png, иначе платформу рисуем стандартно.
     function drawPlatform(plat) {
       ctx.save();
       ctx.globalAlpha = plat.opacity || 1;
       if (plat.isGround) {
         if (selectedTheme === "JUNGLE") {
-          ctx.fillStyle = "#8B4513"; // коричневый для земли в jungle
+          ctx.fillStyle = "#8B4513";
           ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
         } else {
           ctx.fillStyle = "#87CEFA";
@@ -1302,7 +1333,6 @@
       }
       ctx.restore();
     }
-    // Рисование двери: теперь вместо прямоугольника рисуем door.png
     function drawDoor(x, y, width, height) {
       ctx.drawImage(doorImage, x, y, width, height);
     }
