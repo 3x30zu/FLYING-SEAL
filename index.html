@@ -498,16 +498,17 @@
     }
 
     /* ========= РЕЖИМ BRICKS (Break Bricks) ========= */
-    // Уровень будет легче – много маленьких кирпичей в лабиринте
+    // Для режима BRICKS: теперь шар будет отрисовываться как жёлтый круг,
+    // а расположение кирпичей формируется по одной из нескольких схем для разнообразия "рисунков".
     let breakBricksRowCount = 8;
     let breakBricksColCount = 12;
     let breakBricksPaddle = null;
-    let breakBricksBalls = []; // Массив шаров (нерп)
+    let breakBricksBalls = []; // Массив шаров
     let breakBricksBricks = [];
     let breakBricksBrickWidth, breakBricksBrickHeight, breakBricksBrickPadding, breakBricksBrickOffsetTop, breakBricksBrickOffsetLeft;
     // Специальная монета-баф, которая падает сверху
     let buffCoin = null;
-    // Инициализация кирпичей: для каждой ячейки случайно задаём наличие кирпича (80% вероятность)
+    // Инициализация кирпичей – выбирается одна из нескольких схем расположения кирпичей
     function initBreakBricks() {
       breakBricksBrickPadding = 2;
       breakBricksBrickHeight = 10;
@@ -515,20 +516,61 @@
       breakBricksBrickOffsetTop = 10;
       breakBricksBrickOffsetLeft = 2;
       breakBricksBricks = [];
+
+      // Определяем несколько паттернов (схем) расположения кирпичей
+      const brickPatterns = [
+        // Паттерн 1: рамка
+        [
+          "111111111111",
+          "100000000001",
+          "100000000001",
+          "100000000001",
+          "100000000001",
+          "100000000001",
+          "100000000001",
+          "111111111111"
+        ],
+        // Паттерн 2: диагонали
+        [
+          "100000000001",
+          "010000000010",
+          "001000000100",
+          "000100001000",
+          "000010010000",
+          "000001100000",
+          "000000110000",
+          "000000011000"
+        ],
+        // Паттерн 3: шахматная доска (чекерборд)
+        (function(){
+          let pattern = [];
+          for(let r = 0; r < breakBricksRowCount; r++){
+            let rowStr = "";
+            for(let c = 0; c < breakBricksColCount; c++){
+              rowStr += ((r + c) % 2 === 0) ? "1" : "0";
+            }
+            pattern.push(rowStr);
+          }
+          return pattern;
+        })()
+      ];
+      let selectedPattern = brickPatterns[Math.floor(Math.random() * brickPatterns.length)];
+      
       for(let c = 0; c < breakBricksColCount; c++){
         breakBricksBricks[c] = [];
         for(let r = 0; r < breakBricksRowCount; r++){
-          // 80% кирпичей; результат различен для каждого уровня
+          // Читаем символ из выбранного паттерна
+          let char = selectedPattern[r].charAt(c);
           breakBricksBricks[c][r] = { 
             x: 0, 
             y: 0, 
-            status: (Math.random() < 0.8 ? 1 : 0), 
-            hue: Math.floor(Math.random() * 360) 
+            status: (char === "1" ? 1 : 0), 
+            hue: Math.floor(Math.random() * 360)
           };
         }
       }
     }
-    // Создаем один шар (нерпу)
+    // Создаём один шар
     function createBall(x, y, dx, dy) {
       return {
         x: x,
@@ -540,26 +582,21 @@
     }
     // Изначально один шар; после бафа будут добавлены еще два
     function startBreakBricksMode() {
-      // Сбрасываем баф-коин, если остался
       buffCoin = null;
-      // Показываем кнопку паузы
       platformerPauseBtn.style.display = 'block';
-      // Инициализируем ракетку (расположена выше нижнего края)
       breakBricksPaddle = {
         height: 10,
         width: canvas.width * 0.2,
         x: (canvas.width - canvas.width * 0.2) / 2,
         y: canvas.height - 100
       };
-      // Шар (нерпа) спавнится прямо на ракетке
       breakBricksBalls = [];
+      // Шар спавнится прямо над ракеткой
       breakBricksBalls.push(createBall(breakBricksPaddle.x + breakBricksPaddle.width / 2, breakBricksPaddle.y - 10, 4, -4));
       initBreakBricks();
-      // Добавляем управление ракеткой пальцем
       canvas.addEventListener("touchmove", updatePaddlePositionTouch, {passive:false});
       breakBricksGameLoop();
     }
-    // Функция обновления позиции ракетки через касание (управление пальцем)
     function updatePaddlePositionTouch(e) {
       e.preventDefault();
       if(selectedMode === "BRICKS" && breakBricksPaddle) {
@@ -571,13 +608,11 @@
         if(breakBricksPaddle.x > canvas.width - breakBricksPaddle.width) breakBricksPaddle.x = canvas.width - breakBricksPaddle.width;
       }
     }
-    // Удаление обработчика при завершении игры
     function endBreakBricks() {
       canvas.removeEventListener("touchmove", updatePaddlePositionTouch);
     }
-    // Спавн баф-коина: с маленькой вероятностью появляется коин, падающий сверху
     function spawnBuffCoin() {
-      if(!buffCoin && Math.random() < 0.005) {  // вероятность спавна
+      if(!buffCoin && Math.random() < 0.005) {
         buffCoin = {
           x: Math.random() * (canvas.width - 20) + 10,
           y: 0,
@@ -586,17 +621,14 @@
         };
       }
     }
-    // Обновление позиции баф-коина
     function updateBuffCoin() {
       if(buffCoin) {
         buffCoin.y += buffCoin.dy;
-        // Если коин ушёл за нижнюю границу – убрать
         if(buffCoin.y - buffCoin.radius > canvas.height) {
           buffCoin = null;
         }
       }
     }
-    // Отрисовка баф-коина
     function drawBuffCoin() {
       if(buffCoin) {
         ctx.save();
@@ -607,25 +639,20 @@
         ctx.restore();
       }
     }
-    // Проверка столкновения шара с баф-коином
     function checkBuffCollision(ball) {
       if(!buffCoin) return false;
       let dx = ball.x - buffCoin.x;
       let dy = ball.y - buffCoin.y;
-      return (dx*dx + dy*dy) < ((ball.radius + buffCoin.radius) **2);
+      return (dx*dx + dy*dy) < ((ball.radius + buffCoin.radius) ** 2);
     }
-    // Основной игровой цикл для режима BRICKS
     function breakBricksGameLoop() {
-      // Если игра на паузе или завершена, не продолжаем
       if(paused) {
         requestAnimationFrame(breakBricksGameLoop);
         return;
       }
       clearCanvas();
-      // Спавн баф-коина
       spawnBuffCoin();
       updateBuffCoin();
-      // Отрисовка кирпичей
       for(let c = 0; c < breakBricksColCount; c++){
         for(let r = 0; r < breakBricksRowCount; r++){
           if(breakBricksBricks[c][r].status === 1) {
@@ -642,20 +669,20 @@
           }
         }
       }
-      // Отрисовка баф-коина
       drawBuffCoin();
-      // Отрисовка всех шаров (нерп)
+      // Отрисовка всех шаров: теперь вместо изображения используется жёлтый круг
       breakBricksBalls.forEach(ball => {
         ctx.save();
-        ctx.translate(ball.x, ball.y);
-        ctx.drawImage(currentCharacterFall, -ball.radius, -ball.radius, ball.radius*2, ball.radius*2);
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+        ctx.fillStyle = "yellow";
+        ctx.fill();
         ctx.restore();
       });
-      // Отрисовка ракетки
       ctx.fillStyle = "#0095DD";
       ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
       
-      // Обработка столкновений каждого шара с кирпичами
+      // Обработка столкновений шара с кирпичами
       breakBricksBalls.forEach(ball => {
         for(let c = 0; c < breakBricksColCount; c++){
           for(let r = 0; r < breakBricksRowCount; r++){
@@ -664,7 +691,7 @@
               if(ball.x > b.x && ball.x < b.x + breakBricksBrickWidth &&
                  ball.y > b.y && ball.y < b.y + breakBricksBrickHeight) {
                 ball.dy = -ball.dy;
-                b.status = 0;  // уничтожаем только один кирпич
+                b.status = 0;
               }
             }
           }
@@ -674,14 +701,12 @@
       // Обработка столкновения шара с баф-коином
       breakBricksBalls.forEach(ball => {
         if(checkBuffCollision(ball)) {
-          // Если столкновение, добавляем еще два шара с небольшим разнообразием скорости
           breakBricksBalls.push(createBall(ball.x, ball.y, ball.dx, ball.dy * 1.1));
           breakBricksBalls.push(createBall(ball.x, ball.y, -ball.dx, ball.dy * 1.1));
           buffCoin = null;
         }
       });
       
-      // Обработка отскока шаров от краёв экрана
       breakBricksBalls.forEach(ball => {
         if(ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius){
           ball.dx = -ball.dx;
@@ -691,11 +716,10 @@
         }
       });
       
-      // Проверка: если шар опускается ниже ракетки, удаляем его (если все исчезнут – игра окончена)
+      // Если шар достигает уровня ракетки, проверяем попадание (если не попал – удаляем)
       breakBricksBalls = breakBricksBalls.filter(ball => {
         if(ball.y + ball.dy > breakBricksPaddle.y - ball.radius) {
           if(ball.x > breakBricksPaddle.x && ball.x < breakBricksPaddle.x + breakBricksPaddle.width) {
-            // попал в ракетку – отскакиваем
             ball.dy = -ball.dy;
             return true;
           } else {
@@ -705,20 +729,17 @@
         return true;
       });
       
-      // Если не осталось ни одного шара – игра окончена
       if(breakBricksBalls.length === 0) {
         endBreakBricks();
         gameOverOverlay.style.display = 'block';
         return;
       }
       
-      // Движение шаров
       breakBricksBalls.forEach(ball => {
         ball.x += ball.dx;
         ball.y += ball.dy;
       });
       
-      // Управление ракеткой ПК (клавиши)
       if(keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
         breakBricksPaddle.x -= 7;
       }
@@ -726,7 +747,6 @@
         breakBricksPaddle.x += 7;
       }
       
-      // Если все кирпичи разрушены – уровень пройден, выдаем 5 монет, увеличиваем скорость шаров и переинициализируем кирпичную область
       let allBroken = true;
       for(let c = 0; c < breakBricksColCount; c++){
         for(let r = 0; r < breakBricksRowCount; r++){
@@ -741,12 +761,10 @@
         totalCoins += 5;
         localStorage.setItem("totalCoins", totalCoins);
         shopBalance.textContent = `Total Coins: ${totalCoins}`;
-        // Увеличиваем скорость шаров
         breakBricksBalls.forEach(ball => {
           ball.dx *= 1.05;
           ball.dy *= 1.05;
         });
-        // Переинициализируем кирпичи с новым случайным лабиринтом
         initBreakBricks();
       }
       
