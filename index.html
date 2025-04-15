@@ -37,14 +37,29 @@
     #menu * { text-shadow: 2px 2px 4px #000; }
     #menu h1 { font-size: 5vw; margin-bottom: 10px; animation: bounce 2s infinite; }
     #greeting { font-size: 3vw; margin-bottom: 20px; }
-    /* Изменения для кнопки старта не затрагивают стили, т.к. в содержимом будет img */
-    #startBtn, #shopBtn {
+
+    /* Убираем фон, границы и делаем кнопку в 2 раза меньше (примерно) */
+    #startBtn {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+    #startBtn img {
+      width: 80px; /* подберите нужное значение, чтобы кнопка была в 2 раза меньше */
+      height: auto;
+      display: block;
+    }
+
+    /* Стили для SHOP-кнопки и прочих */
+    #shopBtn {
       padding: 10px 20px; font-size: 3vw; letter-spacing: 2px;
       text-transform: uppercase; color: #fff; background: #3498db;
       border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer; margin-bottom: 15px; transition: all 0.1s;
     }
-    #startBtn img { width: 100%; height: auto; display: block; }
     #telegramBtn {
       margin-bottom: 15px; width: 80px; height: auto; cursor: pointer;
     }
@@ -102,7 +117,6 @@
       display: none; flex-direction: column; justify-content: center;
       align-items: center; text-align: center; z-index: 20;
     }
-    /* Исправлено: убрана лишняя запятая */
     #pauseMenu {
       display: none;
       position: absolute;
@@ -245,8 +259,10 @@
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="greeting"></p>
-    <!-- Кнопка PLAY заменяется на изображение в зависимости от выбранной темы -->
-    <button id="startBtn">PLAY</button>
+    <!-- Сразу вставляем картинку play button.png, чтобы она отображалась по умолчанию -->
+    <button id="startBtn">
+      <img src="BACKGROUND/play button.png" alt="Play">
+    </button>
     <button id="shopBtn">SHOP</button>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
     <div id="leaderboard" style="display:none;">
@@ -309,7 +325,11 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // По умолчанию скрываем виртуальный джойстик:
       document.getElementById('platformerControls').style.display = 'none';
+      // Можно сразу установить тему как WINTER (или оставить выбор пользователю)
+      // selectedTheme = "WINTER";
+      // updateTheme();
     });
 
     /* ====== Профиль ====== */
@@ -495,38 +515,38 @@
         ctx.restore();
       });
     }
-    // Обновляем тему и подставляем нужные изображения для персонажа во всех режимах
+
+    // Обновляем тему и подставляем нужные изображения (включая кнопку) во всех режимах
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
         backgroundUrl = "BACKGROUND/photo_2025-03-12_12-26-18.gif";
         currentCharacterJump = sealJump;
         currentCharacterFall = sealFall;
+        // Если выбрана тема WINTER, меняем изображение кнопки
+        startBtn.innerHTML = "<img src='BACKGROUND/play button.png' alt='Play'>";
       } else if(selectedTheme === "JUNGLE") {
         backgroundUrl = "BACKGROUND/JUNGLE BACKGROUND.jpeg";
         currentCharacterJump = gorillaJump;
         currentCharacterFall = gorillaFall;
-      }
-      document.getElementById("gameCanvas").style.background = `url('${backgroundUrl}') center/cover no-repeat`;
-      document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
-      
-      if(selectedTheme === "JUNGLE"){
-        document.querySelectorAll("button").forEach(btn => {
-          btn.style.backgroundColor = "#4CAF50";
-          btn.style.borderColor = "#2E7D32";
-        });
-      } else {
-        document.querySelectorAll("button").forEach(btn => {
-          btn.style.backgroundColor = "#3498db";
-          btn.style.borderColor = "#fff";
-        });
-      }
-      // Заменяем содержимое кнопки PLAY в зависимости от выбранной темы
-      if(selectedTheme === "WINTER"){
-        startBtn.innerHTML = "<img src='BACKGROUND/play button.png' alt='Play'>";
-      } else if(selectedTheme === "JUNGLE"){
+        // Если выбрана тема JUNGLE, меняем изображение кнопки
         startBtn.innerHTML = "<img src='BACKGROUND/play button 2.png' alt='Play'>";
       }
+
+      document.getElementById("gameCanvas").style.background = `url('${backgroundUrl}') center/cover no-repeat`;
+      document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
+
+      // Меняем фон и бордер для всех кнопок, кроме startBtn
+      document.querySelectorAll("button").forEach(btn => {
+        if (btn.id === "startBtn") return; 
+        if(selectedTheme === "JUNGLE"){
+          btn.style.backgroundColor = "#4CAF50";
+          btn.style.borderColor = "#2E7D32";
+        } else {
+          btn.style.backgroundColor = "#3498db";
+          btn.style.borderColor = "#fff";
+        }
+      });
     }
 
     /* ========= РЕЖИМ BRICKS (Break Bricks) ========= */
@@ -1270,7 +1290,6 @@
         }
       } else {
         if (selectedTheme === "JUNGLE") {
-          // Используем изображение бревна
           ctx.drawImage(logImage, plat.x, plat.y, plat.width, plat.height);
         } else {
           ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
