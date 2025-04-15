@@ -101,7 +101,7 @@
       align-items: center; text-align: center; z-index: 20;
     }
     #pauseMenu {
-      display: none; position: absolute;
+      display: none; position: absolute,
       top: 50%; left: 50%; transform: translate(-50%, -50%);
       background: rgba(0,0,0,0.8); color: white; text-align: center;
       padding: 20px; z-index: 30; width: 80%; max-width: 400px;
@@ -687,21 +687,7 @@
         }
         return true;
       });
-      if (breakBricksBalls.length === 0) {
-        endBreakBricks();
-        gameOverOverlay.style.display = 'block';
-        return;
-      }
-      breakBricksBalls.forEach(ball => {
-        ball.x += ball.dx;
-        ball.y += ball.dy;
-      });
-      if (keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
-        breakBricksPaddle.x -= 7;
-      }
-      if (keysDown["ArrowRight"] && breakBricksPaddle.x < canvas.width - breakBricksPaddle.width) {
-        breakBricksPaddle.x += 7;
-      }
+      // Проверка, уничтожены ли все кирпичи
       let allBroken = true;
       for (let c = 0; c < breakBricksColCount; c++) {
         for (let r = 0; r < breakBricksRowCount; r++) {
@@ -713,16 +699,36 @@
         if (!allBroken) break;
       }
       if (allBroken) {
-        totalCoins += 5;
-        localStorage.setItem("totalCoins", totalCoins);
-        shopBalance.textContent = `Total Coins: ${totalCoins}`;
-        breakBricksBalls.forEach(ball => {
-          ball.dx *= 1.05;
-          ball.dy *= 1.05;
-        });
-        initBreakBricks();
+        // Вывод надписи "GREAT!" и пауза в 3 секунды перед переходом на следующий уровень
+        clearCanvas();
+        ctx.fillStyle = "#fff";
+        ctx.font = "40px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("GREAT!", canvas.width / 2, canvas.height / 2);
+        setTimeout(() => {
+          totalCoins += 5;
+          localStorage.setItem("totalCoins", totalCoins);
+          shopBalance.textContent = `Total Coins: ${totalCoins}`;
+          breakBricksBalls.forEach(ball => {
+            ball.dx *= 1.05;
+            ball.dy *= 1.05;
+          });
+          initBreakBricks();
+          breakBricksGameLoop();
+        }, 3000);
+        return;
       }
       requestAnimationFrame(breakBricksGameLoop);
+      breakBricksBalls.forEach(ball => {
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+      });
+      if (keysDown["ArrowLeft"] && breakBricksPaddle.x > 0) {
+        breakBricksPaddle.x -= 7;
+      }
+      if (keysDown["ArrowRight"] && breakBricksPaddle.x < canvas.width - breakBricksPaddle.width) {
+        breakBricksPaddle.x += 7;
+      }
     }
 
     /* ========= FLYING MODE ========= */
