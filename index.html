@@ -37,12 +37,14 @@
     #menu * { text-shadow: 2px 2px 4px #000; }
     #menu h1 { font-size: 5vw; margin-bottom: 10px; animation: bounce 2s infinite; }
     #greeting { font-size: 3vw; margin-bottom: 20px; }
+    /* Изменения для кнопки старта не затрагивают стили, т.к. в содержимом будет img */
     #startBtn, #shopBtn {
       padding: 10px 20px; font-size: 3vw; letter-spacing: 2px;
       text-transform: uppercase; color: #fff; background: #3498db;
       border: 4px solid #fff; box-shadow: 4px 4px 0 #00ffff;
       cursor: pointer; margin-bottom: 15px; transition: all 0.1s;
     }
+    #startBtn img { width: 100%; height: auto; display: block; }
     #telegramBtn {
       margin-bottom: 15px; width: 80px; height: auto; cursor: pointer;
     }
@@ -243,6 +245,7 @@
   <div id="menu">
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="greeting"></p>
+    <!-- Кнопка PLAY заменяется на изображение в зависимости от выбранной темы -->
     <button id="startBtn">PLAY</button>
     <button id="shopBtn">SHOP</button>
     <img id="telegramBtn" src="BACKGROUND/telegrammm.png" alt="Telegram">
@@ -517,6 +520,12 @@
           btn.style.backgroundColor = "#3498db";
           btn.style.borderColor = "#fff";
         });
+      }
+      // Заменяем содержимое кнопки PLAY в зависимости от выбранной темы
+      if(selectedTheme === "WINTER"){
+        startBtn.innerHTML = "<img src='BACKGROUND/play button.png' alt='Play'>";
+      } else if(selectedTheme === "JUNGLE"){
+        startBtn.innerHTML = "<img src='BACKGROUND/play button 2.png' alt='Play'>";
       }
     }
 
