@@ -44,7 +44,10 @@
       border-radius: 5px;
     }
     #greeting { font-size: 3vw; margin-bottom: 20px; }
-    /* Стили для кнопки START: */
+
+    /* Стили для кнопки START:
+       – фон, бордер и box-shadow убраны;
+       – изображению задаём размер 100px по ширине (увеличено на ~25% от 80px). */
     #startBtn {
       background: none !important;
       border: none !important;
@@ -58,7 +61,8 @@
       height: auto;
       display: block;
     }
-    /* Новый комбинированный элемент для магазина */
+
+    /* Новый стиль для элемента магазина, заменяющего предыдущую кнопку shop */
     #shopBtn {
       display: flex;
       flex-direction: column;
@@ -70,7 +74,7 @@
       padding: 0;
     }
     #shopBtn img {
-      width: 80px;
+      width: 80px; /* можно при необходимости изменить размер */
       height: auto;
       display: block;
     }
@@ -85,6 +89,7 @@
       border: 4px solid #fff;
       box-shadow: 4px 4px 0 #00ffff;
     }
+    
     /* Остальные кнопки */
     #telegramBtn {
       margin-bottom: 15px; width: 80px; height: auto; cursor: pointer;
@@ -283,11 +288,14 @@
   </div>
   
   <div id="menu">
+    <!-- Заголовок с серым прозрачным фоном -->
     <h1 id="gameTitle">FLYING SEAL</h1>
     <p id="greeting"></p>
+    <!-- Кнопка Start с изображением -->
     <button id="startBtn">
       <img src="BACKGROUND/play button.png" alt="Play">
     </button>
+    <!-- Новый комбинированный элемент для магазина -->
     <div id="shopBtn">
       <img src="BACKGROUND/shop.png" alt="Shop">
       <div class="shopCaption">SHOP</div>
@@ -299,6 +307,7 @@
     </div>
   </div>
 
+  <!-- Модальное окно выбора темы -->
   <div id="themeSelectModal">
     <h2>Select Theme</h2>
     <button id="winterThemeBtn">WINTER</button>
@@ -309,6 +318,7 @@
     <h2>Select Mode</h2>
     <button id="flyingModeBtn">FLYING</button>
     <button id="platformerModeBtn">PLATFORMER</button>
+    <!-- Режим DIVE заменён на новый режим BRICKS (Break Bricks) -->
     <button id="dunkModeBtn">BRICKS</button>
   </div>
 
@@ -351,6 +361,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // По умолчанию скрываем виртуальный джойстик:
       document.getElementById('platformerControls').style.display = 'none';
     });
 
@@ -416,215 +427,26 @@
       updateLevelInfoDisplay();
     }
 
-    let platformerGameStarted = false;
-    let currentPlatforms = [];
-    const platformW = 150, platformH = 40, groundHeight = 80, platformHitboxOffset = 10;
-    let hasTouchedPlatform = false;
-    // Генерация исходных платформ
-    function generatePlatforms() {
-      let platforms = [];
-      const platformCount = 10;
-      platforms.push({
-        x: 0,
-        y: canvas.height - groundHeight,
-        width: canvas.width,
-        height: groundHeight,
-        isGround: true,
-        opacity: 1
-      });
-      const gap = (canvas.height - 150) / (platformCount - 1);
-      for (let i = 1; i < platformCount; i++) {
-        let y = canvas.height - groundHeight - i * gap;
-        let x = Math.random() * (canvas.width - platformW);
-        platforms.push({
-          x: x,
-          y: y,
-          width: platformW,
-          height: platformH,
-          isGround: false,
-          opacity: 1
-        });
-      }
-      // Сортируем по y (от верхней платформы к нижней)
-      platforms.sort((a, b) => a.y - b.y);
-      return platforms;
-    }
-
-    // Функция для добавления новой платформы сверху, если их не хватает
-    function addNewPlatform() {
-      // Берём самую верхнюю платформу (с минимальным y)
-      let topPlatform = currentPlatforms[0];
-      let newY = topPlatform.y - (Math.random() * 50 + 50);
-      let newX = Math.random() * (canvas.width - platformW);
-      let newPlat = {
-        x: newX,
-        y: newY,
-        width: platformW,
-        height: platformH,
-        isGround: false,
-        opacity: 1
-      };
-      currentPlatforms.unshift(newPlat);
-    }
-
-    // Функция запуска бесконечного режима PLATFORMER (Doodle Jump style)
-    function startPlatformerLevel() {
-      platformerGameStarted = true;
-      paused = false;
-      score = 0;
-      currentPlatforms = generatePlatforms();
-      // Удаляем дверь – не требуется для бесконечного режима
-      player = {
-        x: canvas.width * 0.1,
-        y: canvas.height - 150,
-        width: 50,
-        height: 50,
-        vx: 0,
-        vy: 0,
-        speed: 3,
-        jumpForce: -12,
-        onGround: false
-      };
-      platformerLoop();
-    }
-
-    // Основной игровой цикл режима PLATFORMER (бесконечный)
-    function platformerLoop() {
-      if (!platformerGameStarted || paused) return;
-      clearCanvas();
-
-      // Обновление управления игроком
-      if (keysDown["ArrowLeft"]) { player.vx = -player.speed; }
-      else if (keysDown["ArrowRight"]) { player.vx = player.speed; }
-      else { player.vx = 0; }
-      if (keysDown["ArrowUp"] && player.onGround) {
-        player.vy = player.jumpForce;
-        player.onGround = false;
-      }
-      player.vy += 0.5;
-      player.x += player.vx;
-      player.y += player.vy;
-
-      // Простая горизонтальная обтекание границ
-      if (player.x < 0) player.x = 0;
-      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
-
-      player.onGround = false;
-      // Проверка столкновений с платформами
-      for (let i = 0; i < currentPlatforms.length; i++) {
-        let plat = currentPlatforms[i];
-        let left = plat.x + platformHitboxOffset;
-        let right = plat.x + plat.width - platformHitboxOffset;
-        let top = plat.y;
-        let bottom = plat.y + plat.height;
-        if (
-          player.x < right &&
-          player.x + player.width > left &&
-          player.y < bottom &&
-          player.y + player.height > top
-        ) {
-          // Если игрок падает сверху и касается платформы
-          if (player.vy > 0 && (player.y + player.height - player.vy) <= plat.y) {
-            player.y = plat.y - player.height;
-            player.vy = 0;
-            player.onGround = true;
-          }
-        }
-      }
-
-      // Когда игрок поднимается выше 40% высоты холста, сдвигаем все объекты вниз
-      let threshold = canvas.height * 0.4;
-      if (player.y < threshold) {
-        let diff = threshold - player.y;
-        player.y = threshold;
-        // Сдвигаем все платформы вниз
-        for (let i = 0; i < currentPlatforms.length; i++) {
-          currentPlatforms[i].y += diff;
-        }
-        score += diff; // Можно использовать score как "высоту"
-      }
-
-      // Удаляем платформы, которые вышли за нижнюю границу холста
-      currentPlatforms = currentPlatforms.filter(plat => plat.y < canvas.height);
-      // Добавляем новые платформы, если их недостаточно сверху
-      while (currentPlatforms.length === 0 || currentPlatforms[0].y > 50) {
-        addNewPlatform();
-      }
-
-      // Если игрок падает ниже экрана, игра окончена
-      if (player.y > canvas.height) {
-        platformerGameStarted = false;
-        alert("Game Over");
-        endPlatformer();
-        return;
-      }
-
-      // Отрисовка игрока
-      ctx.save();
-      ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-      let pAngle = player.vy < 0 ? -15 * Math.PI / 180 : 15 * Math.PI / 180;
-      ctx.rotate(pAngle);
-      let currentSprite = player.vy < 0 ? currentCharacterJump : currentCharacterFall;
-      ctx.drawImage(currentSprite, -player.width/2, -player.height/2, player.width, player.height);
-      ctx.restore();
-
-      // Отрисовка платформ
-      currentPlatforms.forEach(plat => drawPlatform(plat));
-      // Отображение счета
-      ctx.save();
-      ctx.fillStyle = "#fff";
-      ctx.font = "20px 'Press Start 2P'";
-      ctx.textAlign = "center";
-      ctx.fillText("Score: " + Math.floor(score), canvas.width / 2, 30);
-      ctx.restore();
-
-      requestAnimationFrame(platformerLoop);
-    }
-
-    function endPlatformer() {
-      menu.style.display = 'flex';
-      platformerPauseBtn.style.display = 'none';
-      platformerControls.style.display = 'none';
-      showProfileButton();
-      clearCanvas();
-      currentPlatforms = [];
-    }
-
-    function drawPlatform(plat) {
-      ctx.save();
-      ctx.globalAlpha = plat.opacity || 1;
-      if (plat.isGround) {
-        if (selectedTheme === "JUNGLE") {
-          ctx.fillStyle = "#8B4513";
-          ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-        } else {
-          ctx.fillStyle = "#87CEFA";
-          ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
-        }
-      } else {
-        if (selectedTheme === "JUNGLE") {
-          ctx.drawImage(logImage, plat.x, plat.y, plat.width, plat.height);
-        } else {
-          ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
-        }
-      }
-      ctx.restore();
-    }
-
-    /* ====== Остальные режимы и глобальные переменные ====== */
-    let pipes = [], pipeSpeed = 2, pipeWidth = 75;
+    let platformerLevel = 1;
+    let pipes = [];
+    let pipeSpeed = 2;
+    let pipeWidth = 75;
     const pipeImage = new Image(); 
     pipeImage.src = 'BACKGROUND/PIPE.png';
     const pipeImageJungle1 = new Image();
     pipeImageJungle1.src = 'BACKGROUND/PIPE 1.png';
     const pipeImageJungle2 = new Image();
     pipeImageJungle2.src = 'BACKGROUND/PIPE 2.png';
-
+    
     let flyingPipeCounter = 0;
+    
+    // Основное изображение платформ для режима PLATFORMER (используется для non-jungle)
     const platformImage = new Image(); platformImage.src = 'BACKGROUND/platform.png';
+    // В теме JUNGLE платформы заменяются на изображение бревна
     const logImage = new Image(); logImage.src = 'BACKGROUND/log.png';
-    const doorImage = new Image(); doorImage.src = 'BACKGROUND/door.png'; // Теперь не используется в PLATFORMER режиме
-
+    // Для двери во всех режимах используется door.png
+    const doorImage = new Image(); doorImage.src = 'BACKGROUND/door.png';
+    
     let collisionOffsetLeft = 10, collisionOffsetRight = 10, collisionOffsetTop = 20, collisionOffsetBottom = 20;
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -680,10 +502,13 @@
     let particles = [], coins = [], reactionMessages = [];
 
     /* ====== Загрузка изображений персонажей ====== */
+    // Для режима WINTER – нерпа
     const sealJump = new Image(); sealJump.src = 'BACKGROUND/seal jump.png';
     const sealFall = new Image(); sealFall.src = 'BACKGROUND/seal fall.png';
+    // Для режима JUNGLE – горилла
     const gorillaJump = new Image(); gorillaJump.src = 'BACKGROUND/gorilla jump.png';
     const gorillaFall = new Image(); gorillaFall.src = 'BACKGROUND/gorilla fall.png';
+    // По умолчанию выставляем нерпу
     let currentCharacterJump = sealJump;
     let currentCharacterFall = sealFall;
     let selectedTheme = "WINTER";
@@ -723,6 +548,8 @@
         ctx.restore();
       });
     }
+
+    // Обновляем тему, фон, изображения персонажей и картинку кнопки
     function updateTheme() {
       let backgroundUrl;
       if(selectedTheme === "WINTER") {
@@ -738,6 +565,8 @@
       }
       document.getElementById("gameCanvas").style.background = `url('${backgroundUrl}') center/cover no-repeat`;
       document.getElementById("shop").style.background = `linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('${backgroundUrl}') center/cover no-repeat`;
+      
+      // Для остальных кнопок меняем фон, но пропускаем startBtn
       document.querySelectorAll("button").forEach(btn => {
         if (btn.id === "startBtn") return;
         if(selectedTheme === "JUNGLE"){
@@ -751,7 +580,6 @@
     }
 
     /* ========= РЕЖИМ BRICKS (Break Bricks) ========= */
-    // ... (оставляем без изменений)
     let breakBricksGameStarted = false;
     let breakBricksBrickPadding, breakBricksBrickHeight, breakBricksBrickOffsetTop, breakBricksBrickOffsetLeft;
     let breakBricksColCount = 6; 
@@ -898,11 +726,13 @@
         ctx.drawImage(currentCharacterFall, -ball.radius, -ball.radius, ball.radius * 2, ball.radius * 2);
         ctx.restore();
       });
+      // Рисуем ракетку (в режиме BRICKS) с заливкой белым и чёрной обводкой
       ctx.fillStyle = "#fff";
       ctx.fillRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
       ctx.strokeStyle = "#000";
       ctx.lineWidth = 2;
       ctx.strokeRect(breakBricksPaddle.x, breakBricksPaddle.y, breakBricksPaddle.width, breakBricksPaddle.height);
+      
       breakBricksBalls.forEach(ball => {
         for (let c = 0; c < breakBricksColCount; c++) {
           for (let r = 0; r < breakBricksRowCount; r++) {
@@ -1238,6 +1068,7 @@
       topScoresList.innerHTML = scores.map(s => `<li>${s.name}: ${s.points}</li>`).join("");
     }
     updateLeaderboard();
+
     function renderShopItems() {
       shopItemsDiv.innerHTML = "";
       if (typeof trailsConfig !== 'undefined') {
@@ -1326,6 +1157,203 @@
       }
       shopItemsDiv.appendChild(pipesGrid);
     }
+
+    /* ====== PLATFORMER MODE ====== */
+    let platformerGameStarted = false;
+    let door, player;
+    let keysDown = {};
+    let currentPlatforms = [];
+    const platformW = 150, platformH = 40, groundHeight = 80, platformHitboxOffset = 10;
+    let hasTouchedPlatform = false;
+    function generatePlatforms() {
+      let platforms = [];
+      const platformCount = 10;
+      platforms.push({
+        x: 0,
+        y: canvas.height - groundHeight,
+        width: canvas.width,
+        height: groundHeight,
+        isGround: true,
+        disappearStartTime: null
+      });
+      const gap = (canvas.height - 150) / (platformCount - 1);
+      for (let i = 1; i < platformCount; i++) {
+        let y = canvas.height - groundHeight - i * gap;
+        let x = Math.random() * (canvas.width - platformW);
+        platforms.push({
+          x: x,
+          y: y,
+          width: platformW,
+          height: platformH,
+          isGround: false,
+          disappearStartTime: null
+        });
+      }
+      return platforms;
+    }
+    function startPlatformerLevel() {
+      platformerGameStarted = true;
+      paused = false;
+      hasTouchedPlatform = false;
+      score = 0;
+      currentPlatforms = generatePlatforms();
+      currentPlatforms.sort((a, b) => a.y - b.y);
+      let highestPlatform = currentPlatforms[0];
+      let doorX = Math.random() * (canvas.width - 50);
+      let doorY = highestPlatform.y - 80;
+      door = { x: doorX, y: doorY, width: 50, height: 70 };
+      player = {
+        x: canvas.width * 0.1,
+        y: canvas.height - 150,
+        width: 50,
+        height: 50,
+        vx: 0,
+        vy: 0,
+        speed: 3,
+        jumpForce: -12,
+        onGround: false
+      };
+      platformerLoop(currentPlatforms);
+    }
+    function platformerLoop(platforms) {
+      if (!platformerGameStarted || paused) return;
+      clearCanvas();
+      if (keysDown["ArrowLeft"]) { player.vx = -player.speed; }
+      else if (keysDown["ArrowRight"]) { player.vx = player.speed; }
+      else { player.vx = 0; }
+      if (keysDown["ArrowUp"] && player.onGround) {
+        player.vy = player.jumpForce;
+        player.onGround = false;
+      }
+      player.vy += 0.5;
+      player.x += player.vx;
+      player.y += player.vy;
+      player.onGround = false;
+      for (let i = 0; i < platforms.length; i++) {
+        let plat = platforms[i];
+        let left = plat.x + platformHitboxOffset;
+        let right = plat.x + plat.width - platformHitboxOffset;
+        let top = plat.y;
+        let bottom = plat.y + plat.height;
+        if (
+          player.x < right &&
+          player.x + player.width > left &&
+          player.y < bottom &&
+          player.y + player.height > top
+        ) {
+          if (player.vy > 0 && player.y + player.height - player.vy <= plat.y) {
+            if (!plat.isGround) {
+              hasTouchedPlatform = true;
+              if (plat.disappearStartTime === null) {
+                plat.disappearStartTime = performance.now();
+              }
+            }
+            player.y = plat.y - player.height;
+            player.vy = 0;
+            player.onGround = true;
+            if (plat.isGround && hasTouchedPlatform) {
+              platformerGameStarted = false;
+              alert("Game Over");
+              endPlatformer();
+              return;
+            }
+          }
+        }
+      }
+      if (player.y > canvas.height) {
+        platformerGameStarted = false;
+        alert("Game Over");
+        endPlatformer();
+        return;
+      }
+      ctx.save();
+      ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+      let pAngle = player.vy < 0 ? -15 * Math.PI / 180 : 15 * Math.PI / 180;
+      ctx.rotate(pAngle);
+      let currentSprite = player.vy < 0 ? currentCharacterJump : currentCharacterFall;
+      ctx.drawImage(currentSprite, -player.width / 2, -player.height / 2, player.width, player.height);
+      ctx.restore();
+      for (let i = platforms.length - 1; i >= 0; i--) {
+        let plat = platforms[i];
+        if (!plat.isGround && plat.disappearStartTime !== null) {
+          let elapsed = performance.now() - plat.disappearStartTime;
+          if (elapsed < 1000) { plat.opacity = 1 - elapsed / 1000; }
+          else { platforms.splice(i, 1); continue; }
+        } else {
+          plat.opacity = 1;
+        }
+      }
+      platforms.forEach(plat => drawPlatform(plat));
+      drawDoor(door.x, door.y, door.width, door.height);
+      if (
+        player.x < door.x + door.width &&
+        player.x + player.width > door.x &&
+        player.y < door.y + door.height &&
+        player.y + player.height > door.y
+      ) {
+        totalCoins += 10;
+        localStorage.setItem("totalCoins", totalCoins);
+        shopBalance.textContent = `Total Coins: ${totalCoins}`;
+        platformerGameStarted = false;
+        ctx.fillStyle = "#fff";
+        ctx.font = "20px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("GREAT! +10 coins", canvas.width / 2, canvas.height / 2);
+        setTimeout(() => { platformerLevel++; startPlatformerLevel(); }, 1500);
+        return;
+      }
+      requestAnimationFrame(() => platformerLoop(platforms));
+    }
+    function endPlatformer() {
+      removeAllCoins();
+      menu.style.display = 'flex';
+      platformerPauseBtn.style.display = 'none';
+      platformerControls.style.display = 'none';
+      showProfileButton();
+      clearCanvas();
+      currentPlatforms = [];
+    }
+    function drawPlatform(plat) {
+      ctx.save();
+      ctx.globalAlpha = plat.opacity || 1;
+      if (plat.isGround) {
+        if (selectedTheme === "JUNGLE") {
+          ctx.fillStyle = "#8B4513";
+          ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+        } else {
+          ctx.fillStyle = "#87CEFA";
+          ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+        }
+      } else {
+        if (selectedTheme === "JUNGLE") {
+          ctx.drawImage(logImage, plat.x, plat.y, plat.width, plat.height);
+        } else {
+          ctx.drawImage(platformImage, plat.x, plat.y, plat.width, plat.height);
+        }
+      }
+      ctx.restore();
+    }
+    function drawDoor(x, y, width, height) {
+      ctx.drawImage(doorImage, x, y, width, height);
+    }
+    window.addEventListener("keydown", (e) => { 
+      if (selectedMode !== "PLATFORMER") keysDown[e.code] = true; 
+    });
+    window.addEventListener("keyup", (e) => { 
+      if (selectedMode !== "PLATFORMER") keysDown[e.code] = false; 
+    });
+    document.getElementById("btnLeft").addEventListener("mousedown", () => { keysDown["ArrowLeft"] = true; });
+    document.getElementById("btnLeft").addEventListener("mouseup", () => { keysDown["ArrowLeft"] = false; });
+    document.getElementById("btnLeft").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = true; });
+    document.getElementById("btnLeft").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowLeft"] = false; });
+    document.getElementById("btnUp").addEventListener("mousedown", () => { keysDown["ArrowUp"] = true; });
+    document.getElementById("btnUp").addEventListener("mouseup", () => { keysDown["ArrowUp"] = false; });
+    document.getElementById("btnUp").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowUp"] = true; });
+    document.getElementById("btnUp").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowUp"] = false; });
+    document.getElementById("btnRight").addEventListener("mousedown", () => { keysDown["ArrowRight"] = true; });
+    document.getElementById("btnRight").addEventListener("mouseup", () => { keysDown["ArrowRight"] = false; });
+    document.getElementById("btnRight").addEventListener("touchstart", (e) => { e.preventDefault(); keysDown["ArrowRight"] = true; });
+    document.getElementById("btnRight").addEventListener("touchend", (e) => { e.preventDefault(); keysDown["ArrowRight"] = false; });
 
     /* ====== Главное меню и пауза ====== */
     startBtn.addEventListener('click', () => {
@@ -1430,7 +1458,7 @@
       paused = false;
       pauseMenu.style.display = 'none';
       if (selectedMode === "FLYING") { flyingGameLoop(); }
-      else if (selectedMode === "PLATFORMER") { platformerLoop(); }
+      else if (selectedMode === "PLATFORMER") { platformerLoop(currentPlatforms); }
       else if (selectedMode === "BRICKS") { breakBricksGameLoop(); }
     });
     const exitBtn = document.getElementById('exitBtn');
